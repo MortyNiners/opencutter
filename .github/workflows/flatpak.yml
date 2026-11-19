@@ -83,6 +83,13 @@ jobs:
       # build command in a bwrap sandbox, which needs a privileged container.
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
       options: --privileged
+      # The action always runs flatpak-builder with --install-deps-from, which updates the
+      # image's GNOME runtime when Flathub has a newer one. On the container's overlay file
+      # system that update cannot move the old runtime directory ("Invalid cross-device
+      # link"), and the build fails. An anonymous volume here starts as a copy of the image's
+      # installation on a plain file system, where the update works.
+      volumes:
+        - /var/lib/flatpak
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:

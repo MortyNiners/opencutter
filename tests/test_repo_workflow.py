@@ -249,6 +249,9 @@ def test_the_build_runs_in_flathubs_image_of_the_manifests_runtime():
     assert container["image"] == ("ghcr.io/flathub-infra/flatpak-github-actions:gnome-"
                                   + MANIFEST["runtime-version"])
     assert container["options"] == "--privileged"            # bwrap inside the container
+    # the image's Flatpak installation on a volume: updating its runtime moves directories,
+    # which the container's overlay file system refuses (the build then fails)
+    assert container["volumes"] == ["/var/lib/flatpak"]
 
 
 def test_the_bundle_is_built_from_the_manifest_with_flathub_as_runtime_repo():
