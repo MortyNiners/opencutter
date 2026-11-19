@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="100mm" height="100mm" viewBox="0 0 100 100" stroke="black">
+  <path d="M 0 0 H 10"/>
+  <g inkscape:groupmode="layer" inkscape:label="Cut" id="layer1">
+    <path d="M 0 10 H 10"/>
+    <g id="group1" inkscape:label="Just a group"><path d="M 0 20 H 10"/></g>
+    <g inkscape:groupmode="layer" inkscape:label="Score" id="layer2">
+      <path d="M 0 30 H 10"/>
+    </g>
+    <path d="M 0 40 H 10"/>
+  </g>
+  <g inkscape:groupmode="layer" id="layer3"><path d="M 0 50 H 10"/></g>
+</svg>

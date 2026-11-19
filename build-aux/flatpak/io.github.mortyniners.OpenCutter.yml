@@ -1,0 +1,156 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# Flatpak manifest of OpenCutter: the bundle attached to each GitHub release is built from it,
+# by .github/workflows/flatpak.yml. To build it locally, from the repository root, with the
+# build folders outside the repository (CONTRIBUTING.md, "Building the Flatpak locally"):
+#
+#   B=~/.cache/opencutter-flatpak
+#   flatpak-builder --user --force-clean --state-dir="$B/state" --repo="$B/repo" "$B/build" \
+#       build-aux/flatpak/io.github.mortyniners.OpenCutter.yml
+#   flatpak build-bundle "$B/repo" "$B/opencutter-local.flatpak" io.github.mortyniners.OpenCutter \
+#       --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+#
+# The Python modules are pinned by hand from their PyPI release files (version and sha256) and
+# installed offline with pip: nothing is downloaded while a module builds.
+id: io.github.mortyniners.OpenCutter
+runtime: org.gnome.Platform
+runtime-version: '51'        # Python 3.14, PyGObject 3.58, GTK 4.24, libadwaita 1.10
+sdk: org.gnome.Sdk           # adds pip, setuptools, wheel and Cython for the build
+command: opencutter
+finish-args:
+  # The window: Wayland, or X11 where there is no Wayland. X11 needs the shared IPC namespace
+  # for its shared-memory extension.
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  # GTK 4 draws with the GPU.
+  - --device=dri
+  # The background service finds the paired cutter (a name starting with CAMEO, Portrait or
+  # CURIO) in BlueZ and holds its Bluetooth LE link: it talks to org.bluez on the system bus,
+  # and to nothing else there.
+  - --system-talk-name=org.bluez
+  # Nothing else: no network and no access to files. Designs are opened through the file
+  # chooser portal, or dropped on the window through the file transfer portal; the app keeps
+  # no file paths between runs. Its settings, presets file and service log are in its own
+  # ~/.var/app directory. The background service is started through the Flatpak portal
+  # (flatpak-spawn, which every app may use) in a sandbox of its own, with these same
+  # permissions, so that it keeps running after the window was closed.
+build-options:
+  env:
+    PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    PIP_NO_CACHE_DIR: '1'
+cleanup:
+  - '*.a'
+  - '*.la'
+  - /include
+  - /lib/pkgconfig
+modules:
+  # Build-only: the build backend of dbus-fast. Its files are removed when the build is done.
+  - name: python3-poetry-core
+    buildsystem: simple
+    build-commands:
+      - >-
+        pip3 install --no-index --find-links="file://${PWD}" --no-build-isolation
+        --prefix="${FLATPAK_DEST}" poetry-core==2.5.0
+    cleanup:
+      - '*'
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/42/b5/50f1fda26c4fe5b1d6ce5cdf0391bdfa1ca12fdcb8ad68344d5cf678fc90/poetry_core-2.5.0.tar.gz
+        sha256: 81d04c9253b19d0604718268d781867c8f7b2128e5b25bbf1e84141eec6b89c4
+
+  # D-Bus for Python, which bleak uses to reach BlueZ. Built from the sdist with the SDK's
+  # Cython 3, so that its compiled extension is used. dbus-fast falls back to pure Python,
+  # silently, when the extension does not build: the second command fails the build then.
+  - name: python3-dbus-fast
+    buildsystem: simple
+    build-commands:
+      - >-
+        REQUIRE_CYTHON=1 pip3 install --no-index --find-links="file://${PWD}"
+        --no-build-isolation --prefix="${FLATPAK_DEST}" dbus-fast==5.2.0
+      - >-
+        python3 -I -c 'import sys, dbus_fast.message as m, dbus_fast._private.marshaller as w;
+        bad = [x.__file__ for x in (m, w) if not x.__file__.endswith(".so")];
+        sys.exit("dbus-fast has no compiled extension: %s" % bad if bad else 0)'
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/4c/5b/ce64b8788c10a8bd313c8638b28be5dccdd5c2daf14839f23aff37e0b39d/dbus_fast-5.2.0.tar.gz
+        sha256: a4a5dddc04b1ade5eb7650d791e2f6fb7c1334595593473914e78a2526ecddda
+
+  # Bluetooth LE. Its sdist builds only with the uv_build backend, a compiled program that is
+  # not in the SDK; the py3-none-any wheel holds the same pure-Python modules and installs
+  # without running any build code. On Linux it needs only dbus-fast.
+  - name: python3-bleak
+    buildsystem: simple
+    build-commands:
+      - >-
+        pip3 install --no-index --find-links="file://${PWD}" --no-build-isolation
+        --prefix="${FLATPAK_DEST}" bleak==3.1.0
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/4d/f4/25642dbebe4d7aff3b36f95eae40c46a31f40b0f30f8c87b057456534ae3/bleak-3.1.0-py3-none-any.whl
+        sha256: 3cb08e03039f6e477c276252540416b287d4e3de63a86732780ff93a2f6e73ef
+
+  # SVG parsing: pure Python, no dependencies (numpy and Pillow are optional and not used).
+  # Its sdist also installs its own tests as a top-level package named "test": removed.
+  - name: python3-svgelements
+    buildsystem: simple
+    build-commands:
+      - >-
+        pip3 install --no-index --find-links="file://${PWD}" --no-build-isolation
+        --prefix="${FLATPAK_DEST}" svgelements==1.9.6
+    cleanup:
+      - /lib/python3.14/site-packages/test
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/5d/29/1c93c94a2289675ba2ff898612f9c9a03f46d69f253bdf4da0dfc08a599d/svgelements-1.9.6.tar.gz
+        sha256: 7c02ad6404cd3d1771fd50e40fbfc0550b0893933466f86a6eb815f3ba3f37f7
+
+  - name: opencutter
+    buildsystem: simple
+    build-commands:
+      # The package with its icons (package data: the in-app icons such as Align). Without
+      # --no-deps, pip checks that bleak, dbus-fast and svgelements are installed above.
+      - pip3 install --no-index --no-build-isolation --prefix="${FLATPAK_DEST}" .
+      # A smoke test of what was installed (no display, no D-Bus, nothing is started): the
+      # command runs, every module imports, and the style sheet and the icons are package data.
+      - ${FLATPAK_DEST}/bin/opencutter --version
+      - >-
+        python3 -I -c 'import os, opencutter.device.daemon, opencutter.gui.app as app;
+        icons = app.ICONS / "hicolor"; a = os.environ["FLATPAK_ID"];
+        need = [app.STYLE, icons / "scalable/apps" / (a + ".svg"),
+        icons / "symbolic/apps" / (a + "-symbolic.svg"),
+        icons / "symbolic/apps" / (a + "-align-symbolic.svg")];
+        bad = [str(p) for p in need if not p.is_file()];
+        raise SystemExit("not installed: %s" % bad if bad else 0)'
+      - install -Dm644 -t "${FLATPAK_DEST}/share/applications" data/${FLATPAK_ID}.desktop
+      - install -Dm644 -t "${FLATPAK_DEST}/share/metainfo" data/${FLATPAK_ID}.metainfo.xml
+      # The app icon and its symbolic variant for the desktop: the same files the app uses.
+      - >-
+        install -Dm644 -t "${FLATPAK_DEST}/share/icons/hicolor/scalable/apps"
+        src/opencutter/gui/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg
+      - >-
+        install -Dm644 -t "${FLATPAK_DEST}/share/icons/hicolor/symbolic/apps"
+        src/opencutter/gui/icons/hicolor/symbolic/apps/${FLATPAK_ID}-symbolic.svg
+    sources:
+      # The repository itself (this file lies in build-aux/flatpak). The release workflow on
+      # GitHub Actions builds from its checkout of the tagged commit, so the bundle holds exactly
+      # that commit. The paths skipped here are never needed (tests, a venv, build output; the
+      # workflow builds in build-dir, flatpak-repo and .flatpak-builder inside the checkout).
+      # build and dist are what `pip install .` leaves in a working copy: pip would reuse a
+      # stale build/lib. A local build takes everything else of the working copy as it is,
+      # git-ignored files too (CONTRIBUTING.md: build bundles for others from a clean clone).
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - .venv
+          - .flatpak-builder
+          - build-dir
+          - flatpak-repo
+          - flatpak_app
+          - build
+          - dist
+          - tests
+          - src/opencutter.egg-info

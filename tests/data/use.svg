@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="100mm" height="100mm" viewBox="0 0 100 100">
+  <defs>
+    <rect id="tile" width="10" height="10"/>
+  </defs>
+  <!-- (5,5) 10x10 -->
+  <use xlink:href="#tile" x="5" y="5"/>
+  <!-- translate(50,0) scale(2) translate(1,1): (52,2) 20x20 -->
+  <use href="#tile" x="1" y="1" transform="translate(50,0) scale(2)"/>
+  <!-- A symbol outside defs is only drawn through use; its viewBox maps onto the use's size. -->
+  <symbol id="dot" viewBox="-1 -1 2 2">
+    <circle r="1"/>
+  </symbol>
+  <!-- A circle of radius 10 centred on (30,70) -->
+  <use xlink:href="#dot" x="20" y="60" width="20" height="20"/>
+  <!-- 100% is the page: a circle filling it -->
+  <use xlink:href="#dot" width="100%" height="100%"/>
+  <!-- A clone of a clone: (80,80) and (80,70) -->
+  <use id="clone" xlink:href="#tile" x="80" y="80"/>
+  <use xlink:href="#clone" y="-10"/>
+</svg>

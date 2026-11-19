@@ -1,0 +1,135 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# The model report form: how a model went that is not yet tested, or one OpenCutter only
+# recognizes. It asks for what "Reporting a model" in CONTRIBUTING.md lists.
+# The markdown paragraphs stay on one line each: GitHub may show a line break as a break.
+name: Model report
+description: You ran OpenCutter on a model that is not yet tested, or one it only recognizes. Tell us how it went.
+title: "Model report: "
+labels: ["model report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! OpenCutter has been tested on one CAMEO 4 (firmware V5.05) so far. Every other model and firmware line it drives is not yet tested, and reports like yours are how one becomes tested. A report of the connection alone helps too: fill in what you have and leave the rest empty.
+
+        **Before you send a job to a model that is not yet tested:** keep "Preview outline before cutting" on, use scrap material, start with a light Force, load the mat right before every job and keep a hand near the power button. Do not press the machine's Pause key during a job. The [Safety](https://github.com/MortyNiners/opencutter#safety) section of the README says why.
+
+        In the Flatpak, every `opencutter …` command below is `flatpak run --command=opencutter io.github.mortyniners.OpenCutter …`. If something went wrong in a way that could hurt someone or damage the machine, report it privately instead, as the [security policy](https://github.com/MortyNiners/opencutter/security/policy) explains.
+
+  - type: input
+    id: model
+    attributes:
+      label: Model and firmware
+      description: >-
+        What the machine reports itself as (its `FG` reply), exactly as shown: the
+        **Firmware** row of the connection menu (the button with the machine's name in the
+        header bar), or the `model:` line of `opencutter status`. For a machine OpenCutter
+        refused, the `model:` line of `opencutter service status`. Not the `machine:` line,
+        which holds the machine's Bluetooth name and address.
+      placeholder: CAMEO 4 V5.05
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: OpenCutter version
+      description: The output of `opencutter --version`.
+      placeholder: opencutter 0.1.0 (build 1a2b3c4d5e6f, api 1)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Did it connect?
+      description: What the connection menu showed after you switched the machine on.
+      options:
+        - Connected
+        - Unsupported Machine
+        - Could not Connect
+        - OpenCutter did not find the machine
+    validations:
+      required: true
+
+  - type: textarea
+    id: connection-notes
+    attributes:
+      label: About the connection
+      description: >-
+        Anything worth knowing: what the banner or the connection menu said, whether you had to
+        switch the machine off and on first, and which tool each **Tool** row of the connection
+        menu showed.
+
+  - type: textarea
+    id: mats
+    attributes:
+      label: Mats, and the machine's reply after loading
+      description: >-
+        For each mat you tried: its name as Page Setup shows it, and the machine's reply to the
+        unit check after the mat was loaded. On a model whose reply is not known yet, the job
+        view shows it ("The machine answered …"); the service log has it for every model, one
+        line `job: U -> '…' (…)` per job. Load the mat right before each job.
+      placeholder: |
+        12 × 12 in: job: U -> '…' (…)
+
+  - type: textarea
+    id: tools
+    attributes:
+      label: What the machine reports for each tool
+      description: >-
+        The `Tools (ESC 15):` line of `opencutter info`, once for each tool you have in each
+        holder, and once with the holders empty. Say which tool was in which holder. On a model
+        with one holder, say which of the two numbers changes.
+      placeholder: |
+        AutoBlade in Tool 1, Tool 2 empty: Tools    (ESC 15): …
+        Both holders empty: Tools    (ESC 15): …
+
+  - type: textarea
+    id: cut
+    attributes:
+      label: What you cut and how it went
+      description: >-
+        The mat, the tool and its holder, the material and the settings (Blade Depth, Force,
+        Speed, Acceleration, Passes). Then what you measured: whether a 1-inch square came out
+        as one inch, where it landed against the mat grid, and whether the cut went cleanly
+        through. Photos are welcome; keep the machine's serial number label out of them.
+
+  - type: textarea
+    id: stop
+    attributes:
+      label: The stop, if you tried it
+      description: >-
+        Only with a hand on the power button: whether a running cut stopped at once after
+        Cancel Job or `opencutter stop`, and whether anything moved afterwards. After a stop,
+        press Unload or the power button, never Pause.
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Service log
+      description: >-
+        The lines of `daemon.log` from the connection to the end of the job. The file is
+        `~/.var/app/io.github.mortyniners.OpenCutter/.local/state/opencutter/daemon.log` in the
+        Flatpak, and `~/.local/state/opencutter/daemon.log` from source
+        (`$XDG_STATE_HOME/opencutter/daemon.log` when that is set). For every write and every
+        reply, close the app, run `opencutter service stop`, then `opencutter serve -v` in a
+        terminal, and copy the lines from that terminal.
+      render: text
+
+  - type: checkboxes
+    id: personal-data
+    attributes:
+      label: Personal data
+      description: >-
+        The service log and `opencutter status` show the machine's Bluetooth name, which holds
+        its serial number, and its Bluetooth address. The connection menu shows the name too,
+        also in a screenshot.
+      options:
+        - label: >-
+            I replaced the serial number and the Bluetooth address everywhere in this report,
+            in the log lines and screenshots too, and left out my user name and home folder
+            paths.
+          required: true

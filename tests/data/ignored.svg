@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="100mm" height="100mm" viewBox="0 0 100 100">
+  <path d="M 0 0 L 10 10" stroke="black"/>
+  <text x="10" y="10"><tspan>Hello</tspan><tspan x="10" y="20">World</tspan></text>
+  <text x="10" y="30">Plain</text>
+  <image x="0" y="40" width="10" height="10" xlink:href="data:image/png;base64,iVBORw0KGgo="/>
+  <image x="20" y="40" width="10" height="10" href="picture.png"/>
+  <!-- Inkscape 0.92 flowed text: the frame rectangle must not be cut -->
+  <flowRoot>
+    <flowRegion><rect x="50" y="50" width="40" height="40"/></flowRegion>
+    <flowPara>Flowed text</flowPara>
+  </flowRoot>
+  <defs><clipPath id="clip"><rect width="5" height="5"/></clipPath></defs>
+  <rect x="60" y="0" width="10" height="10" clip-path="url(#clip)"/>
+</svg>

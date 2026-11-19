@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="fade"><stop offset="0" stop-color="red"/><stop offset="1" stop-color="blue"/></linearGradient>
+  </defs>
+  <g stroke="blue">
+    <path d="M 0 0 H 10"/>
+    <path d="M 0 10 H 10" stroke="#ABC" fill="none"/>
+  </g>
+  <path d="M 0 20 H 10" style="stroke:rgb(255, 128, 0);fill:url(#fade)"/>
+  <path d="M 0 30 H 10" stroke="none" fill="rgba(10,20,30,0)"/>
+  <path d="M 0 40 H 10" color="#123456" stroke="currentColor" fill="red" fill-opacity="0.5"/>
+  <path d="M 0 50 H 10" stroke="transparent" fill="hsl(120, 100%, 50%)"/>
+</svg>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"
+     fill="none" stroke="black">
+  <!-- closed by Z -->
+  <path d="M 0 0 H 10 V 10 Z"/>
+  <!-- ends on its start without Z: closed too -->
+  <path d="M 20 0 H 30 V 10 L 20 0"/>
+  <!-- open -->
+  <path d="M 40 0 H 50 V 10"/>
+  <!-- two subpaths: a closed square and an open line -->
+  <path d="M 60 0 h 10 v 10 h -10 z M 80 0 H 90"/>
+  <!-- drawing on after Z starts a new subpath at the closed subpath's start -->
+  <path d="M 0 20 h 10 v 10 z l 5 5"/>
+</svg>

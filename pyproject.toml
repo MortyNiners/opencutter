@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opencutter"
+version = "0.1.0"
+description = "Cutting software for Linux that drives Silhouette cutters over Bluetooth, tested on the CAMEO 4"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.12"
+dependencies = ["bleak>=1.0", "dbus-fast>=2.0", "svgelements>=1.9"]
+# The GUI also needs PyGObject with GTK 4 and libadwaita 1 from the system (python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1).
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+opencutter = "opencutter.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# the stylesheet and the app's own icons (gui/icons/hicolor/<size>/apps/*.svg), see gui/app.py
+opencutter = ["gui/*.css", "gui/icons/hicolor/*/apps/*.svg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

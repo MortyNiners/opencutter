@@ -1,0 +1,113 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# The bug report form. A safety problem (the machine moves when it should not, a stop does not
+# stop it) is reported privately instead, as SECURITY.md explains; the form says so first.
+# The markdown paragraphs stay on one line each: GitHub may show a line break as a break.
+name: Bug report
+description: Something in OpenCutter does not work as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a problem. Please look through the [open issues](https://github.com/MortyNiners/opencutter/issues) first: if one already describes it, add what you know there.
+
+        **Is it a safety problem?** If the machine moved when it should not have, a stop did not stop it, or OpenCutter sent the machine something it should not have, please do not open a public issue: report it privately, as the [security policy](https://github.com/MortyNiners/opencutter/security/policy) explains. If the machine is moving now, press its power button.
+
+        Running OpenCutter on a model that is not yet tested? The **Model report** form asks for what helps most. Many connection problems are answered under [Troubleshooting](https://github.com/MortyNiners/opencutter#troubleshooting) in the README.
+
+        In the Flatpak, every `opencutter …` command below is `flatpak run --command=opencutter io.github.mortyniners.OpenCutter …`.
+
+  - type: input
+    id: version
+    attributes:
+      label: OpenCutter version
+      description: >-
+        The output of `opencutter --version`, which also names the build. The app shows the
+        version under main menu → About OpenCutter.
+      placeholder: opencutter 0.1.0 (build 1a2b3c4d5e6f, api 1)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How you installed it
+      options:
+        - Flatpak bundle from GitHub Releases
+        - Flatpak I built myself
+        - From source
+    validations:
+      required: true
+
+  - type: input
+    id: system
+    attributes:
+      label: Linux distribution and GNOME version
+      description: >-
+        GNOME's version is under Settings → System → About. On another desktop, name it and its
+        version.
+      placeholder: Fedora 43, GNOME 49
+    validations:
+      required: true
+
+  - type: input
+    id: machine
+    attributes:
+      label: Machine and firmware
+      description: >-
+        What the machine reports itself as: the **Firmware** row of the connection menu (the
+        button with the machine's name in the header bar), or the `model:` line of
+        `opencutter status`. Not the `machine:` line, which holds the machine's Bluetooth name
+        and address. Leave this empty if no machine was involved.
+      placeholder: CAMEO 4 V5.05
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: >-
+        What did you expect, and what happened instead? Copy any message the app showed word
+        for word. A screenshot helps for a problem with the layout or the window; the
+        connection menu shows the machine's Bluetooth name, so cover it there.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: >-
+        What you did, step by step, so that we can make it happen too. If it is about a design,
+        attach the SVG file (or a smaller one that shows the same problem), if you made it
+        yourself and may share it. Please attach no files made with Silhouette software.
+      placeholder: |
+        1. Open an SVG file with …
+        2. Press …
+        3. The app shows …
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log lines
+      description: >-
+        The lines around the problem from the service log, `daemon.log`, and from `app.log` for
+        an error in the app. Both files are in
+        `~/.var/app/io.github.mortyniners.OpenCutter/.local/state/opencutter/` in the Flatpak,
+        and in `~/.local/state/opencutter/` from source (`$XDG_STATE_HOME/opencutter/` when that
+        is set).
+      render: text
+
+  - type: checkboxes
+    id: personal-data
+    attributes:
+      label: Personal data
+      options:
+        - label: >-
+            I replaced the machine's Bluetooth name (it holds the serial number) and its
+            Bluetooth address, and my user name and home folder in paths, everywhere in this
+            report.
+          required: true

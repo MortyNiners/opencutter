@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=OpenCutter
+GenericName=Cutting Machine Software
+Comment=Send SVG designs to a Silhouette cutting machine over Bluetooth
+Exec=opencutter
+Icon=io.github.mortyniners.OpenCutter
+Terminal=false
+Categories=Graphics;Engineering;GTK;GNOME;
+Keywords=cutter;cutting;plotter;vinyl;crafts;svg;cameo;portrait;
+StartupNotify=true
+DBusActivatable=false

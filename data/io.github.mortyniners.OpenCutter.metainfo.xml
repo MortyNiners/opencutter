@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.mortyniners.OpenCutter</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>OpenCutter</name>
+  <summary>Send SVG designs to Silhouette cutters</summary>
+  <description>
+    <p>
+      OpenCutter cuts, draws and scores your SVG designs on a Silhouette cutting machine over
+      Bluetooth, from Linux. It is tested on the CAMEO 4. Draw in Inkscape or any SVG editor,
+      place the design on the cutting mat, choose Material, Action and Tool, load the mat and
+      press Send.
+    </p>
+    <ul>
+      <li>Cutting mat view with the cut area, media size and placement by drag, scale and rotate</li>
+      <li>Material presets: a small built-in set or your own presets file, and Cut Settings for every other material</li>
+      <li>Tool check before every job, an optional outline preview with the tool up, and a large Cancel Job button</li>
+    </ul>
+    <p>
+      OpenCutter is experimental. It has cut designs on one real CAMEO 4 (firmware V5.05), but
+      stopping a running cut and where a design lands against the printed grid of the mat have
+      not been checked on a real machine yet. Use the outline preview and scrap material for
+      your first jobs.
+    </p>
+    <p>
+      OpenCutter reads the model and firmware the machine reports. Not yet tested: it also
+      drives the CAMEO 4 Plus, CAMEO 4 Pro, CAMEO 5, CAMEO 5 Plus, CAMEO Pro MK-II,
+      CAMEO 5 Alpha, CAMEO 5 Alpha Plus, Portrait 3 and Portrait 4, and the CAMEO 4 with
+      firmware V1.xx, none of which has been run with it yet.
+      Recognized, not supported yet: the CURIO 2, the CAMEO 3, the Portrait 2 and older
+      USB-only models get no job.
+    </p>
+    <p>
+      Tested with the Silhouette CAMEO 4. Not affiliated with or endorsed by Silhouette America,
+      Inc. Silhouette, CAMEO, Portrait and CURIO are trademarks of their respective owners.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.mortyniners.OpenCutter.desktop</launchable>
+  <icon type="stock">io.github.mortyniners.OpenCutter</icon>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/MortyNiners/opencutter/v0.1.0/data/screenshots/main-window.png</image>
+      <caption>Lay out a design on the cutting mat and choose the material</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/MortyNiners/opencutter/v0.1.0/data/screenshots/send-sheet.png</image>
+      <caption>Check the job, the media size and the checklist before the machine moves</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/MortyNiners/opencutter/v0.1.0/data/screenshots/cutting.png</image>
+      <caption>Follow the job while it cuts, with Cancel Job always on screen</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/MortyNiners/opencutter/v0.1.0/data/screenshots/page-setup.png</image>
+      <caption>Page Setup: the detected machine, the cutting mat and the media size</caption>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/MortyNiners/opencutter</url>
+  <url type="bugtracker">https://github.com/MortyNiners/opencutter/issues</url>
+  <url type="vcs-browser">https://github.com/MortyNiners/opencutter</url>
+  <developer id="io.github.mortyniners">
+    <name>OpenCutter contributors</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <branding>
+    <color type="primary" scheme_preference="light">#8fbcff</color>
+    <color type="primary" scheme_preference="dark">#123063</color>
+  </branding>
+  <requires>
+    <display_length compare="ge">600</display_length>
+  </requires>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <provides>
+    <binary>opencutter</binary>
+  </provides>
+  <categories>
+    <category>Graphics</category>
+  </categories>
+  <releases>
+    <release version="0.1.0" type="stable" date="2026-11-19">
+      <description>
+        <p>
+          The first release. OpenCutter opens SVG designs, places them on the cutting mat and
+          cuts, draws or scores them on a Silhouette cutter over Bluetooth LE, with a tool check
+          before every job, an optional outline preview and Cancel Job always on screen.
+        </p>
+        <p>
+          Tested on one CAMEO 4 with firmware V5.05. OpenCutter also drives these, which have
+          not been tested on a real machine yet: the CAMEO 4 Plus and Pro, the CAMEO 5, 5 Plus
+          and Pro MK-II, the CAMEO 5 Alpha and Alpha Plus, the Portrait 3 and 4, and the
+          CAMEO 4 with firmware V1.xx.
+        </p>
+        <p>
+          If you own one of them, please report how it went on the bug tracker: "Reporting a
+          model" in the project's CONTRIBUTING.md lists what helps.
+        </p>
+      </description>
+    </release>
+    <release version="0.1.0~dev0" type="development" date="2026-11-16">
+      <description>
+        <p>First development version.</p>
+      </description>
+    </release>
+  </releases>
+</component>

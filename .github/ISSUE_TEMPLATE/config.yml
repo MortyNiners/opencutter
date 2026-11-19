@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# The "New issue" page: the two forms of this folder (bug_report.yml, model_report.yml) and
+# links to the README's Supported machines and Troubleshooting sections, no blank issues. GitHub
+# adds its own link to SECURITY.md, where safety and security problems are reported privately.
+blank_issues_enabled: false
+contact_links:
+  - name: Which machines OpenCutter drives
+    url: https://github.com/MortyNiners/opencutter#supported-machines
+    about: >-
+      Is your model tested, not yet tested, or only recognized? The README's Supported machines
+      section lists every model. To tell us how a model went, use the Model report form.
+  - name: Troubleshooting
+    url: https://github.com/MortyNiners/opencutter#troubleshooting
+    about: >-
+      The app cannot connect, says "Unsupported Machine" or that Bluetooth is off, or another
+      program holds the machine? The README's Troubleshooting section answers these, and says
+      where the service log is.

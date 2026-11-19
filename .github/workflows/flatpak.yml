@@ -1,0 +1,271 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# Runs the tests and builds the Flatpak bundle opencutter-<version>.flatpak from
+# build-aux/flatpak/io.github.mortyniners.OpenCutter.yml (see CONTRIBUTING.md, "Releasing").
+#
+# - Every trigger: the test job runs the test suite and the build job builds the bundle, side by
+#   side. The tests run without PyGObject: the tests that need GTK are skipped there.
+# - A pushed tag vX.Y.Z: when both have passed, the release job checks that the tag is the
+#   version (pyproject.toml, src/opencutter/__init__.py and the newest <release> of the
+#   metainfo) and creates the GitHub release of that tag with the bundle and SHA256SUMS, or adds
+#   them to a release made by hand. A bundle already attached is never replaced. A failed test
+#   releases nothing.
+# - Run workflow (workflow_dispatch), a pull request or a push to main: the test and build jobs
+#   only. The bundle and SHA256SUMS are an artifact of the run; nothing is released.
+#
+# Every action is pinned to a full commit SHA; the comment names its version.
+name: Flatpak
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+# Read-only by default. Only the release job may write, and only the repository contents (the
+# release and its files).
+permissions:
+  contents: read
+
+concurrency:
+  group: flatpak-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Run the tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The Python of the manifest's runtime: GNOME 51 has Python 3.14.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
+      # pytest, and the app's dependencies (pyproject.toml) at the versions the manifest
+      # installs in the bundle; PyYAML for the tests that read the manifest and this workflow.
+      # Exact versions, wheels only: no build code runs. No PyGObject: the tests that need GTK
+      # are skipped (tests/conftest.py).
+      - name: Install pytest and the dependencies
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+        run: >-
+          python -m pip install --no-cache-dir --only-binary=:all:
+          pytest==9.2.0 iniconfig==2.3.1 packaging==26.3 pluggy==1.7.0 pygments==2.21.0
+          bleak==3.1.0 dbus-fast==5.2.0 svgelements==1.9.6 pyyaml==6.0.3
+
+      # No test uses the network, Bluetooth, a display or a cutter: stand-ins replace bleak and
+      # dbus_fast (tests/stubs.py), the service and the cutter. The system bus address leads
+      # nowhere, as in the service the tests start (tests/service_stubs.py): a test that missed
+      # its stand-in fails, it never reaches the runner's D-Bus. No __pycache__ is written into
+      # the checkout, whose files some tests read.
+      - name: Run the tests
+        env:
+          DBUS_SYSTEM_BUS_ADDRESS: unix:path=/nonexistent
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python -m pytest -q -p no:cacheprovider
+
+  build:
+    name: Build the Flatpak bundle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container:
+      # Flathub's image for GNOME 51: flatpak-builder with org.gnome.Platform//51 and
+      # org.gnome.Sdk//51 installed (flathub-infra/actions-images). flatpak-builder runs each
+      # build command in a bwrap sandbox, which needs a privileged container.
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The three version files must agree; on a tag, the tag must be v<version> too, so a
+      # wrong tag fails here, before the build.
+      - name: Read and check the version
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$REF_TYPE" = tag ]; then
+            python3 build-aux/release-version.py --tag "$REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            python3 build-aux/release-version.py >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the Flatpak and the bundle
+        uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6.8
+        with:
+          manifest-path: build-aux/flatpak/io.github.mortyniners.OpenCutter.yml
+          bundle: opencutter-${{ steps.version.outputs.version }}.flatpak
+          # The bundle names Flathub as the place of the GNOME runtime (flatpak build-bundle
+          # --runtime-repo), so `flatpak install` offers to install the runtime from there.
+          repository-name: flathub
+          repository-url: https://dl.flathub.org/repo/flathub.flatpakrepo
+          # The folder names of a local build (CONTRIBUTING.md). The manifest's dir source
+          # (the checkout itself) skips them, so the build never copies its own output.
+          build-dir: build-dir
+          repo-dir: flatpak-repo
+          state-dir: .flatpak-builder
+          # Every bundle is built from scratch, with nothing cached from an earlier run.
+          cache: false
+          # Uploaded below, together with SHA256SUMS.
+          upload-artifact: false
+
+      - name: Write SHA256SUMS
+        env:
+          BUNDLE: opencutter-${{ steps.version.outputs.version }}.flatpak
+        run: |
+          sha256sum "$BUNDLE" > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Keep the bundle as an artifact of this run
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: opencutter-${{ steps.version.outputs.version }}-x86_64
+          path: |
+            opencutter-${{ steps.version.outputs.version }}.flatpak
+            SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+
+  release:
+    name: Attach the bundle to the GitHub release
+    # Only when the tests have passed and the bundle is built.
+    needs: [build, test]
+    # Only for a pushed version tag: never for a pull request, a branch or Run workflow.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check that the tag is the version
+        env:
+          TAG: ${{ github.ref_name }}
+          BUILT: ${{ needs.build.outputs.version }}
+        run: |
+          python3 build-aux/release-version.py --tag "$TAG"
+          if [ "$TAG" != "v$BUILT" ]; then
+            echo "The bundle is version $BUILT, not $TAG." >&2
+            exit 1
+          fi
+
+      - name: Fetch the bundle from the build job
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: opencutter-${{ needs.build.outputs.version }}-x86_64
+          path: dist
+
+      - name: Check the bundle against SHA256SUMS
+        working-directory: dist
+        run: sha256sum --check --strict SHA256SUMS
+
+      # A new release is created with both files in one command: gh makes it a draft, uploads
+      # the files, then publishes it, so a release is never public without its bundle (with
+      # immutable releases, a published release could not get its files later). A release made
+      # by hand (as a draft) gets the files added. A bundle once attached is never replaced: a
+      # rebuild is never byte-identical, so its checksum would change under the same version.
+      #
+      # The notes of a new release come from a quoted heredoc (<<'EOF'): the shell expands
+      # nothing in it, so backticks and dollar signs reach the page as they are. sed then puts in
+      # the version and the tag for @VERSION@ and @TAG@ (both checked above: X.Y.Z and vX.Y.Z).
+      # Each paragraph and list item is one line, so the release page never shows a line break
+      # in the middle of a sentence. A release made by hand keeps its own notes.
+      - name: Create the release, or add the files to it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          BUNDLE="opencutter-$VERSION.flatpak"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+              --jq '.assets[].name' > assets.txt; then
+            if grep -qxF "$BUNDLE" assets.txt; then
+              echo "::notice::The release $TAG already has $BUNDLE; it is not replaced."
+              exit 0
+            fi
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "dist/$BUNDLE"
+            # a SHA256SUMS without its bundle (an upload that broke off) is replaced
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/SHA256SUMS
+          else
+            cat > notes.md <<'EOF'
+          ![OpenCutter's main window: a design on the cutting mat, with Material, Action, Tool and Send on the right](https://raw.githubusercontent.com/MortyNiners/opencutter/@TAG@/data/screenshots/main-window.png)
+
+          OpenCutter is free cutting software for Linux. It opens an SVG design from Inkscape or any other editor, places it on the cutting mat and cuts, draws or scores it on a Silhouette cutting machine over Bluetooth LE. This is an alpha release, tested on one CAMEO 4 with firmware V5.05; the other models it drives have not been tested on a real machine yet. OpenCutter moves a sharp blade: please read the [safety notes](https://github.com/MortyNiners/opencutter/blob/@TAG@/README.md#safety) before your first job.
+
+          ## Highlights
+
+          - **Your design on the mat.** Move, scale, rotate by 90° and align it on the cutting mat of your machine, or let Fit to Mat place it, with the cut area shown.
+          - **Cut, draw or score.** Choose Material, Action and Tool: take a preset from the small built-in set (for the CAMEO 4 family) or from your own presets file, or set Blade Depth, Force, Speed and Passes yourself.
+          - **Checks before anything moves.** The tool in the machine must match the material, the design must lie on the media and inside the cut area, and an optional outline preview traces the outer box of the design with the tool up and waits for you to confirm.
+          - **Bluetooth in the background.** A small background service holds the link to the machine. The `opencutter` command line talks to the same service, and the service releases the machine 15 minutes after you close the app.
+          - **Sandboxed.** The Flatpak may use the window, the GPU and BlueZ (Bluetooth) and nothing else: no network, and no files except the designs you open or drop on the window.
+
+          ## Machines
+
+          OpenCutter reads the model and firmware a machine reports and uses that model's profile.
+
+          - **Tested on a real machine:** the CAMEO 4 with firmware V5.xx (tested on V5.05).
+          - **Not yet tested:** the CAMEO 4 with firmware V1.xx, the CAMEO 4 Plus, CAMEO 4 Pro, CAMEO 5, CAMEO 5 Plus, CAMEO Pro MK-II, CAMEO 5 Alpha, CAMEO 5 Alpha Plus, Portrait 3 and Portrait 4. OpenCutter sends them jobs, but none of them has been run with it yet: keep the outline preview on, use scrap material and keep the power button within reach for your first jobs.
+          - **Recognized, not supported yet:** the CURIO 2, the CAMEO 3, the Portrait 2 and older USB-only models. OpenCutter names them but sends them no job.
+
+          [Supported machines](https://github.com/MortyNiners/opencutter/blob/@TAG@/README.md#supported-machines) in the README has the details.
+
+          ## Install
+
+          OpenCutter needs Linux on a 64-bit PC (x86_64), with [Flatpak](https://flatpak.org/setup/) and BlueZ, the Bluetooth service of most distributions. Download `opencutter-@VERSION@.flatpak` and `SHA256SUMS` from the assets below into one folder, or with the first two commands. In that folder, check the download and install the bundle for your user:
+
+          ```sh
+          curl -LO https://github.com/MortyNiners/opencutter/releases/download/@TAG@/opencutter-@VERSION@.flatpak
+          curl -LO https://github.com/MortyNiners/opencutter/releases/download/@TAG@/SHA256SUMS
+          sha256sum --check SHA256SUMS   # prints: opencutter-@VERSION@.flatpak: OK
+          flatpak install --user ./opencutter-@VERSION@.flatpak
+          ```
+
+          The bundle runs on the GNOME 51 runtime from Flathub. `flatpak install` lists what it will install and asks first: without the Flathub remote it adds it, and without the GNOME 51 runtime it installs the runtime from there too (up to about 1.5 GB to download when you have no Flathub apps yet). To add the Flathub remote yourself beforehand:
+
+          ```sh
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          ```
+
+          Then pair the machine in your desktop's Bluetooth settings, switch it off and on again, and open OpenCutter from your app menu. [First run](https://github.com/MortyNiners/opencutter/blob/@TAG@/README.md#first-run) in the README walks you through the first connection, and [The Flatpak](https://github.com/MortyNiners/opencutter/blob/@TAG@/README.md#the-flatpak) covers updates, uninstalling and the command line.
+
+          ## Known limitations
+
+          - Stopping a running cut with Cancel Job has not been tried on a real machine yet, and where a design lands against the printed grid of the mat has not been measured. Use the outline preview and scrap material for your first jobs.
+          - Not supported yet: Print & Cut (registration marks), matless cutting, a USB connection, and on the CAMEO 4 every mat but the 12 × 12 in.
+          - Ending the background service outside the app (under Background Apps in GNOME's quick settings, or with `flatpak kill`) skips the stop and the clean release of the Bluetooth link. Press **Disconnect** in the app instead.
+          - The bundle is not signed. `sha256sum --check` shows that the download is complete and unchanged, not who made it, so download the bundle and `SHA256SUMS` from this page only.
+
+          More in the README: [Known limitations](https://github.com/MortyNiners/opencutter/blob/@TAG@/README.md#known-limitations) and [Safety](https://github.com/MortyNiners/opencutter/blob/@TAG@/README.md#safety).
+
+          ## Report a model
+
+          Do you own a model that is not yet tested, or one that OpenCutter only recognizes? Please tell us how it went with the [model report](https://github.com/MortyNiners/opencutter/issues/new?template=model_report.yml) form: reports are how a model moves up a level, and a report of the connection alone helps too. [Reporting a model](https://github.com/MortyNiners/opencutter/blob/@TAG@/CONTRIBUTING.md#reporting-a-model) in CONTRIBUTING.md lists what helps most. Before you post, replace the machine's Bluetooth name (it holds the serial number) and its Bluetooth address.
+
+          ---
+
+          OpenCutter is free software, licensed under the GNU General Public License, version 3 or later. It is an independent project, not affiliated with, endorsed by or supported by Silhouette America, Inc. Silhouette, CAMEO, Portrait and CURIO are trademarks of their respective owners.
+          EOF
+            sed -i -e "s/@VERSION@/$VERSION/g" -e "s/@TAG@/$TAG/g" notes.md
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "OpenCutter $VERSION" --notes-file notes.md "dist/$BUNDLE" dist/SHA256SUMS
+          fi

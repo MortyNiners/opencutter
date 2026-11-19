@@ -1,0 +1,54 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/
+build/
+dist/
+# Flatpak builds (CONTRIBUTING.md, "Building the Flatpak locally"; CI builds in build-dir,
+# flatpak-repo and .flatpak-builder)
+.flatpak-builder/
+build-dir/
+flatpak-repo/
+*.flatpak
+
+# Never commit Silhouette data, installers, firmware, captures or personal data.
+# Installers and archives
+*.exe
+*.dmg
+*.msi
+*.7z
+# Firmware images, and tables taken from firmware
+*.S
+*.bin
+*.srec
+*.s19
+*.mot
+*_mat_table*
+# Bluetooth and USB captures, and text dumps made from them
+*.btsnoop
+btsnoop_hci*.log
+*.pcap
+*.pcapng
+captures/
+gpgl_*.txt
+decoded_*.txt
+# Files taken from other vendors' software
+pseudo
+materials
+materials.json
+materials.dec
+materials.txt
+lang
+lang.json
+lang.dec
+lang.txt
+SPEC_*/
+# Preset tables and presets files that may hold Studio data (the app reads presets.json)
+presets.json
+*presets_fw*.json
+studio-presets*.json
+cameo4_materials*
+cameo4_commands*
+cameo4_params*
+peripherals.json
