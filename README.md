@@ -190,8 +190,8 @@ machine in your desktop's Bluetooth settings, with the Flatpak too: see [First r
 
 Each release on <https://github.com/MortyNiners/opencutter/releases> has a Flatpak bundle for
 64-bit PCs (x86_64), `opencutter-<version>.flatpak`, and a file `SHA256SUMS` with its checksum.
-The current release is [0.1.1](https://github.com/MortyNiners/opencutter/releases/tag/v0.1.1),
-with the bundle `opencutter-0.1.1.flatpak`. There is no bundle for ARM computers yet; on those,
+The current release is [0.2.0](https://github.com/MortyNiners/opencutter/releases/tag/v0.2.0),
+with the bundle `opencutter-0.2.0.flatpak`. There is no bundle for ARM computers yet; on those,
 OpenCutter can run [from source](#from-source). OpenCutter is not on Flathub, but the bundle runs
 on the GNOME 51 runtime from Flathub. You need Flatpak (see <https://flatpak.org/setup/>).
 
@@ -199,10 +199,10 @@ Download the bundle and `SHA256SUMS` into one folder, from the release page or w
 two commands below. In that folder, check the download and install the bundle for your user:
 
 ```sh
-curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.1.1/opencutter-0.1.1.flatpak
-curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.1.1/SHA256SUMS
-sha256sum --check SHA256SUMS                       # prints: opencutter-0.1.1.flatpak: OK
-flatpak install --user ./opencutter-0.1.1.flatpak
+curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.2.0/opencutter-0.2.0.flatpak
+curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.2.0/SHA256SUMS
+sha256sum --check SHA256SUMS                       # prints: opencutter-0.2.0.flatpak: OK
+flatpak install --user ./opencutter-0.2.0.flatpak
 ```
 
 `sha256sum --check` shows that the download is complete and unchanged; it does not show who
@@ -317,7 +317,7 @@ Then fetch a release and install it with pipx. `--system-site-packages` lets Ope
 system's PyGObject; pipx installs bleak, dbus-fast and svgelements from PyPI:
 
 ```sh
-git clone --branch v0.1.1 https://github.com/MortyNiners/opencutter.git
+git clone --branch v0.2.0 https://github.com/MortyNiners/opencutter.git
 pipx install --system-site-packages ./opencutter
 opencutter
 ```
@@ -434,10 +434,10 @@ folder and install that folder the same way, with `pipx install --force
 **Test Cut** cuts a 10 mm square with a triangle inside near the top-left corner of the media,
 with the current settings, so you can check Force and Blade Depth before the real job.
 
-**Preferences** sets the default media size and, on a machine with more than one mat, the default
-Cutting Mat of the layout's machine. Its Machine group names the model, for example "CAMEO 5"; for
-a machine that OpenCutter does not drive it adds "Recognized, not supported yet" or "Not
-supported".
+**Preferences** sets the default media size, the window's language (see
+[Languages](#languages)) and, on a machine with more than one mat, the default Cutting Mat of the
+layout's machine. Its Machine group names the model, for example "CAMEO 5"; for a machine that
+OpenCutter does not drive it adds "Recognized, not supported yet" or "Not supported".
 
 ### Another machine than the layout's
 
@@ -465,6 +465,28 @@ area cannot be checked with this mat on this model yet"). When the machine answe
 all the same, and the job view shows "The cut area could not be checked on this model." with the
 machine's reply; when it does not answer in that form at all, the job stops before the cut. Load
 the mat right before every job, and if you send a report, include that reply.
+
+## Languages
+
+The window is in English, Romanian, German, French, Spanish, Italian, Portuguese (also used for
+Brazilian Portuguese) and Russian. It follows your desktop's language; on a desktop in another
+language it is in English. To choose one yourself, open **Preferences** → **General** → **Language** and
+start OpenCutter again: the list has System default, English and the languages above, each by its
+own name. To try a language for one start, leave the row at System default and set `LANGUAGE`:
+
+```sh
+LANGUAGE=de .venv/bin/opencutter                               # from source
+flatpak run --env=LANGUAGE=de io.github.mortyniners.OpenCutter # the Flatpak
+```
+
+Only the window is translated. The command line, the background service's log and these
+documents stay in English, and machine and model names, commands and units (CAMEO 4,
+`opencutter stop`, mm, in) look the same in every language.
+
+The translations were written with machine assistance and have not all been checked by native
+speakers yet, so some wording may be clumsy or wrong. If you speak one of these languages and a
+text reads oddly, please open an issue or a pull request; "Translations" in
+[CONTRIBUTING.md](CONTRIBUTING.md#translations) says how to fix a translation or add a language.
 
 ## Safety
 
@@ -896,7 +918,7 @@ no network access at all: it may use the window, the GPU and BlueZ, and nothing 
 
 ## Contributing
 
-Bug reports, model reports, fixes and documentation are all welcome. Please read
+Bug reports, model reports, fixes, translations and documentation are all welcome. Please read
 [CONTRIBUTING.md](CONTRIBUTING.md) first: OpenCutter drives a machine with a sharp blade, so a few
 rules are stricter than usual, and some things must never enter the repository, such as
 Silhouette data, firmware, Bluetooth or USB captures and personal data. The next section sets up

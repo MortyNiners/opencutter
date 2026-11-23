@@ -18,6 +18,8 @@ from xml.etree.ElementTree import ParseError
 
 from svgelements import SVG, SVG_STRUCT_ATTRIB, Color, Group, Image, Shape, SVGElement, Text, Use
 
+from opencutter.i18n import _, ngettext
+
 from .flatten import flatten, largest_stretch
 from .prepare import prepare
 
@@ -73,21 +75,25 @@ def load_svg(path: str | os.PathLike[str]) -> Design:
     try:
         data = prepare(_read(path, name))
     except ParseError as exc:
-        message = f"Could not read {name}: the file is damaged or not an SVG ({exc})."
+        message = _("Could not read {name}: the file is damaged or not an SVG ({error}).").format(
+            name=name, error=exc)
         raise SvgImportError(message) from exc
     except ValueError as exc:
-        raise SvgImportError(f"Could not read {name}: it is not an SVG file.") from exc
+        raise SvgImportError(_("Could not read {name}: it is not an SVG file.").format(
+            name=name)) from exc
     try:
         doc = SVG.parse(io.BytesIO(data), reify=False, ppi=_PX_PER_IN)
     except Exception as exc:  # svgelements has no error type of its own: any failure is bad input
-        raise SvgImportError(f"Could not read {name}: {exc}") from exc
+        raise SvgImportError(_("Could not read {name}: {error}").format(name=name,
+                                                                        error=exc)) from exc
 
     found = _Collector()
     if isinstance(doc, SVG):  # None when the whole document is display:none
         found.walk(doc)
     warnings = found.warnings()
     if not found.paths:
-        message = f"Nothing to cut in {name}: it has no visible paths or shapes."
+        message = _("Nothing to cut in {name}: it has no visible paths or shapes.").format(
+            name=name)
         raise SvgImportError(" ".join([message, *warnings]))
     return Design(found.paths, _bbox(found.paths), warnings, name)
 
@@ -177,21 +183,24 @@ class _Collector:
 
     def warnings(self) -> list[str]:
         out = []
+        # The texts are shown in the window's language (opencutter.i18n; English elsewhere).
         if self.texts:
-            out.append(
-                f"{_count(self.texts, 'text object')} ignored: "
-                "convert text to paths in Inkscape (Path > Object to Path)."
-            )
+            out.append(ngettext(
+                "{n} text object ignored: convert text to paths in Inkscape (Path > Object to "
+                "Path).",
+                "{n} text objects ignored: convert text to paths in Inkscape (Path > Object to "
+                "Path).", self.texts).format(n=self.texts))
         if self.images:
-            out.append(
-                f"{_count(self.images, 'image')} ignored: "
-                "trace images in Inkscape (Path > Trace Bitmap) to cut them."
-            )
+            out.append(ngettext(
+                "{n} image ignored: trace images in Inkscape (Path > Trace Bitmap) to cut them.",
+                "{n} images ignored: trace images in Inkscape (Path > Trace Bitmap) to cut them.",
+                self.images).format(n=self.images))
         if self.clipped:
-            out.append(
-                f"{_count(self.clipped, 'clipped or masked object')}: "
-                "clips and masks are ignored, so the whole object is cut."
-            )
+            out.append(ngettext(
+                "{n} clipped or masked object: clips and masks are ignored, so the whole object "
+                "is cut.",
+                "{n} clipped or masked objects: clips and masks are ignored, so the whole object "
+                "is cut.", self.clipped).format(n=self.clipped))
         return out
 
 
@@ -201,16 +210,18 @@ def _read(path: str | os.PathLike[str], name: str) -> bytes:
         with open(path, "rb") as fh:
             data = fh.read()
     except OSError as exc:
-        raise SvgImportError(f"Could not open {name}: {exc.strerror or exc}.") from exc
+        raise SvgImportError(_("Could not open {name}: {error}.").format(
+            name=name, error=exc.strerror or exc)) from exc
     if data[:2] != b"\x1f\x8b":
         return data
     unzip = zlib.decompressobj(wbits=31)
     try:
         data = unzip.decompress(data, _MAX_SVGZ_BYTES)
     except zlib.error as exc:
-        raise SvgImportError(f"Could not read {name}: the compressed file is damaged.") from exc
+        raise SvgImportError(_("Could not read {name}: the compressed file is damaged.").format(
+            name=name)) from exc
     if unzip.unconsumed_tail:
-        raise SvgImportError(f"Could not read {name}: the file is too large.")
+        raise SvgImportError(_("Could not read {name}: the file is too large.").format(name=name))
     return data
 
 
@@ -259,7 +270,3 @@ def _bbox(paths: list[DesignPath]) -> tuple[float, float, float, float]:
         x0, y0 = min(x0, min(xs)), min(y0, min(ys))
         x1, y1 = max(x1, max(xs)), max(y1, max(ys))
     return x0, y0, x1 - x0, y1 - y0
-
-
-def _count(n: int, noun: str) -> str:
-    return f"{n} {noun}" if n == 1 else f"{n} {noun}s"

@@ -139,6 +139,12 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+def N_(message: str) -> str:
+    """Marks a text for the translations of the window (the same marker as opencutter.i18n.N_,
+    which this package may not import): the window translates it where it shows it."""
+    return message
+
+
 class Support(Enum):
     """How far OpenCutter may go with a model or a firmware line."""
     TESTED = "tested"            # cut on real hardware
@@ -599,7 +605,8 @@ class RecognizedModel:
 
 def recognized_message(name: str, reason: str) -> str:
     """'OpenCutter recognizes this <name> but cannot drive it yet: <reason>.'"""
-    return f"OpenCutter recognizes this {name} but cannot drive it yet: {reason}."
+    return N_("OpenCutter recognizes this {name} but cannot drive it yet: {reason}.").format(
+        name=name, reason=reason)
 
 
 # A registry entry: a model OpenCutter may drive, or one it only names.

@@ -13,6 +13,11 @@ app.log.1 when the app starts. Messages still go to stderr as before.
 
 Esc is not an application accelerator: the main window cancels a running job with its own
 shortcut, after an open dialog or popover had its turn (window.MainWindow).
+
+The window's language: ``main()`` sets up the translations (opencutter.i18n) before GTK starts,
+from the language chosen in the Preferences (GuiSettings.language), else the system's. A chosen
+language is also put in LANGUAGE, so that GTK's and libadwaita's own texts follow it. A change in
+the Preferences takes effect at the next start.
 """
 from __future__ import annotations
 
@@ -27,7 +32,7 @@ from pathlib import Path
 from gi.events import GLibEventLoopPolicy
 from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
-from opencutter import APP_ID
+from opencutter import APP_ID, i18n
 from opencutter.device.client import LOG_ROTATE_BYTES, DaemonClient, _open_log, state_dir
 from opencutter.presets.model import PresetStore
 
@@ -207,12 +212,26 @@ class OpenCutterApp(Adw.Application):
             self.window.close()            # asks first while a job runs
 
 
+def setup_language(settings: GuiSettings | None = None) -> str:
+    """The window's language, before GTK starts: the one chosen in the Preferences (when it has
+    a catalog, or is English), else the system's. Returns the language in use ('en' for the
+    English texts)."""
+    chosen = (settings or GuiSettings.load()).language
+    if chosen and chosen != i18n.SOURCE_LANGUAGE and chosen not in i18n.available_languages():
+        chosen = ""                     # its catalog is gone: the system's language
+    i18n.apply_language_choice(chosen)
+    i18n.setup(chosen or None)
+    i18n.started_choice = chosen or ""  # what the Preferences' Language row compares with
+    return i18n.current_language()
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the GUI and return its exit status."""
     # The program name is the window's X11 WM_CLASS: make it the desktop file's id however the
     # app was started (`opencutter`, `python -m opencutter`), so desktops match the window to it.
     GLib.set_prgname(APP_ID)
     GLib.set_application_name("OpenCutter")
+    setup_language()
     Gtk.init_check()           # may report success without a display: check the display itself
     if Gdk.Display.get_default() is None:
         print("opencutter: cannot open a display; the app needs a graphical session "

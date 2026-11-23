@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# The source files whose texts are marked for translation (opencutter.i18n), one per line, from
+# the repository root. build-aux/translations.py extract reads them; tests/test_i18n.py checks
+# that every file with a marked text is listed here.
+src/opencutter/i18n.py
+src/opencutter/gui/canvas.py
+src/opencutter/gui/connection.py
+src/opencutter/gui/dialogs.py
+src/opencutter/gui/firstrun.py
+src/opencutter/gui/geometry.py
+src/opencutter/gui/jobview.py
+src/opencutter/gui/machine.py
+src/opencutter/gui/materials.py
+src/opencutter/gui/runner.py
+src/opencutter/gui/sending.py
+src/opencutter/gui/sheets.py
+src/opencutter/gui/sidebar.py
+src/opencutter/gui/window.py
+src/opencutter/device/daemon.py
+src/opencutter/device/protocol.py
+src/opencutter/job/plan.py
+src/opencutter/job/validate.py
+src/opencutter/machines/profile.py
+src/opencutter/machines/recognized.py
+src/opencutter/svg/importer.py

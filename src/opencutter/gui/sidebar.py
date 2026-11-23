@@ -17,6 +17,10 @@ Machine profiles: both panels are for the layout's machine (``profile``, a Machi
               tool that takes it. A machine without materials shows "No materials for this
               machine yet" with Use Cut Settings: the user then picks the tool and sets the
               values in Cut Settings, which start light (sending.starting_settings).
+
+Translations: the panels keep the English keys (materials, actions, tools, holders: the presets'
+and the profiles' words) and show them in the window's language (i18n's labels); the reasons
+Send waits come in English and are translated where they are shown.
 """
 from __future__ import annotations
 
@@ -26,6 +30,8 @@ from dataclasses import replace
 from gi.repository import Adw, GLib, GObject, Gtk, Pango
 
 from opencutter.device.protocol import tool_name
+from opencutter.i18n import (MANUAL_MATERIAL, N_, _, action_label, holder_label, material_label,
+                             pgettext, tool_label, translate_text)
 from opencutter.job.plan import blade_depth_mm
 from opencutter.job.spec import ToolSettings
 from opencutter.machines import MachineProfile, Mat
@@ -33,27 +39,32 @@ from opencutter.presets.model import Preset, PresetStore
 
 from .geometry import (CUSTOM_MEDIA, MatChoice, Rect, format_size, mat_choices, media_rect,
                        media_size, media_sizes, profile_mat)
-from .machine import MachineState, machine_choices, unclear_reply
+from .geometry import media_label as media_name
+from .machine import MachineState, machine_choices
 from .sending import (NO_MATERIALS, NO_MATERIALS_HINT, ToolCheck, choose_preset, depth_note,
                       materials_note, preset_line, settings_summary, slider_ranges,
-                      starting_settings, tool_cards, tool_check, verified_preset)
+                      starting_settings, store_description, tool_cards, tool_check,
+                      verified_preset)
 from .settings import GuiSettings
 from .materials import USE_CUT_SETTINGS, MaterialPicker
 from .widgets import InlineNote, LengthEntry, StatusDot, field, icon_label, label, relate
 
 DEFAULT_OVERCUT = (1, 1)
-CHOOSE_MATERIAL_PLACEHOLDER = "Choose a material"
+CHOOSE_MATERIAL_PLACEHOLDER = N_("Choose a material")
 # Studio forces FE0 and FF0,0 for tools without a blade (pens, foil): these edits exist
 # only for blade tools (PROTOCOL.md section 5)
 BLADE_ONLY_EDITS = frozenset({"line_segment_overcut", "overcut"})
-DETECTED = "(Detected)"
-NOT_DETECTED = "Not detected"             # a machine the service refused: it never will be
-NOT_DETECTED_YET = "Not detected yet"
+DETECTED = N_("(Detected)")
+NOT_DETECTED = N_("Not detected")         # a machine the service refused: it never will be
+NOT_DETECTED_YET = N_("Not detected yet")
 # what the Material field says once the user chose to set everything in Cut Settings (a
 # machine without materials)
-MANUAL_MATERIAL = "Cut Settings"
-MANUAL_SOURCE = "Your own settings"
-MANUAL_TOOL = "The tool in the chosen holder"
+# MANUAL_MATERIAL (opencutter.i18n, "Cut Settings"): the material of the manual mode
+MANUAL_SOURCE = N_("Your own settings")
+MANUAL_TOOL = N_("The tool in the chosen holder")
+# the Cut Settings rows: (key, name)
+SLIDERS = (("blade_depth", N_("Blade Depth")), ("force", N_("Force")), ("speed", N_("Speed")),
+           ("acceleration", N_("Acceleration")))
 
 
 def _factory(describe: Callable[[str], tuple[bool, str | None]] | None = None,
@@ -126,16 +137,16 @@ class PageSetupPanel(Gtk.Box):
         self._machine.set_factory(_factory(button=True))
         self._machine.set_list_factory(_factory())
         self._machine.add_css_class("app-field")
-        self._machine.update_property([Gtk.AccessibleProperty.LABEL], ["Machine"])
+        self._machine.update_property([Gtk.AccessibleProperty.LABEL], [_("Machine")])
         self._machine_name = label(self.profile.name)
         self._machine_name.set_hexpand(True)
         self._machine_name.set_ellipsize(Pango.EllipsizeMode.END)
         machine.append(self._machine)
         machine.append(self._machine_name)
-        self._detected = label(NOT_DETECTED_YET, "dim-label", "caption")
+        self._detected = label(_(NOT_DETECTED_YET), "dim-label", "caption")
         self._detected.set_xalign(1.0)
         machine.append(self._detected)
-        self.append(field("Machine", machine, self._machine))
+        self.append(field(_("Machine"), machine, self._machine))
 
         # the machine's mats
         self._mat_choices: tuple[MatChoice, ...] = ()
@@ -150,34 +161,39 @@ class PageSetupPanel(Gtk.Box):
         mat_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         mat_box.append(self._mat)
         mat_box.append(self._mat_note)
-        self.append(field("Cutting Mat", mat_box, self._mat))
+        self.append(field(_("Cutting Mat"), mat_box, self._mat))
 
         self._media_keys: list[str] = []
         self._media_list = Gtk.StringList()
         self._media = Gtk.DropDown(model=self._media_list)
         self._media.add_css_class("app-field")
         custom = Gtk.Box(spacing=8)
-        self._custom_w = LengthEntry("Custom width", settings.units, positive=True)
-        self._custom_h = LengthEntry("Custom height", settings.units, positive=True)
-        self._custom_unit = label(settings.units, "dim-label")
-        for widget in (label("W", "dim-label"), self._custom_w, label("×", "dim-label"),
-                       label("H", "dim-label"), self._custom_h, self._custom_unit):
+        self._custom_w = LengthEntry(_("Custom width"), settings.units, positive=True)
+        self._custom_h = LengthEntry(_("Custom height"), settings.units, positive=True)
+        self._custom_unit = label(pgettext("unit", settings.units), "dim-label")
+        # Translators: W and H are the short forms of Width and Height.
+        for widget in (label(pgettext("width", "W"), "dim-label"), self._custom_w,
+                       label("×", "dim-label"), label(pgettext("height", "H"), "dim-label"),
+                       self._custom_h, self._custom_unit):
             custom.append(widget)
         self._custom = Gtk.Revealer(child=custom)
         media_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         media_box.append(self._media)
         media_box.append(self._custom)
-        self.append(field("Media Size", media_box, self._media))
+        self.append(field(_("Media Size"), media_box, self._media))
 
         self._orientation = Adw.ToggleGroup()
-        self._orientation.add(Adw.Toggle(name="portrait", label="Portrait"))
-        self._orientation.add(Adw.Toggle(name="landscape", label="Landscape"))
+        # Translators: the page orientation (not the Portrait machines).
+        self._orientation.add(Adw.Toggle(name="portrait", label=pgettext("orientation",
+                                                                         "Portrait")))
+        self._orientation.add(Adw.Toggle(name="landscape", label=pgettext("orientation",
+                                                                          "Landscape")))
         self._orientation.add_css_class("segmented")
-        self.append(field("Orientation", self._orientation))
+        self.append(field(_("Orientation"), self._orientation))
 
         self.append(Gtk.Separator())
         reveal = Gtk.Box(spacing=12)
-        reveal_label = label("Reveal Cutting Mat")
+        reveal_label = label(_("Reveal Cutting Mat"))
         reveal_label.set_hexpand(True)
         self.reveal_switch = Gtk.Switch(valign=Gtk.Align.CENTER, active=settings.reveal_mat)
         relate(self.reveal_switch, Gtk.AccessibleRelation.LABELLED_BY, reveal_label)
@@ -239,7 +255,8 @@ class PageSetupPanel(Gtk.Box):
         the name already is the size."""
         size = media_size(self.media_key, self._mat_key, self.profile)
         _x, _y, w, h = self.media_rect()
-        return _named_size(size.label if size else "Custom", w, h, self.settings.units)
+        return _named_size(media_name(size.label) if size else _("Custom"), w, h,
+                           self.settings.units)
 
     # --- changing --------------------------------------------------------------------
     def commit_pending(self) -> None:
@@ -288,7 +305,7 @@ class PageSetupPanel(Gtk.Box):
             entry.units = units
         self._custom_w.set_mm(self.settings.custom_media_mm[0])
         self._custom_h.set_mm(self.settings.custom_media_mm[1])
-        self._custom_unit.set_text(units)
+        self._custom_unit.set_text(pgettext("unit", units))
         self._fill_media_list()
 
     # --- internals -------------------------------------------------------------------
@@ -307,8 +324,8 @@ class PageSetupPanel(Gtk.Box):
         self._machine.set_selected(ids.index(self.profile.id) if self.profile.id in ids
                                    else Gtk.INVALID_LIST_POSITION)
         self._updating = False
-        self._detected.set_text(DETECTED if connected else
-                                NOT_DETECTED if state.wrong_model else NOT_DETECTED_YET)
+        self._detected.set_text(_(DETECTED if connected else
+                                  NOT_DETECTED if state.wrong_model else NOT_DETECTED_YET))
 
     def _support(self) -> str | None:
         """The detected machine's level when it is the layout's machine, else None (the
@@ -318,7 +335,9 @@ class PageSetupPanel(Gtk.Box):
 
     def _describe_mat(self, text: str) -> tuple[bool, str | None]:
         choice = next((c for c in self._mat_choices if c.label == text), None)
-        return (True, None) if choice is None else (choice.sensitive, choice.note)
+        if choice is None:
+            return True, None
+        return choice.sensitive, _(choice.note) if choice.note else None
 
     def _fill_mats(self) -> None:
         choices = mat_choices(self.profile, self._support())
@@ -334,7 +353,7 @@ class PageSetupPanel(Gtk.Box):
         self._mat.set_selected(keys.index(self._mat_key))
         self._updating = False
         note = self._mat_choices[keys.index(self._mat_key)].note
-        self._mat_note.set_text(note or "")
+        self._mat_note.set_text(_(note) if note else "")
         self._mat_note.set_visible(bool(note))
 
     def _fill_media_list(self) -> None:
@@ -346,7 +365,8 @@ class PageSetupPanel(Gtk.Box):
             if other is not None:
                 sizes.append(other)
         self._media_keys = [m.key for m in sizes] + [CUSTOM_MEDIA]
-        names = [_named_size(m.label, m.width_mm, m.height_mm, units) for m in sizes] + ["Custom…"]
+        names = [_named_size(media_name(m.label), m.width_mm, m.height_mm, units)
+                 for m in sizes] + [_("Custom…")]
         self._updating = True
         self._media_list.splice(0, self._media_list.get_n_items(), names)
         self._media.set_selected(self._media_keys.index(current) if current in self._media_keys
@@ -415,7 +435,7 @@ class ToolCard(Gtk.ToggleButton):
         self.title = title or f"Tool {holder}"
         self.add_css_class("tool-card")
         grid = Gtk.Grid(column_spacing=12)
-        self._title = label(self.title, "heading")
+        self._title = label(holder_label(self.title), "heading")
         self._desc = label("", "caption", "dim-label")
         self._icon = Gtk.Image()
         self._title.set_hexpand(True)
@@ -426,7 +446,7 @@ class ToolCard(Gtk.ToggleButton):
 
     def show_state(self, tool: str | None, description: str, icon: str | None, warn: bool) -> None:
         """Set the title tool name, the description line and the status icon."""
-        title = self.title + (f" · {tool}" if tool else "")
+        title = holder_label(self.title) + (f" · {tool}" if tool else "")
         self._title.set_text(title)
         self._desc.set_text(description)
         self._icon.set_from_icon_name(icon)
@@ -445,7 +465,7 @@ class _SliderRow:
         self.name_box = Gtk.Box(spacing=6)
         self.name_box.append(label(name, "setting-name"))
         self.dot = StatusDot("accent")
-        self.dot.set_tooltip_text("Changed")
+        self.dot.set_tooltip_text(_("Changed"))
         self.name_box.append(self.dot)
         self.scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, low, high, 1)
         self.scale.set_draw_value(False)
@@ -516,11 +536,12 @@ class SendPanel(Gtk.Box):
         self._action = Gtk.DropDown(model=self._actions)
         self._action.add_css_class("app-field")
         self._action.connect("notify::selected", self._on_action)
-        body.append(field("Action", self._action))
+        self._action_keys: list[str] = []      # the actions the list shows, in English
+        body.append(field(_("Action"), self._action))
         body.append(self._build_tools())
         body.append(self._build_settings())
         # no focus on click: after a Test Cut a stray Return or Space must not start another
-        self.test_cut = Gtk.Button(label="Test Cut", halign=Gtk.Align.START, focus_on_click=False)
+        self.test_cut = Gtk.Button(label=_("Test Cut"), halign=Gtk.Align.START, focus_on_click=False)
         self.test_cut.add_css_class("pill-sm")
         self.test_cut.connect("clicked", lambda *_: self.emit("test-cut"))
         body.append(self.test_cut)
@@ -542,7 +563,7 @@ class SendPanel(Gtk.Box):
         self._material_label.set_ellipsize(Pango.EllipsizeMode.END)
         content.append(self._material_label)
         self._material_dot = StatusDot("accent")
-        self._material_dot.set_tooltip_text("Modified")
+        self._material_dot.set_tooltip_text(_("Modified"))
         content.append(self._material_dot)
         content.append(Gtk.Image.new_from_icon_name("pan-down-symbolic"))
         self._material_button = Gtk.MenuButton(child=content, popover=self._picker)
@@ -553,7 +574,7 @@ class SendPanel(Gtk.Box):
         self._source.set_hexpand(True)
         self._source.set_ellipsize(Pango.EllipsizeMode.END)
         source.append(self._source)
-        self._reset = Gtk.Button(label="Reset to preset")
+        self._reset = Gtk.Button(label=_("Reset to preset"))
         self._reset.add_css_class("link-button")
         self._reset.add_css_class("caption")
         self._reset.connect("clicked", lambda *_: self.reset_to_preset())
@@ -563,15 +584,15 @@ class SendPanel(Gtk.Box):
         box.append(source)
         # a machine without materials: say so and point to Cut Settings
         self._empty = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        self._empty_note = InlineNote(NO_MATERIALS_HINT)
+        self._empty_note = InlineNote(_(NO_MATERIALS_HINT))
         self._empty.append(self._empty_note)
-        self._use_cut_settings = Gtk.Button(label=USE_CUT_SETTINGS, halign=Gtk.Align.START)
+        self._use_cut_settings = Gtk.Button(label=_(USE_CUT_SETTINGS), halign=Gtk.Align.START)
         self._use_cut_settings.add_css_class("pill-sm")
         self._use_cut_settings.connect("clicked", lambda *_: self.use_cut_settings())
         self._empty.append(self._use_cut_settings)
         self._empty.set_visible(False)
         box.append(self._empty)
-        return field("Material", box, self._material_button)
+        return field(_("Material"), box, self._material_button)
 
     def _build_tools(self) -> Gtk.Widget:
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
@@ -585,7 +606,7 @@ class SendPanel(Gtk.Box):
         texts.append(self._mismatch_title)
         texts.append(self._mismatch_detail)
         self._mismatch.append(texts)
-        self._mismatch.update_property([Gtk.AccessibleProperty.LABEL], ["Tool mismatch"])
+        self._mismatch.update_property([Gtk.AccessibleProperty.LABEL], [_("Tool mismatch")])
         box.append(self._mismatch)
         self._cards_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.append(self._cards_box)
@@ -594,12 +615,12 @@ class SendPanel(Gtk.Box):
         # with the settings from Cut Settings: which tool is in the chosen holder
         self._manual_tool_list = Gtk.StringList()
         self._manual_tool = Gtk.DropDown(model=self._manual_tool_list, visible=False,
-                                         tooltip_text=MANUAL_TOOL)
+                                         tooltip_text=_(MANUAL_TOOL))
         self._manual_tool.add_css_class("app-field")
-        self._manual_tool.update_property([Gtk.AccessibleProperty.LABEL], [MANUAL_TOOL])
+        self._manual_tool.update_property([Gtk.AccessibleProperty.LABEL], [_(MANUAL_TOOL)])
         self._manual_tool.connect("notify::selected", self._on_manual_tool)
         box.append(self._manual_tool)
-        return field("Tool", box, self._cards_box)
+        return field(_("Tool"), box, self._cards_box)
 
     def _build_cards(self) -> None:
         """One Tool card per holder of the machine."""
@@ -624,12 +645,17 @@ class SendPanel(Gtk.Box):
         self._chevron = Gtk.Image.new_from_icon_name("pan-end-symbolic")
         header.append(self._chevron)
         titles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True)
-        titles.append(label("Cut Settings", "heading"))
+        titles.append(label(_("Cut Settings"), "heading"))
         self._summary = label("", "caption", "dim-label", "numeric")
+        # two lines when one is too short (a longer translation): the passes stay in sight
         self._summary.set_ellipsize(Pango.EllipsizeMode.END)
+        self._summary.set_wrap(True)
+        self._summary.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        self._summary.set_natural_wrap_mode(Gtk.NaturalWrapMode.NONE)
+        self._summary.set_lines(2)
         titles.append(self._summary)
         header.append(titles)
-        self._edit_label = label("Edit", "accent")
+        self._edit_label = label(_("Edit"), "accent")
         header.append(self._edit_label)
         self._settings_toggle = Gtk.ToggleButton(child=header)
         self._settings_toggle.add_css_class("flat")
@@ -640,12 +666,10 @@ class SendPanel(Gtk.Box):
         grid = Gtk.Grid(column_spacing=12, row_spacing=14)
         grid.add_css_class("settings-grid")
         ranges = slider_ranges(self.profile)
-        rows = (("blade_depth", "Blade Depth"), ("force", "Force"), ("speed", "Speed"),
-                ("acceleration", "Acceleration"))
         self._sliders = {}
-        for row, (key, name) in enumerate(rows):
+        for row, (key, name) in enumerate(SLIDERS):
             low, high = ranges[key] or (0, 10)
-            self._sliders[key] = _SliderRow(grid, row, name, low, high,
+            self._sliders[key] = _SliderRow(grid, row, _(name), low, high,
                                             lambda v, key=key: self._edit(key, v))
         self._passes = Gtk.SpinButton.new_with_range(*ranges["passes"], 1)
         self._passes.set_halign(Gtk.Align.START)
@@ -656,12 +680,12 @@ class SendPanel(Gtk.Box):
         self._overcut = Gtk.Switch(halign=Gtk.Align.END, valign=Gtk.Align.CENTER)
         self._overcut.connect("notify::active", lambda s, _p: self._on_overcut(s.get_active()))
         self._blade_rows: list[Gtk.Widget] = []      # shown only for blade tools
-        for row, (name, widget) in enumerate((("Passes", self._passes),
-                                              ("Line Segment Overcut", self._lso),
-                                              ("Overcut", self._overcut)), start=4):
-            name_label = label(name, "setting-name")
-            widget.update_property([Gtk.AccessibleProperty.LABEL], [name])
-            if name == "Passes":
+        for row, (name, widget) in enumerate(((N_("Passes"), self._passes),
+                                              (N_("Line Segment Overcut"), self._lso),
+                                              (N_("Overcut"), self._overcut)), start=4):
+            name_label = label(_(name), "setting-name")
+            widget.update_property([Gtk.AccessibleProperty.LABEL], [_(name)])
+            if widget is self._passes:
                 name_box = Gtk.Box(spacing=6)
                 name_box.append(name_label)
                 name_box.append(self._passes_dot)
@@ -678,15 +702,15 @@ class SendPanel(Gtk.Box):
     def _build_footer(self) -> Gtk.Widget:
         footer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         footer.add_css_class("send-footer")
-        self.send_button = Gtk.Button(child=icon_label("media-playback-start-symbolic", "Send"))
+        self.send_button = Gtk.Button(child=icon_label("media-playback-start-symbolic", _("Send")))
         self.send_button.add_css_class("suggested-action")
         self.send_button.add_css_class("send-big")
-        self.send_button.update_property([Gtk.AccessibleProperty.LABEL], ["Send"])
+        self.send_button.update_property([Gtk.AccessibleProperty.LABEL], [_("Send")])
         self.send_button.connect("clicked", lambda *_: self.emit("send"))
         footer.append(self.send_button)
         self._why = label("", "caption", "why-disabled", wrap=True, xalign=0.5)
         footer.append(self._why)
-        self.preview = Gtk.CheckButton(label="Preview outline before cutting",
+        self.preview = Gtk.CheckButton(label=_("Preview outline before cutting"),
                                        active=self.settings.preview_outline)
         self.preview.add_css_class("caption")
         self.preview.connect("toggled", self._on_preview)
@@ -774,11 +798,11 @@ class SendPanel(Gtk.Box):
     def set_blockers(self, send: str | None, test_cut: str | None) -> None:
         """Enable or disable Send and Test Cut, showing why Send is disabled."""
         self.send_button.set_sensitive(send is None)
-        self.send_button.set_tooltip_text(send)
-        self._why.set_text(send or "")
+        self.send_button.set_tooltip_text(translate_text(send))
+        self._why.set_text(translate_text(send) or "")
         self._why.set_visible(send is not None)
         self.test_cut.set_sensitive(test_cut is None)
-        self.test_cut.set_tooltip_text(test_cut)
+        self.test_cut.set_tooltip_text(translate_text(test_cut))
 
     def set_send_primary(self, primary: bool) -> None:
         """Only one cyan action per view: the big Send is primary while this panel shows."""
@@ -861,7 +885,8 @@ class SendPanel(Gtk.Box):
     # --- internals -------------------------------------------------------------------
     def _fill_actions(self, actions: list[str], chosen: str | None) -> None:
         updating, self._updating = self._updating, True
-        self._actions.splice(0, self._actions.get_n_items(), actions)
+        self._action_keys = list(actions)
+        self._actions.splice(0, self._actions.get_n_items(), [action_label(a) for a in actions])
         self._action.set_selected(actions.index(chosen) if chosen in actions
                                   else Gtk.INVALID_LIST_POSITION)
         self._action.set_sensitive(bool(actions) and not self.manual)
@@ -907,26 +932,28 @@ class SendPanel(Gtk.Box):
         self._updating = True
         preset = self.preset()
         empty = materials_note(self.store) is not None
-        self._material_label.set_text(self.material or (CHOOSE_MATERIAL_PLACEHOLDER
-                                                        if not empty else NO_MATERIALS))
-        self._material_label.set_tooltip_text(NO_MATERIALS if empty and not self.material
+        shown = (_(MANUAL_MATERIAL) if self.manual else material_label(self.material)) \
+            if self.material else None
+        self._material_label.set_text(shown or (_(CHOOSE_MATERIAL_PLACEHOLDER)
+                                                if not empty else _(NO_MATERIALS)))
+        self._material_label.set_tooltip_text(_(NO_MATERIALS) if empty and not self.material
                                               else None)
         if self.material:
             self._material_label.remove_css_class("dim-label")
         else:
             self._material_label.add_css_class("dim-label")
-        origin = self.store.description          # "Basic set", or the presets file's own text
+        origin = store_description(self.store)  # "Basic set", or the presets file's own text
         if self.manual:
-            text = MANUAL_SOURCE
+            text = _(MANUAL_SOURCE)
         elif empty:                              # none of its rows are for this machine
             text = ""
         else:
-            text = f"{preset.material_type} · {origin}" if preset else origin
+            text = f"{material_label(preset.material_type)} · {origin}" if preset else origin
         self._source.set_text(text)
         self._source.set_tooltip_text(text)
         self._empty.set_visible(empty and not self.manual)
         self._material_dot.set_visible(self.modified)
-        self._reset.set_label("Reset" if self.manual else "Reset to preset")
+        self._reset.set_label(_("Reset") if self.manual else _("Reset to preset"))
         self._reset.set_visible(self.modified)
         self._refresh_tools()
         settings = self.tool_settings()
@@ -969,39 +996,49 @@ class SendPanel(Gtk.Box):
             card.set_sensitive(required is not None)
             card.set_active(selected)
             if detected is not None:
-                tool = tool_name(holder, detected, reported)
+                tool = tool_label(tool_name(holder, detected, reported))
             else:
-                tool = (tool_name(holder, required, self.profile)
+                tool = (tool_label(tool_name(holder, required, self.profile))
                         if selected and required is not None else None)
             if required is None and not self.material:
-                desc, icon, warn = "No material chosen", None, False
+                desc, icon, warn = _("No material chosen"), None, False
             elif required is None:
-                desc, icon, warn = f"Not used for {self.action or 'this action'}", None, False
+                desc = (_("Not used for {action}").format(action=action_label(self.action))
+                        if self.action else _("Not used for this action"))
+                icon, warn = None, False
             elif detected is None and self.machine.tools_problem:   # reported, unreadable
-                desc = unclear_reply(self.machine.tools_reply or "")
+                desc = _("Unclear reply “{reply}”").format(
+                    reply=(self.machine.tools_reply or "").strip())
                 icon, warn = "dialog-warning-symbolic", True
             elif detected is None:      # never, for a machine refused for its model
-                desc = "Not detected" if self.machine.wrong_model else "Not detected yet"
+                desc = _(NOT_DETECTED) if self.machine.wrong_model else _(NOT_DETECTED_YET)
                 icon, warn = None, False
             elif not selected:
-                desc, icon, warn = "Detected" if detected else "Not used", None, False
+                desc, icon, warn = _("Detected") if detected else _("Not used"), None, False
             elif detected == required:
-                desc, icon, warn = f"Detected · required for {self.action}", "object-select-symbolic", False
+                desc = _("Detected · required for {action}").format(
+                    action=action_label(self.action))
+                icon, warn = "object-select-symbolic", False
             else:
-                desc = f"Detected · {tool_name(holder, required, self.profile)} required"
+                desc = _("Detected · {tool} required").format(
+                    tool=tool_label(tool_name(holder, required, self.profile)))
                 icon, warn = "dialog-warning-symbolic", True
             card.show_state(tool, desc, icon, warn)
         check = self.tool_check()
         mismatch = check is not None and check.known and not check.matches
         self._mismatch.set_visible(mismatch)
         if mismatch:
-            where = "the tool holder" if len(self.profile.holders) == 1 else check.label
-            self._mismatch_title.set_markup(
-                f"Load the <b>{GLib.markup_escape_text(check.required_name)}</b> into "
-                f"<b>{GLib.markup_escape_text(where)}</b>.")
-            current = tool_name(check.holder, check.detected_code, reported)
-            self._mismatch_detail.set_text(f"Currently: {current}"
-                                           + (" detected." if check.detected_code else "."))
+            tool = GLib.markup_escape_text(tool_label(check.required_name))
+            if len(self.profile.holders) == 1:
+                title = _("Load the <b>{tool}</b> into <b>the tool holder</b>.").format(tool=tool)
+            else:
+                title = _("Load the <b>{tool}</b> into <b>{holder}</b>.").format(
+                    tool=tool, holder=GLib.markup_escape_text(holder_label(check.label)))
+            self._mismatch_title.set_markup(title)
+            current = tool_label(tool_name(check.holder, check.detected_code, reported))
+            self._mismatch_detail.set_text(
+                (_("Currently: {tool} detected.") if check.detected_code
+                 else _("Currently: {tool}.")).format(tool=current))
         self._refresh_manual_tool()
 
     def _refresh_manual_tool(self) -> None:
@@ -1015,7 +1052,7 @@ class SendPanel(Gtk.Box):
         if tools != self._manual_shown:          # the names too: a code may differ per holder
             self._manual_shown, self._manual_codes = tools, codes
             self._manual_tool_list.splice(0, self._manual_tool_list.get_n_items(),
-                                          [name for _code, name in tools])
+                                          [tool_label(name) for _code, name in tools])
         code = self._manual_tool_code(self.holder)
         self._manual_tool.set_selected(codes.index(code) if code in codes
                                        else Gtk.INVALID_LIST_POSITION)
@@ -1036,7 +1073,8 @@ class SendPanel(Gtk.Box):
         if self._updating:
             return
         index = self._action.get_selected()
-        action = self._actions.get_string(index) if index != Gtk.INVALID_LIST_POSITION else None
+        action = (self._action_keys[index] if index != Gtk.INVALID_LIST_POSITION
+                  and index < len(self._action_keys) else None)
         if action != self.action:
             self._set_action(action)
 
@@ -1088,7 +1126,7 @@ class SendPanel(Gtk.Box):
         open_ = toggle.get_active()
         self._settings_revealer.set_reveal_child(open_)
         self._chevron.set_from_icon_name("pan-down-symbolic" if open_ else "pan-end-symbolic")
-        self._edit_label.set_text("Done" if open_ else "Edit")
+        self._edit_label.set_text(_("Done") if open_ else _("Edit"))
 
     def _on_preview(self, check: Gtk.CheckButton) -> None:
         self.settings.preview_outline = check.get_active()
@@ -1114,8 +1152,8 @@ class Sidebar(Gtk.Box):
         self._stack.add_named(scroller, "page-setup")
         self._stack.add_named(send, "send")
         self._tabs: dict[str, Gtk.ToggleButton] = {}
-        for name, title in (("page-setup", "Page Setup"), ("send", "Send")):
-            button = Gtk.ToggleButton(label=title)
+        for name, title in (("page-setup", N_("Page Setup")), ("send", N_("Send"))):
+            button = Gtk.ToggleButton(label=_(title))
             if self._tabs:
                 button.set_group(next(iter(self._tabs.values())))
             button.connect("toggled", self._on_tab, name)

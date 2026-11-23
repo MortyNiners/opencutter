@@ -1,0 +1,3180 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# OpenCutter's translation into Italian. po/GLOSSARY.md explains the terms.
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenCutter\n"
+"Report-Msgid-Bugs-To: https://github.com/MortyNiners/opencutter/issues\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/opencutter/i18n.py
+#: src/opencutter/gui/sidebar.py
+msgid "Cut Settings"
+msgstr "Impostazioni di taglio"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Ready"
+msgstr "Pronta"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Busy"
+msgstr "Occupata"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Load Media"
+msgstr "Carica supporto"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Paused"
+msgstr "In pausa"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Cancelling"
+msgstr "Annullamento"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Rejected"
+msgstr "Comando rifiutato"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "No Tool Detected"
+msgstr "Nessun utensile rilevato"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Ratchet Blade"
+msgstr "Lama a cricchetto"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Deep-Cut Blade"
+msgstr "Lama per taglio profondo"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Kraft Blade, 2mm"
+msgstr "Lama Kraft, 2mm"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Kraft Blade, 3mm"
+msgstr "Lama Kraft, 3mm"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Rotary Blade"
+msgstr "Lama rotante"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Punch Tool"
+msgstr "Utensile per punzonare"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Sketch Pen"
+msgstr "Penna da disegno"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Foil Tool"
+msgstr "Utensile per foil"
+
+#: src/opencutter/i18n.py
+#, python-brace-format
+msgctxt "tool holder"
+msgid "Tool {number}"
+msgstr "Portautensile {number}"
+
+#: src/opencutter/i18n.py
+msgctxt "tool holder"
+msgid "Tool"
+msgstr "Portautensile"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Cut"
+msgstr "Taglio"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Kraft Cut"
+msgstr "Taglio kraft"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Rotary Cut"
+msgstr "Taglio rotante"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Punch"
+msgstr "Punzonatura"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Sketch"
+msgstr "Disegno"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Foil"
+msgstr "Foil"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Score"
+msgstr "Cordonatura"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "No Cut"
+msgstr "Nessun taglio"
+
+#: src/opencutter/i18n.py
+msgctxt "material"
+msgid "Vinyl"
+msgstr "Vinile"
+
+#: src/opencutter/i18n.py
+msgctxt "material"
+msgid "Paper"
+msgstr "Carta"
+
+#: src/opencutter/i18n.py
+msgctxt "material"
+msgid "Sketch Pen"
+msgstr "Penna da disegno"
+
+#. Translators: the caption under the mat, in capitals; {mat} is its size ("12 × 12 in").
+#: src/opencutter/gui/canvas.py
+#, python-brace-format
+msgid "CUTTING MAT {mat}"
+msgstr "TAPPETINO DA TAGLIO {mat}"
+
+#: src/opencutter/gui/canvas.py
+msgid "Cut area"
+msgstr "Area di taglio"
+
+#: src/opencutter/gui/canvas.py
+msgid "Origin"
+msgstr "Origine"
+
+#: src/opencutter/gui/canvas.py
+msgid "Feeds into machine"
+msgstr "Entra nella macchina"
+
+#: src/opencutter/gui/canvas.py
+msgid "The design on the mat"
+msgstr "Il progetto sul tappetino"
+
+#: src/opencutter/gui/canvas.py
+msgid "Cutting mat"
+msgstr "Tappetino da taglio"
+
+#: src/opencutter/gui/connection.py
+msgid "Pair the machine once in <b>Settings → Bluetooth</b>."
+msgstr "Associa la macchina una volta in <b>Impostazioni → Bluetooth</b>."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid ""
+"The {name} accepts a Bluetooth connection only right after it is switched "
+"on. If the app can’t connect, switch the machine off and on."
+msgstr ""
+"La {name} accetta una connessione Bluetooth solo subito dopo l’accensione. "
+"Se l’app non riesce a connettersi, spegni e riaccendi la macchina."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "If the app can’t connect to the {name}, switch the machine off and on."
+msgstr ""
+"Se l’app non riesce a connettersi alla {name}, spegni e riaccendi la "
+"macchina."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid ""
+"Make sure the {name} is switched on and paired. If it still fails, switch it "
+"off and on again."
+msgstr ""
+"Assicurati che la {name} sia accesa e associata. Se non funziona ancora, "
+"spegnila e riaccendila."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "Make sure the {name} is switched on and paired."
+msgstr "Assicurati che la {name} sia accesa e associata."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "Releases the {name} so other apps can connect to it."
+msgstr "Libera la {name} così che altre app possano connettersi."
+
+#: src/opencutter/gui/connection.py
+msgid "Available when the job has ended."
+msgstr "Disponibile quando il lavoro è finito."
+
+#: src/opencutter/gui/connection.py
+msgid "Scanning for devices"
+msgstr "Ricerca dispositivi"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/machine.py
+msgid "Could not Connect"
+msgstr "Impossibile connettersi"
+
+#: src/opencutter/gui/connection.py
+msgid "Not Supported"
+msgstr "Non supportato"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/dialogs.py
+msgid "Unknown machine"
+msgstr "Macchina sconosciuta"
+
+#. Translators: the first words of a banner ("Could not Connect"), then why.
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "{title}. {problem}"
+msgstr "{title}. {problem}"
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "<b>{title}.</b> {problem}"
+msgstr "<b>{title}.</b> {problem}"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/machine.py
+msgid "Not Connected"
+msgstr "Non connessa"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/machine.py
+msgid "Connecting…"
+msgstr "Connessione…"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/machine.py
+msgid "Connected"
+msgstr "Connessa"
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "Machine status: {status}. Open connection"
+msgstr "Stato della macchina: {status}. Apri la connessione"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+msgid "Connect"
+msgstr "Connetti"
+
+#: src/opencutter/gui/connection.py
+msgid "Disconnect"
+msgstr "Disconnetti"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+msgid ""
+"Nothing moves when you connect. The machine moves only after you press Send, "
+"Test Cut or Cut."
+msgstr ""
+"Connettersi non fa muovere nulla. La macchina si muove solo dopo che premi "
+"Invia, Taglio di prova o Taglia."
+
+#: src/opencutter/gui/connection.py
+msgid "Firmware"
+msgstr "Firmware"
+
+#: src/opencutter/gui/connection.py
+msgid "Status"
+msgstr "Stato"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/window.py
+msgid "Try again"
+msgstr "Riprova"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"Not affiliated with or endorsed by Silhouette America, Inc. Silhouette, "
+"CAMEO, Portrait and CURIO are trademarks of their respective owners."
+msgstr ""
+"Non affiliato né approvato da Silhouette America, Inc. Silhouette, CAMEO, "
+"Portrait e CURIO sono marchi dei rispettivi proprietari."
+
+#: src/opencutter/gui/dialogs.py
+msgid "Recognized, not supported yet"
+msgstr "Riconosciuto, non ancora supportato"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Not supported"
+msgstr "Non supportato"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Restart OpenCutter to use the new language"
+msgstr "Riavvia OpenCutter per usare la nuova lingua"
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid "Drives the {models}."
+msgstr "Funziona con {models}."
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid "{not_supported_yet}: {models}."
+msgstr "{not_supported_yet}: {models}."
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid ""
+"Send SVG designs to a Silhouette cutting machine over Bluetooth. {machines}"
+msgstr ""
+"Invia progetti SVG a una macchina da taglio Silhouette tramite Bluetooth. "
+"{machines}"
+
+#: src/opencutter/gui/dialogs.py
+msgid "A job is running"
+msgstr "Un lavoro è in corso"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Cancel the job and quit? The machine stops right away."
+msgstr "Annullare il lavoro e uscire? La macchina si ferma subito."
+
+#: src/opencutter/gui/dialogs.py
+msgid "Keep cutting"
+msgstr "Continua a tagliare"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Cancel Job and quit"
+msgstr "Annulla lavoro ed esci"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid "Connection lost during the job"
+msgstr "Connessione persa durante il lavoro"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid ""
+"OpenCutter cannot stop the machine without the connection. If it is still "
+"moving, press its power button. Then switch it on again to reconnect."
+msgstr ""
+"Senza connessione OpenCutter non può fermare la macchina. Se si sta ancora "
+"muovendo, premi il suo pulsante di accensione. Poi riaccendila per "
+"riconnetterti."
+
+#: src/opencutter/gui/dialogs.py
+msgid "Close"
+msgstr "Chiudi"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Reconnect"
+msgstr "Riconnetti"
+
+#: src/opencutter/gui/dialogs.py
+msgid "The stop could not be sent"
+msgstr "Impossibile inviare il comando di arresto"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"Press the machine's power button now. The window stays open; close it again "
+"once the machine has stopped."
+msgstr ""
+"Premi ora il pulsante di accensione della macchina. La finestra resta "
+"aperta; chiudila di nuovo quando la macchina si è fermata."
+
+#: src/opencutter/gui/dialogs.py
+msgid "OK"
+msgstr "OK"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"OpenCutter could not send the stop to the machine. If it moves, press its "
+"power button now."
+msgstr ""
+"OpenCutter non è riuscito a inviare il comando di arresto alla macchina. Se "
+"si muove, premi subito il suo pulsante di accensione."
+
+#: src/opencutter/gui/dialogs.py
+msgid "The machine still reports Busy"
+msgstr "La macchina risulta ancora occupata"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"The stop was sent, but the machine still reports Busy. If it moves, press "
+"its power button now."
+msgstr ""
+"Il comando di arresto è stato inviato, ma la macchina risulta ancora "
+"occupata. Se si muove, premi subito il suo pulsante di accensione."
+
+#: src/opencutter/gui/dialogs.py
+msgid "The machine still reports Paused"
+msgstr "La macchina risulta ancora in pausa"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid "Preferences"
+msgstr "Preferenze"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid "General"
+msgstr "Generale"
+
+#: src/opencutter/gui/dialogs.py
+msgctxt "unit"
+msgid "in"
+msgstr "in"
+
+#: src/opencutter/gui/dialogs.py
+msgctxt "unit"
+msgid "mm"
+msgstr "mm"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Units"
+msgstr "Unità"
+
+#: src/opencutter/gui/dialogs.py
+msgid "For positions and sizes"
+msgstr "Per posizioni e dimensioni"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Default Media Size"
+msgstr "Formato supporto predefinito"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/sidebar.py
+msgid "Preview outline before cutting"
+msgstr "Anteprima del contorno prima del taglio"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Trace the outer box with the tool up first"
+msgstr "Prima traccia il riquadro esterno con l’utensile sollevato"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Presets"
+msgstr "Preimpostazioni"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Source"
+msgstr "Provenienza"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Materials"
+msgstr "Materiali"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/sidebar.py
+msgid "Machine"
+msgstr "Macchina"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Pair it in Settings → Bluetooth"
+msgstr "Associala in Impostazioni → Bluetooth"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Model"
+msgstr "Modello"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Default Cutting Mat"
+msgstr "Tappetino da taglio predefinito"
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid "For the {machine}"
+msgstr "Per la {machine}"
+
+#: src/opencutter/gui/dialogs.py
+msgid "System default"
+msgstr "Lingua di sistema"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Language"
+msgstr "Lingua"
+
+#: src/opencutter/gui/firstrun.py
+msgid "your machine"
+msgstr "la tua macchina"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Cut your designs on your machine from Linux."
+msgstr "Taglia i tuoi progetti con la tua macchina da Linux."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid "Cut your designs on a Silhouette {machine} from Linux."
+msgstr "Taglia i tuoi progetti con una Silhouette {machine} da Linux."
+
+#: src/opencutter/gui/firstrun.py
+msgid ""
+"Switch your machine on. Some machines accept a Bluetooth connection only "
+"right after they are switched on: if the app can’t connect, switch it off "
+"and on."
+msgstr ""
+"Accendi la macchina. Alcune macchine accettano una connessione Bluetooth "
+"solo subito dopo l’accensione: se l’app non riesce a connettersi, spegnila e "
+"riaccendila."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid ""
+"Switch the {machine} on. It accepts a Bluetooth connection only right after "
+"it is switched on: if the app can’t connect, switch it off and on."
+msgstr ""
+"Accendi la {machine}. Accetta una connessione Bluetooth solo subito dopo "
+"l’accensione: se l’app non riesce a connettersi, spegnila e riaccendila."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid ""
+"Switch the {machine} on. If the app can’t connect, switch it off and on."
+msgstr ""
+"Accendi la {machine}. Se l’app non riesce a connettersi, spegnila e "
+"riaccendila."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid "Switch the {machine} on. OpenCutter then connects to it by itself."
+msgstr "Accendi la {machine}. OpenCutter si connette da solo."
+
+#: src/opencutter/gui/firstrun.py
+msgid "Welcome"
+msgstr "Benvenuto"
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid "Step {step} of {steps}"
+msgstr "Passo {step} di {steps}"
+
+#: src/opencutter/gui/firstrun.py
+msgid ""
+"Draw in Inkscape, place the design on the mat here, choose Material, Action "
+"and Tool, and send it over Bluetooth."
+msgstr ""
+"Disegna in Inkscape, posiziona qui il progetto sul tappetino, scegli "
+"Materiale, Azione e Utensile e invialo tramite Bluetooth."
+
+#: src/opencutter/gui/firstrun.py
+msgid "Get started"
+msgstr "Inizia"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Optional"
+msgstr "Facoltativo"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Connect your machine"
+msgstr "Connetti la macchina"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Back"
+msgstr "Indietro"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Skip for now"
+msgstr "Salta per ora"
+
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sidebar.py
+msgid "Done"
+msgstr "Fatto"
+
+#: src/opencutter/gui/geometry.py
+msgid "Not measured on this machine yet"
+msgstr "Non ancora misurata su questa macchina"
+
+#: src/opencutter/gui/geometry.py
+msgid "The cut area cannot be checked with this mat on this model yet."
+msgstr ""
+"L’area di taglio con questo tappetino non può ancora essere verificata su "
+"questo modello."
+
+#: src/opencutter/gui/geometry.py
+msgctxt "paper size"
+msgid "Letter"
+msgstr "Lettera"
+
+#: src/opencutter/gui/geometry.py
+#: src/opencutter/gui/window.py
+msgid "Center to Page"
+msgstr "Centra nella pagina"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Left"
+msgstr "Allinea a sinistra"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Center"
+msgstr "Centra orizzontalmente"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Right"
+msgstr "Allinea a destra"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Top"
+msgstr "Allinea in alto"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Middle"
+msgstr "Centra verticalmente"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Bottom"
+msgstr "Allinea in basso"
+
+#: src/opencutter/gui/geometry.py
+#, python-brace-format
+msgid "{seconds} s"
+msgstr "{seconds} s"
+
+#: src/opencutter/gui/geometry.py
+#, python-brace-format
+msgid "{minutes} min {seconds} s"
+msgstr "{minutes} min {seconds} s"
+
+#: src/opencutter/gui/geometry.py
+#, python-brace-format
+msgid "{minutes} min"
+msgstr "{minutes} min"
+
+#: src/opencutter/gui/jobview.py
+msgid "If the machine keeps moving, press its power button."
+msgstr ""
+"Se la macchina continua a muoversi, premi il suo pulsante di accensione."
+
+#: src/opencutter/gui/jobview.py
+msgid "The stop could not be sent. Press the machine's power button now."
+msgstr ""
+"Impossibile inviare il comando di arresto. Premi subito il pulsante di "
+"accensione della macchina."
+
+#: src/opencutter/gui/jobview.py
+msgid "Stopping…"
+msgstr "Arresto in corso…"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Waiting for the machine to confirm the stop. If the machine keeps moving, "
+"press its power button."
+msgstr ""
+"In attesa che la macchina confermi l’arresto. Se la macchina continua a "
+"muoversi, premi il suo pulsante di accensione."
+
+#: src/opencutter/gui/jobview.py
+msgid "Nothing was sent"
+msgstr "Non è stato inviato nulla"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Before the next job: check that the tool is up, press <b>Unload</b>, then "
+"load the mat."
+msgstr ""
+"Prima del prossimo lavoro: controlla che l’utensile sia sollevato, premi "
+"<b>Scarica</b> e poi carica il tappetino."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Once the machine has stopped, check that the tool is up and load the mat "
+"again before the next job."
+msgstr ""
+"Quando la macchina si è fermata, controlla che l’utensile sia sollevato e "
+"ricarica il tappetino prima del prossimo lavoro."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Press <b>Unload</b> on the machine to remove the mat. Load the mat again "
+"right before the next job."
+msgstr ""
+"Premi <b>Scarica</b> sulla macchina per togliere il tappetino. Ricarica il "
+"tappetino subito prima del prossimo lavoro."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid ""
+"The connection to the {name} was lost while the job waited at the outline "
+"check, so the stop could not be sent. The machine was waiting there with the "
+"tool up; nothing more was sent. If it moves, press its power button."
+msgstr ""
+"La connessione alla {name} si è persa mentre il lavoro aspettava al "
+"controllo del contorno, quindi il comando di arresto non è stato inviato. La "
+"macchina era ferma lì con l’utensile sollevato; non è stato inviato altro. "
+"Se si muove, premi il suo pulsante di accensione."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "The connection to the {name} was lost. Nothing more is sent."
+msgstr "La connessione alla {name} si è persa. Non viene inviato altro."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"The connection was lost while the job waited here, so Cut cannot be sent in "
+"this job: press Cancel."
+msgstr ""
+"La connessione si è persa mentre il lavoro aspettava qui, quindi Taglia non "
+"può essere inviato in questo lavoro: premi Annulla."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"The machine still reports Busy. If it moves, press Stop Machine or its power "
+"button."
+msgstr ""
+"La macchina risulta ancora occupata. Se si muove, premi Ferma o il suo "
+"pulsante di accensione."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid ""
+"The stop has not reached the {name} yet: OpenCutter sends it as soon as the "
+"{name} is connected again. If it moves, press its power button."
+msgstr ""
+"Il comando di arresto non ha ancora raggiunto la {name}: OpenCutter lo invia "
+"appena la {name} è di nuovo connessa. Se si muove, premi il suo pulsante di "
+"accensione."
+
+#: src/opencutter/gui/jobview.py
+msgid "Stop Machine"
+msgstr "Ferma"
+
+#: src/opencutter/gui/jobview.py
+msgid "Send Again…"
+msgstr "Invia di nuovo…"
+
+#: src/opencutter/gui/jobview.py
+msgid "Cut Again"
+msgstr "Taglia di nuovo"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/runner.py
+msgid "Resume"
+msgstr "Riprendi"
+
+#: src/opencutter/gui/jobview.py
+msgid "Resuming…"
+msgstr "Ripresa…"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/runner.py
+msgid "Pause"
+msgstr "Pausa"
+
+#: src/opencutter/gui/jobview.py
+msgid "Pausing…"
+msgstr "Messa in pausa…"
+
+#: src/opencutter/gui/jobview.py
+msgid "Cancelling…"
+msgstr "Annullamento…"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Cancelling… A paused machine ends the job about 5 seconds after the stop."
+msgstr ""
+"Annullamento… Una macchina in pausa termina il lavoro circa 5 secondi dopo "
+"l’arresto."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid ""
+"The machine still reports Paused {n} s after the stop. Press Unload on the "
+"machine; if anything moves, press its power button."
+msgstr ""
+"La macchina risulta ancora in pausa {n} s dopo l’arresto. Premi Scarica "
+"sulla macchina; se qualcosa si muove, premi il suo pulsante di accensione."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{step} progress"
+msgstr "Avanzamento: {step}"
+
+#: src/opencutter/gui/jobview.py
+msgid "Is the outline in the right place?"
+msgstr "Il contorno è nella posizione giusta?"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"The tool traced the outer box of the design with the tool up. Nothing was "
+"cut yet. To adjust the material, press Cancel; do not unload the mat."
+msgstr ""
+"L’utensile ha tracciato il riquadro esterno del progetto restando sollevato. "
+"Non è stato ancora tagliato nulla. Per sistemare il materiale, premi "
+"Annulla; non scaricare il tappetino."
+
+#. Translators: the button at the outline check that lowers the tool and cuts.
+#: src/opencutter/gui/jobview.py
+msgctxt "button"
+msgid "Cut"
+msgstr "Taglia"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+msgid "Cancel"
+msgstr "Annulla"
+
+#: src/opencutter/gui/jobview.py
+msgid "Estimated from the plan, not reported by the machine"
+msgstr "Stimato dal piano, non comunicato dalla macchina"
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{time} elapsed"
+msgstr "{time} trascorsi"
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "about {time} left"
+msgstr "circa {time} rimanenti"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job in progress"
+msgstr "Lavoro in corso"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job steps"
+msgstr "Passaggi del lavoro"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Pause the machine: it finishes the few moves it has planned, lifts the tool "
+"and waits"
+msgstr ""
+"Metti in pausa la macchina: finisce i pochi movimenti già pianificati, "
+"solleva l’utensile e aspetta"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Cancel Job"
+msgstr "Annulla"
+
+#. Translators: the Escape key, as printed on keyboards.
+#: src/opencutter/gui/jobview.py
+msgctxt "key"
+msgid "Esc"
+msgstr "Esc"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sidebar.py
+msgid "Test Cut"
+msgstr "Taglio di prova"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Test in Progress"
+msgstr "Prova in corso"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/runner.py
+msgid "Preparing"
+msgstr "Preparazione"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Check the position"
+msgstr "Controlla la posizione"
+
+#: src/opencutter/gui/jobview.py
+msgid "Stop not confirmed"
+msgstr "Arresto non confermato"
+
+#: src/opencutter/gui/jobview.py
+msgid "Test Complete"
+msgstr "Prova completata"
+
+#: src/opencutter/gui/jobview.py
+msgid "Test stopped"
+msgstr "Prova interrotta"
+
+#. Translators: {action} is the action's name: "Cut complete", "Sketch complete".
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{action} complete"
+msgstr "Completato: {action}"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job complete"
+msgstr "Lavoro completato"
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{action} stopped"
+msgstr "Interrotto: {action}"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job cancelled"
+msgstr "Lavoro annullato"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Connection lost"
+msgstr "Connessione persa"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Material"
+msgstr "Materiale"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Action"
+msgstr "Azione"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Passes"
+msgstr "Passate"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it, then switch "
+"the {name} off and on."
+msgstr ""
+"Un altro programma sta usando la {name} tramite Bluetooth. Chiudilo, poi "
+"spegni e riaccendi la {name}."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it: OpenCutter "
+"then connects to it by itself."
+msgstr ""
+"Un altro programma sta usando la {name} tramite Bluetooth. Chiudilo: "
+"OpenCutter si connetterà da solo."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it, switch the "
+"{name} off and on, then press Try again."
+msgstr ""
+"Un altro programma sta usando la {name} tramite Bluetooth. Chiudilo, spegni "
+"e riaccendi la {name}, poi premi Riprova."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it, then press Try "
+"again."
+msgstr ""
+"Un altro programma sta usando la {name} tramite Bluetooth. Chiudilo, poi "
+"premi Riprova."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "Switch the {name} off and on, then press Try again."
+msgstr "Spegni e riaccendi la {name}, poi premi Riprova."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "Make sure the {name} is switched on, then press Try again."
+msgstr "Assicurati che la {name} sia accesa, poi premi Riprova."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"No paired {name} was found. Pair it in Settings → Bluetooth, then press Try "
+"again."
+msgstr ""
+"Nessuna {name} associata trovata. Associala in Impostazioni → Bluetooth, poi "
+"premi Riprova."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another OpenCutter version is using the {name}. Close it, then press Try "
+"again."
+msgstr ""
+"Un’altra versione di OpenCutter sta usando la {name}. Chiudila, poi premi "
+"Riprova."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "The {name} is free for other apps. Press Connect to use it here again."
+msgstr ""
+"La {name} è libera per altre app. Premi Connetti per usarla di nuovo qui."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "Releasing the {name} for other apps…"
+msgstr "Rilascio della {name} per altre app…"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Not disconnected: a job is running on the {name}. Press Disconnect again "
+"when it has ended."
+msgstr ""
+"Non disconnessa: un lavoro è in corso sulla {name}. Premi di nuovo "
+"Disconnetti quando è finito."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The connection to the {name} was lost. Switch the {name} off and on; "
+"OpenCutter reconnects by itself."
+msgstr ""
+"La connessione alla {name} si è persa. Spegni e riaccendi la {name}; "
+"OpenCutter si riconnette da solo."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The connection to the {name} was lost. Make sure the {name} is switched on; "
+"OpenCutter reconnects by itself."
+msgstr ""
+"La connessione alla {name} si è persa. Assicurati che la {name} sia accesa; "
+"OpenCutter si riconnette da solo."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} is connected to this computer, but not to OpenCutter: the system "
+"may have reconnected it by itself, or another program uses it. Switch the "
+"{name} off and on."
+msgstr ""
+"La {name} è connessa a questo computer, ma non a OpenCutter: il sistema "
+"potrebbe averla riconnessa da solo, oppure la sta usando un altro programma. "
+"Spegni e riaccendi la {name}."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} is connected to this computer, but not to OpenCutter: the system "
+"may have reconnected it by itself, or another program uses it. Close the "
+"other program."
+msgstr ""
+"La {name} è connessa a questo computer, ma non a OpenCutter: il sistema "
+"potrebbe averla riconnessa da solo, oppure la sta usando un altro programma. "
+"Chiudi l’altro programma."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"Bluetooth is off or not available. Turn it on in Settings → Bluetooth, then "
+"press Try again."
+msgstr ""
+"Il Bluetooth è spento o non disponibile. Attivalo in Impostazioni → "
+"Bluetooth, poi premi Riprova."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is already running but does not answer. Wait "
+"a moment, then press Try again."
+msgstr ""
+"Il servizio in background di OpenCutter è già in esecuzione ma non risponde. "
+"Attendi un momento, poi premi Riprova."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"OpenCutter’s background service stopped unexpectedly. Press Try again; if it "
+"keeps stopping, see {log}."
+msgstr ""
+"Il servizio in background di OpenCutter si è fermato inaspettatamente. Premi "
+"Riprova; se continua a fermarsi, consulta {log}."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter could not start its background service. Press Try again; if it "
+"keeps failing, start OpenCutter from a terminal to see why."
+msgstr ""
+"OpenCutter non è riuscito ad avviare il suo servizio in background. Premi "
+"Riprova; se continua a non riuscirci, avvia OpenCutter da un terminale per "
+"vedere il motivo."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"An older OpenCutter background service is still running. Press Try again; if "
+"it keeps failing, restart the computer."
+msgstr ""
+"È ancora in esecuzione un servizio in background di OpenCutter più vecchio. "
+"Premi Riprova; se continua a non funzionare, riavvia il computer."
+
+#: src/opencutter/gui/machine.py
+msgid "Updating OpenCutter’s background service…"
+msgstr "Aggiornamento del servizio in background di OpenCutter…"
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is from another version; it will be updated "
+"when its current job ends."
+msgstr ""
+"Il servizio in background di OpenCutter è di un’altra versione; verrà "
+"aggiornato quando il lavoro in corso sarà finito."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service from another version did not stop. Wait a "
+"moment, then press Try again."
+msgstr ""
+"Il servizio in background di OpenCutter di un’altra versione non si è "
+"fermato. Attendi un momento, poi premi Riprova."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service from another version could not be stopped. "
+"Restart the computer, then open OpenCutter again."
+msgstr ""
+"Impossibile fermare il servizio in background di OpenCutter di un’altra "
+"versione. Riavvia il computer, poi apri di nuovo OpenCutter."
+
+#: src/opencutter/gui/machine.py
+msgid "OpenCutter was updated while it was open. Close it and open it again."
+msgstr ""
+"OpenCutter è stato aggiornato mentre era aperto. Chiudilo e aprilo di nuovo."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is still stopping. Wait a moment, then press "
+"Try again."
+msgstr ""
+"Il servizio in background di OpenCutter si sta ancora fermando. Attendi un "
+"momento, poi premi Riprova."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is from another version, so nothing was "
+"sent. Send again once it has been updated."
+msgstr ""
+"Il servizio in background di OpenCutter è di un’altra versione, quindi non è "
+"stato inviato nulla. Invia di nuovo quando sarà aggiornato."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"Not disconnected: OpenCutter’s background service did not stop. Try again in "
+"a moment."
+msgstr ""
+"Non disconnessa: il servizio in background di OpenCutter non si è fermato. "
+"Riprova tra un momento."
+
+#: src/opencutter/gui/machine.py
+msgid "Not disconnected: OpenCutter’s background service is being updated."
+msgstr ""
+"Non disconnessa: il servizio in background di OpenCutter è in aggiornamento."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as “{model}”. OpenCutter cannot drive it and "
+"will not send jobs to it."
+msgstr ""
+"Questa macchina si presenta come “{model}”. OpenCutter non può controllarla "
+"e non le invierà lavori."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"This machine did not report its model. OpenCutter cannot drive it and will "
+"not send jobs to it."
+msgstr ""
+"Questa macchina non ha comunicato il suo modello. OpenCutter non può "
+"controllarla e non le invierà lavori."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as “{model}”, a name that more than one model "
+"uses, so OpenCutter cannot tell which model it is and will not send jobs to "
+"it."
+msgstr ""
+"Questa macchina si presenta come “{model}”, un nome usato da più modelli, "
+"quindi OpenCutter non sa quale modello sia e non le invierà lavori."
+
+#: src/opencutter/gui/machine.py
+msgid "Unsupported Machine"
+msgstr "Macchina non supportata"
+
+#: src/opencutter/gui/machine.py
+msgid "This machine is not supported."
+msgstr "Questa macchina non è supportata."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"To use one, pair it in Settings → Bluetooth and switch it on: OpenCutter "
+"connects to it by itself."
+msgstr ""
+"Per usarne una, associala in Impostazioni → Bluetooth e accendila: "
+"OpenCutter si connette da solo."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"The machine is paused. OpenCutter sends nothing more until it goes on. To go "
+"on from where it stopped, press Resume here or the Pause key on the machine. "
+"To end the job, press Cancel Job."
+msgstr ""
+"La macchina è in pausa. OpenCutter non invia altro finché non riprende. Per "
+"continuare da dove si è fermata, premi Riprendi qui o il tasto Pausa sulla "
+"macchina. Per terminare il lavoro, premi Annulla."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"The machine is paused. OpenCutter sends nothing more until it goes on. To go "
+"on from where it stopped, press the Pause key on the machine. To end the "
+"job, press Cancel Job."
+msgstr ""
+"La macchina è in pausa. OpenCutter non invia altro finché non riprende. Per "
+"continuare da dove si è fermata, premi il tasto Pausa sulla macchina. Per "
+"terminare il lavoro, premi Annulla."
+
+#: src/opencutter/gui/machine.py
+msgid "Checking connection"
+msgstr "Verifica della connessione"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"No answer from the machine for {n} s. OpenCutter keeps waiting and sends "
+"nothing new. If it moves when it should not, press Cancel Job or its power "
+"button."
+msgstr ""
+"Nessuna risposta dalla macchina da {n} s. OpenCutter continua ad aspettare e "
+"non invia nulla di nuovo. Se si muove quando non dovrebbe, premi Annulla o "
+"il suo pulsante di accensione."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"No answer from the machine for {n} s. OpenCutter keeps waiting and sends "
+"nothing new. If it moves when it should not, press Cancel Job or its power "
+"button. It still reports its status ({term})."
+msgstr ""
+"Nessuna risposta dalla macchina da {n} s. OpenCutter continua ad aspettare e "
+"non invia nulla di nuovo. Se si muove quando non dovrebbe, premi Annulla o "
+"il suo pulsante di accensione. Comunica ancora il suo stato ({term})."
+
+#. Translators: the end of a list of machine names: "CAMEO 4, CAMEO 5 and Portrait 3".
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "{items} and {last}"
+msgstr "{items} e {last}"
+
+#: src/opencutter/gui/machine.py
+msgctxt "list separator"
+msgid ", "
+msgstr ", "
+
+#. Translators: between two firmware lines: "V1.xx or V5.xx".
+#: src/opencutter/gui/machine.py
+msgctxt "list separator"
+msgid " or "
+msgstr " o "
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "{model} (firmware {lines})"
+msgstr "{model} (firmware {lines})"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "OpenCutter drives these models: {models}. {hint}"
+msgstr "OpenCutter funziona con questi modelli: {models}. {hint}"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "{tool} (Detected)"
+msgstr "{tool} (presente)"
+
+#: src/opencutter/gui/machine.py
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Unclear reply “{reply}”"
+msgstr "Risposta non chiara “{reply}”"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} reported its tool as “{reply}”, which OpenCutter cannot read for "
+"this model, so nothing is sent. Please report this reply."
+msgstr ""
+"La {name} ha indicato il suo utensile come “{reply}”, che OpenCutter non sa "
+"leggere per questo modello, quindi non viene inviato nulla. Segnala questa "
+"risposta."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} reported its tools as “{reply}”, which OpenCutter cannot read for "
+"this model, so nothing is sent. Please report this reply."
+msgstr ""
+"La {name} ha indicato i suoi utensili come “{reply}”, che OpenCutter non sa "
+"leggere per questo modello, quindi non viene inviato nulla. Segnala questa "
+"risposta."
+
+#: src/opencutter/gui/materials.py
+msgid "Use Cut Settings"
+msgstr "Usa le impostazioni di taglio"
+
+#: src/opencutter/gui/materials.py
+msgid "Recent"
+msgstr "Recenti"
+
+#: src/opencutter/gui/materials.py
+msgid "Other"
+msgstr "Altro"
+
+#: src/opencutter/gui/materials.py
+msgid ""
+"Basic set: one vinyl cut setting and a Sketch Pen starting point. For other "
+"materials, start from the closest one and adjust Speed, Force and Blade "
+"Depth in Cut Settings, then make a Test Cut."
+msgstr ""
+"Set di base: un’impostazione di taglio per il vinile e un punto di partenza "
+"per la Penna da disegno. Per altri materiali, parti da quello più simile e "
+"regola Velocità, Forza e Profondità lama nelle Impostazioni di taglio, poi "
+"fai un Taglio di prova."
+
+#: src/opencutter/gui/materials.py
+msgid ""
+"Basic set from the CAMEO 4. Start light: adjust Speed, Force and Blade Depth "
+"in Cut Settings, then make a Test Cut."
+msgstr ""
+"Set di base della CAMEO 4. Parti con valori leggeri: regola Velocità, Forza "
+"e Profondità lama nelle Impostazioni di taglio, poi fai un Taglio di prova."
+
+#: src/opencutter/gui/materials.py
+msgid "Search materials"
+msgstr "Cerca materiali"
+
+#: src/opencutter/gui/runner.py
+msgid "Unload and load the mat on the machine, then send again."
+msgstr "Scarica e ricarica il tappetino sulla macchina, poi invia di nuovo."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "Unload and load the {label} mat on the machine, then send again."
+msgstr ""
+"Scarica e ricarica il tappetino {label} sulla macchina, poi invia di nuovo."
+
+#: src/opencutter/gui/runner.py
+msgid "The cut area could not be checked on this model."
+msgstr "Non è stato possibile verificare l’area di taglio su questo modello."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid ""
+"The cut area could not be checked on this model. The machine answered "
+"“{reply}”."
+msgstr ""
+"Non è stato possibile verificare l’area di taglio su questo modello. La "
+"macchina ha risposto “{reply}”."
+
+#: src/opencutter/gui/runner.py
+#: src/opencutter/device/daemon.py
+msgid "the Bluetooth link was lost"
+msgstr "il collegamento Bluetooth si è perso"
+
+#: src/opencutter/gui/runner.py
+msgid ""
+"Stopped from outside the app (for example with the opencutter stop command). "
+"Nothing was cut."
+msgstr ""
+"Fermato dall’esterno dell’app (per esempio con il comando opencutter stop). "
+"Non è stato tagliato nulla."
+
+#: src/opencutter/gui/runner.py
+msgid "Previewing outline"
+msgstr "Anteprima del contorno"
+
+#: src/opencutter/gui/runner.py
+msgid "Returning to origin"
+msgstr "Ritorno all’origine"
+
+#: src/opencutter/gui/runner.py
+msgid ""
+"The machine is still paused. Press its Pause key to go on, or Cancel Job."
+msgstr ""
+"La macchina è ancora in pausa. Premi il suo tasto Pausa per continuare, "
+"oppure premi Annulla."
+
+#: src/opencutter/gui/runner.py
+msgid ""
+"The machine has not reported Paused yet. It pauses only after the few moves "
+"it has already planned, so it may still pause. If it keeps cutting, press "
+"Pause here again, or Cancel Job to end the job."
+msgstr ""
+"La macchina non ha ancora comunicato di essere in pausa. Si mette in pausa "
+"solo dopo i pochi movimenti già pianificati, quindi potrebbe ancora farlo. "
+"Se continua a tagliare, premi di nuovo Pausa qui, oppure Annulla per "
+"terminare il lavoro."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "{what} was not sent: {reason}."
+msgstr "Comando {what} non inviato: {reason}."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid ""
+"{what} may not have reached the machine ({reason}). OpenCutter does not send "
+"it again."
+msgstr ""
+"Il comando {what} potrebbe non aver raggiunto la macchina ({reason}). "
+"OpenCutter non lo invia di nuovo."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "the write failed: {error}"
+msgstr "la scrittura non è riuscita: {error}"
+
+#: src/opencutter/gui/runner.py
+msgid "a Resume or Pause is already being sent"
+msgstr "è già in corso l’invio di un comando Riprendi o Pausa"
+
+#: src/opencutter/gui/runner.py
+msgid "no answer"
+msgstr "nessuna risposta"
+
+#: src/opencutter/gui/runner.py
+msgid "no reason given"
+msgstr "nessun motivo indicato"
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "The machine did not confirm the unit ({detail}). {hint}"
+msgstr "La macchina non ha confermato l’unità ({detail}). {hint}"
+
+#: src/opencutter/gui/runner.py
+msgid "The machine refused the job."
+msgstr "La macchina ha rifiutato il lavoro."
+
+#: src/opencutter/gui/runner.py
+msgid "Step"
+msgstr "Passaggio"
+
+#: src/opencutter/gui/runner.py
+msgid "The step failed."
+msgstr "Il passaggio non è riuscito."
+
+#: src/opencutter/gui/runner.py
+msgid "this background service cannot do it"
+msgstr "questo servizio in background non può farlo"
+
+#: src/opencutter/gui/sending.py
+msgid "Choose a material first."
+msgstr "Scegli prima un materiale."
+
+#: src/opencutter/gui/sending.py
+msgid "No materials for this machine yet"
+msgstr "Ancora nessun materiale per questa macchina"
+
+#: src/opencutter/gui/sending.py
+msgid ""
+"Set the tool, Force and Speed in Cut Settings, then make a Test Cut. A "
+"presets file can add materials for this machine."
+msgstr ""
+"Imposta l’utensile, la Forza e la Velocità nelle Impostazioni di taglio, poi "
+"fai un Taglio di prova. Un file di preimpostazioni può aggiungere materiali "
+"per questa macchina."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Use {name}"
+msgstr "Usa {name}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid ""
+"The connected machine is a {name}. The layout was made for the {old}, so it "
+"now uses the {name}’s cutting mat; your design stays where it is. Check it, "
+"then press Use {name}."
+msgstr ""
+"La macchina connessa è una {name}. La disposizione era stata fatta per la "
+"{old}, quindi ora usa il tappetino da taglio della {name}; il progetto resta "
+"dov’è. Controllalo, poi premi Usa {name}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Check the layout for the {name}, then press Use {name}."
+msgstr "Controlla la disposizione per la {name}, poi premi Usa {name}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid ""
+"The layout was made for the {layout}, but the connected machine is a {name}."
+msgstr ""
+"La disposizione è stata fatta per la {layout}, ma la macchina connessa è una "
+"{name}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "The {name} has no {label}."
+msgstr "La {name} non ha il {label}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Choose a Cutting Mat for the {name} in Page Setup."
+msgstr "Scegli un tappetino da taglio per la {name} in Imposta pagina."
+
+#: src/opencutter/gui/sending.py
+msgid "Move the design inside the cut area."
+msgstr "Sposta il progetto all’interno dell’area di taglio."
+
+#: src/opencutter/gui/sending.py
+msgid ""
+"Move the design onto the media, or set Media Size to your sheet in Page "
+"Setup."
+msgstr ""
+"Sposta il progetto sul supporto, oppure imposta in Imposta pagina il Formato "
+"supporto del tuo foglio."
+
+#: src/opencutter/gui/sending.py
+msgid "A job is already running."
+msgstr "Un lavoro è già in corso."
+
+#: src/opencutter/gui/sending.py
+msgid "Open a design first."
+msgstr "Apri prima un progetto."
+
+#: src/opencutter/gui/sending.py
+msgid "The design has no paths to cut."
+msgstr "Il progetto non ha tracciati da tagliare."
+
+#: src/opencutter/gui/sending.py
+msgid "Connect the machine first."
+msgstr "Connetti prima la macchina."
+
+#: src/opencutter/gui/sending.py
+msgid "Choose a material and action."
+msgstr "Scegli un materiale e un’azione."
+
+#: src/opencutter/gui/sending.py
+msgid "Waiting for the machine to report its tools."
+msgstr "In attesa che la macchina comunichi i suoi utensili."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into {holder}."
+msgstr "Inserisci l’utensile {tool} nel {holder}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into the tool holder."
+msgstr "Inserisci l’utensile {tool} nel portautensile."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into {holder} to send."
+msgstr "Inserisci l’utensile {tool} nel {holder} per inviare."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into the tool holder to send."
+msgstr "Inserisci l’utensile {tool} nel portautensile per inviare."
+
+#: src/opencutter/gui/sending.py
+msgid "Basic set"
+msgstr "Set di base"
+
+#: src/opencutter/gui/sending.py
+msgid "Presets file"
+msgstr "File di preimpostazioni"
+
+#. Translators: the short form of Acceleration in a settings line.
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Accel. {value}"
+msgstr "Acc. {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Blade Depth {value}"
+msgstr "Profondità lama {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Force {value}"
+msgstr "Forza {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Speed {value}"
+msgstr "Velocità {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "{n} pass"
+msgid_plural "{n} passes"
+msgstr[0] "{n} passata"
+msgstr[1] "{n} passate"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Place the media on the mat, line the mat up with the guide, then press the "
+"<b>Load</b> button on the machine. Load the mat right before every job."
+msgstr ""
+"Metti il supporto sul tappetino, allinea il tappetino alla guida, poi premi "
+"il pulsante <b>Carica</b> sulla macchina. Carica il tappetino subito prima "
+"di ogni lavoro."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid ""
+"Place the media on the {mat} mat, line the mat up with the guide, then press "
+"the <b>Load</b> button on the machine. Load the mat right before every job."
+msgstr ""
+"Metti il supporto sul tappetino {mat}, allinea il tappetino alla guida, poi "
+"premi il pulsante <b>Carica</b> sulla macchina. Carica il tappetino subito "
+"prima di ogni lavoro."
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Put the top-left corner of the sheet on the top-left corner of the mat's "
+"grid: OpenCutter lays the design out from there. Media Size in Page Setup "
+"must match the sheet."
+msgstr ""
+"Metti l’angolo in alto a sinistra del foglio sull’angolo in alto a sinistra "
+"della griglia del tappetino: OpenCutter dispone il progetto a partire da lì. "
+"Il Formato supporto in Imposta pagina deve corrispondere al foglio."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid ""
+"Put the top-left corner of the sheet on the top-left corner of the mat's "
+"grid: OpenCutter lays the design out from there. Media Size in Page Setup "
+"must match the sheet (now {media})."
+msgstr ""
+"Metti l’angolo in alto a sinistra del foglio sull’angolo in alto a sinistra "
+"della griglia del tappetino: OpenCutter dispone il progetto a partire da lì. "
+"Il Formato supporto in Imposta pagina deve corrispondere al foglio (ora "
+"{media})."
+
+#: src/opencutter/gui/sheets.py
+msgid "Cutting mat loaded"
+msgstr "Tappetino da taglio caricato"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Press <b>Unload</b> on the machine. With the media for the next job on the "
+"mat, press <b>Load</b>: the machine applies the mat setting only right after "
+"a load."
+msgstr ""
+"Premi <b>Scarica</b> sulla macchina. Con il supporto per il prossimo lavoro "
+"sul tappetino, premi <b>Carica</b>: la macchina applica l’impostazione del "
+"tappetino solo subito dopo un caricamento."
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Press <b>Unload</b> on the machine and check that the tool is up. Then put "
+"the media on the mat and press <b>Load</b>."
+msgstr ""
+"Premi <b>Scarica</b> sulla macchina e controlla che l’utensile sia "
+"sollevato. Poi metti il supporto sul tappetino e premi <b>Carica</b>."
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The connection to the machine dropped since the mat was loaded. Press "
+"<b>Unload</b> on the machine and check that the tool is up. Then put the "
+"media on the mat and press <b>Load</b>."
+msgstr ""
+"La connessione alla macchina si è interrotta dopo il caricamento del "
+"tappetino. Premi <b>Scarica</b> sulla macchina e controlla che l’utensile "
+"sia sollevato. Poi metti il supporto sul tappetino e premi <b>Carica</b>."
+
+#: src/opencutter/gui/sheets.py
+msgid "Loaded before the last job"
+msgstr "Caricato prima dell’ultimo lavoro"
+
+#: src/opencutter/gui/sheets.py
+msgid "Loaded before the connection dropped"
+msgstr "Caricato prima che la connessione si interrompesse"
+
+#: src/opencutter/gui/sheets.py
+msgid "Load Cutting Mat"
+msgstr "Carica tappetino da taglio"
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Busy"
+msgstr "Macchina occupata"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The machine is still busy. Wait until it stops; if it keeps moving, press "
+"its power button. Then load the mat."
+msgstr ""
+"La macchina è ancora occupata. Aspetta che si fermi; se continua a muoversi, "
+"premi il suo pulsante di accensione. Poi carica il tappetino."
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Paused"
+msgstr "Macchina in pausa"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The machine is paused. OpenCutter does not resume it: press <b>Unload</b> on "
+"the machine (or switch it off and on), then load the mat. Do not press Pause "
+"to continue."
+msgstr ""
+"La macchina è in pausa. OpenCutter non la fa ripartire: premi <b>Scarica</b> "
+"sulla macchina (o spegnila e riaccendila), poi carica il tappetino. Non "
+"premere Pausa per continuare."
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Cancelling"
+msgstr "Macchina in annullamento"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The machine is ending a cancel. Wait until it has ended, then press "
+"<b>Unload</b> and load the mat. Do not press Pause to continue."
+msgstr ""
+"La macchina sta completando un annullamento. Aspetta che abbia finito, poi "
+"premi <b>Scarica</b> e carica il tappetino. Non premere Pausa per continuare."
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Held Elsewhere"
+msgstr "Macchina occupata da un’altra connessione"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Another connection (for example USB) holds the machine. Close it, then load "
+"the mat."
+msgstr ""
+"Un’altra connessione (per esempio USB) occupa la macchina. Chiudila, poi "
+"carica il tappetino."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "Cutting mat loaded ({mat})"
+msgstr "Tappetino da taglio caricato ({mat})"
+
+#: src/opencutter/gui/sheets.py
+msgid "Not loaded again yet"
+msgstr "Non ancora ricaricato"
+
+#: src/opencutter/gui/sheets.py
+msgid "A cutting mat entering the machine"
+msgstr "Un tappetino da taglio che entra nella macchina"
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine state"
+msgstr "Stato della macchina"
+
+#: src/opencutter/gui/sheets.py
+msgid "Waiting for media…"
+msgstr "In attesa del supporto…"
+
+#: src/opencutter/gui/sheets.py
+msgid "Changes to Ready by itself"
+msgstr "Diventa “Pronta” da sola"
+
+#: src/opencutter/gui/sheets.py
+msgid "Continue"
+msgstr "Continua"
+
+#: src/opencutter/gui/sheets.py
+msgid "Waiting for the machine"
+msgstr "In attesa della macchina"
+
+#: src/opencutter/gui/sheets.py
+msgid "Ready — the mat is loaded"
+msgstr "Pronta — il tappetino è caricato"
+
+#: src/opencutter/gui/sheets.py
+msgid "If you loaded it before the last job, press Unload, then Load."
+msgstr "Se l’hai caricato prima dell’ultimo lavoro, premi Scarica, poi Carica."
+
+#: src/opencutter/gui/sheets.py
+msgid "Press Unload, then Load."
+msgstr "Premi Scarica, poi Carica."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "Send to {machine}"
+msgstr "Invia alla {machine}"
+
+#: src/opencutter/gui/sheets.py
+msgid "Media"
+msgstr "Supporto"
+
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Tool"
+msgstr "Utensile"
+
+#: src/opencutter/gui/sheets.py
+msgid "Settings"
+msgstr "Impostazioni"
+
+#: src/opencutter/gui/sheets.py
+msgid "Preview"
+msgstr "Anteprima"
+
+#: src/opencutter/gui/sheets.py
+msgid "Outline first, tool up"
+msgstr "Prima il contorno, utensile sollevato"
+
+#: src/opencutter/gui/sheets.py
+msgid "Off"
+msgstr "Disattivata"
+
+#: src/opencutter/gui/sheets.py
+msgid "Estimated time"
+msgstr "Tempo stimato"
+
+#: src/opencutter/gui/sheets.py
+msgid "Paths"
+msgstr "Tracciati"
+
+#: src/opencutter/gui/sheets.py
+msgid "Before the machine moves"
+msgstr "Prima che la macchina si muova"
+
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgid "Send"
+msgstr "Invia"
+
+#: src/opencutter/gui/sheets.py
+msgid "Send stays disabled while any check fails."
+msgstr "Invia resta disattivato se anche un solo controllo non è superato."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "{check}: passed"
+msgstr "{check}: controllo superato"
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "{check}: failed"
+msgstr "{check}: controllo non superato"
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "about {time}"
+msgstr "circa {time}"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Choose a material"
+msgstr "Scegli un materiale"
+
+#: src/opencutter/gui/sidebar.py
+msgid "(Detected)"
+msgstr "(rilevata)"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not detected"
+msgstr "Nessun rilevamento"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not detected yet"
+msgstr "In attesa di rilevamento"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Your own settings"
+msgstr "Impostazioni personali"
+
+#: src/opencutter/gui/sidebar.py
+msgid "The tool in the chosen holder"
+msgstr "L’utensile nel portautensile scelto"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Blade Depth"
+msgstr "Profondità lama"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Force"
+msgstr "Forza"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Speed"
+msgstr "Velocità"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Acceleration"
+msgstr "Accelerazione"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Cutting Mat"
+msgstr "Tappetino da taglio"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom width"
+msgstr "Larghezza personalizzata"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom height"
+msgstr "Altezza personalizzata"
+
+#. Translators: W and H are the short forms of Width and Height.
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgctxt "width"
+msgid "W"
+msgstr "L"
+
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgctxt "height"
+msgid "H"
+msgstr "A"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Media Size"
+msgstr "Formato supporto"
+
+#. Translators: the page orientation (not the Portrait machines).
+#: src/opencutter/gui/sidebar.py
+msgctxt "orientation"
+msgid "Portrait"
+msgstr "Verticale"
+
+#: src/opencutter/gui/sidebar.py
+msgctxt "orientation"
+msgid "Landscape"
+msgstr "Orizzontale"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Orientation"
+msgstr "Orientamento"
+
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgid "Reveal Cutting Mat"
+msgstr "Mostra tappetino da taglio"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom"
+msgstr "Personalizzato"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom…"
+msgstr "Personalizzato…"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Changed"
+msgstr "Modificato"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Modified"
+msgstr "Modificato"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Reset to preset"
+msgstr "Ripristina preimpostazione"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Tool mismatch"
+msgstr "Utensile non corrispondente"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Edit"
+msgstr "Modifica"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Line Segment Overcut"
+msgstr "Sovrataglio dei segmenti"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Overcut"
+msgstr "Sovrataglio"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Reset"
+msgstr "Ripristina"
+
+#: src/opencutter/gui/sidebar.py
+msgid "No material chosen"
+msgstr "Nessun materiale scelto"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Not used for {action}"
+msgstr "Non usato per: {action}"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not used for this action"
+msgstr "Non usato per questa azione"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Detected"
+msgstr "Rilevato"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not used"
+msgstr "Non usato"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Detected · required for {action}"
+msgstr "Rilevato · richiesto per: {action}"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Detected · {tool} required"
+msgstr "Rilevato · richiesto: {tool}"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Load the <b>{tool}</b> into <b>the tool holder</b>."
+msgstr "Inserisci l’utensile <b>{tool}</b> nel <b>portautensile</b>."
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Load the <b>{tool}</b> into <b>{holder}</b>."
+msgstr "Inserisci l’utensile <b>{tool}</b> nel <b>{holder}</b>."
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Currently: {tool} detected."
+msgstr "Al momento è presente l’utensile {tool}."
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Currently: {tool}."
+msgstr "Al momento: {tool}."
+
+#: src/opencutter/gui/sidebar.py
+msgid "Page Setup"
+msgstr "Imposta pagina"
+
+#: src/opencutter/gui/window.py
+msgid "Sketching"
+msgstr "Disegno"
+
+#: src/opencutter/gui/window.py
+msgid "Scoring"
+msgstr "Cordonatura"
+
+#: src/opencutter/gui/window.py
+msgid "Cutting"
+msgstr "Taglio"
+
+#: src/opencutter/gui/window.py
+msgid "A send is already in progress."
+msgstr "Un invio è già in corso."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "A job is running on the {name}"
+msgstr "Un lavoro è in corso sulla {name}"
+
+#: src/opencutter/gui/window.py
+msgid "The connected machine changed"
+msgstr "La macchina connessa è cambiata"
+
+#: src/opencutter/gui/window.py
+msgid ""
+"Nothing was sent. Check the layout for the connected machine, then send "
+"again."
+msgstr ""
+"Non è stato inviato nulla. Controlla la disposizione per la macchina "
+"connessa, poi invia di nuovo."
+
+#: src/opencutter/gui/window.py
+msgid "Part of the design is outside the cut area."
+msgstr "Una parte del progetto è fuori dall’area di taglio."
+
+#: src/opencutter/gui/window.py
+msgid "Design on the media and inside the cut area"
+msgstr "Progetto sul supporto e all’interno dell’area di taglio"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "Part of the design is off the media ({media})."
+msgstr "Una parte del progetto è fuori dal supporto ({media})."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid ""
+"Media Size is the whole mat ({media}), so OpenCutter cannot keep the blade "
+"on a smaller sheet. If your sheet is smaller, set Media Size in Page Setup."
+msgstr ""
+"Il Formato supporto è l’intero tappetino ({media}), quindi OpenCutter non "
+"può tenere la lama dentro un foglio più piccolo. Se il tuo foglio è più "
+"piccolo, imposta il Formato supporto in Imposta pagina."
+
+#: src/opencutter/gui/window.py
+msgid "<b>The stop could not be sent.</b> Press the machine's power button."
+msgstr ""
+"<b>Impossibile inviare il comando di arresto.</b> Premi il pulsante di "
+"accensione della macchina."
+
+#: src/opencutter/gui/window.py
+msgid "Stop sent. If the machine keeps moving, press its power button."
+msgstr ""
+"Comando di arresto inviato. Se la macchina continua a muoversi, premi il suo "
+"pulsante di accensione."
+
+#: src/opencutter/gui/window.py
+msgid "Not connected: press the machine's power button."
+msgstr "Non connessa: premi il pulsante di accensione della macchina."
+
+#: src/opencutter/gui/window.py
+msgid "Waiting for the machine to confirm the stop…"
+msgstr "In attesa che la macchina confermi l’arresto…"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid ""
+"A stop could not get through to the {name}. OpenCutter sends it as soon as "
+"the {name} is connected again. If it moves, press its power button."
+msgstr ""
+"Un comando di arresto non è riuscito a raggiungere la {name}. OpenCutter lo "
+"invia appena la {name} è di nuovo connessa. Se si muove, premi il suo "
+"pulsante di accensione."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid ""
+"The stop that could not get through was sent to the {name} when it connected "
+"again."
+msgstr ""
+"Il comando di arresto che non era arrivato è stato inviato alla {name} "
+"quando si è riconnessa."
+
+#: src/opencutter/gui/window.py
+msgid "Connection lost while cutting"
+msgstr "Connessione persa durante il taglio"
+
+#: src/opencutter/gui/window.py
+msgid ""
+"The connection came back, but this job has ended and does not go on. If the "
+"machine moves, press Stop Machine or its power button."
+msgstr ""
+"La connessione è tornata, ma questo lavoro è terminato e non riprende. Se la "
+"macchina si muove, premi Ferma o il suo pulsante di accensione."
+
+#: src/opencutter/gui/window.py
+msgid "Open…"
+msgstr "Apri…"
+
+#: src/opencutter/gui/window.py
+msgid "Keyboard Shortcuts"
+msgstr "Scorciatoie da tastiera"
+
+#: src/opencutter/gui/window.py
+msgid "About OpenCutter"
+msgstr "Informazioni su OpenCutter"
+
+#: src/opencutter/gui/window.py
+msgid "Main menu"
+msgstr "Menu principale"
+
+#: src/opencutter/gui/window.py
+msgid "Open"
+msgstr "Apri"
+
+#: src/opencutter/gui/window.py
+msgid "Open an SVG design (Ctrl+O)"
+msgstr "Apri un progetto SVG (Ctrl+O)"
+
+#: src/opencutter/gui/window.py
+msgid "No design open"
+msgstr "Nessun progetto aperto"
+
+#: src/opencutter/gui/window.py
+msgid "Moved since opening"
+msgstr "Spostato dall’apertura"
+
+#: src/opencutter/gui/window.py
+msgid "Show sidebar"
+msgstr "Mostra barra laterale"
+
+#: src/opencutter/gui/window.py
+msgid "Cancel Job (Esc)"
+msgstr "Annulla (Esc)"
+
+#: src/opencutter/gui/window.py
+msgid "Fit to Mat"
+msgstr "Adatta al tappetino"
+
+#: src/opencutter/gui/window.py
+msgid "Open an SVG design"
+msgstr "Apri un progetto SVG"
+
+#: src/opencutter/gui/window.py
+msgid "Drag a file here, or choose one from your computer."
+msgstr "Trascina qui un file, oppure scegline uno dal computer."
+
+#: src/opencutter/gui/window.py
+msgid "Open design…"
+msgstr "Apri progetto…"
+
+#: src/opencutter/gui/window.py
+msgid "Design in Inkscape, then open the SVG here."
+msgstr "Disegna in Inkscape, poi apri qui il file SVG."
+
+#. Translators: the short names of the design's position and size: X, Y, Width, Height.
+#: src/opencutter/gui/window.py
+msgctxt "position"
+msgid "X"
+msgstr "X"
+
+#. Translators: the short names of the design's position and size: X, Y, Width, Height.
+#: src/opencutter/gui/window.py
+msgctxt "position"
+msgid "Y"
+msgstr "Y"
+
+#: src/opencutter/gui/window.py
+msgid "Rotate 90°"
+msgstr "Ruota di 90°"
+
+#: src/opencutter/gui/window.py
+msgid "Align"
+msgstr "Allinea"
+
+#: src/opencutter/gui/window.py
+msgid "Zoom out"
+msgstr "Riduci"
+
+#: src/opencutter/gui/window.py
+msgid "Zoom in"
+msgstr "Ingrandisci"
+
+#: src/opencutter/gui/window.py
+msgid "Fit"
+msgstr "Adatta"
+
+#: src/opencutter/gui/window.py
+msgid "Fit (Ctrl+0)"
+msgstr "Adatta (Ctrl+0)"
+
+#: src/opencutter/gui/window.py
+msgid "SVG designs"
+msgstr "Progetti SVG"
+
+#: src/opencutter/gui/window.py
+msgid "Could not open the design"
+msgstr "Impossibile aprire il progetto"
+
+#: src/opencutter/gui/window.py
+msgid "The design was not opened: a job is being sent."
+msgstr "Il progetto non è stato aperto: è in corso l’invio di un lavoro."
+
+#. Translators: the window title: the design's file name, then the app's name.
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{design} — OpenCutter"
+msgstr "{design} — OpenCutter"
+
+#: src/opencutter/gui/window.py
+msgid "Details"
+msgstr "Dettagli"
+
+#: src/opencutter/gui/window.py
+msgid "Some objects were ignored"
+msgstr "Alcuni oggetti sono stati ignorati"
+
+#: src/opencutter/gui/window.py
+msgid "Fit to Media"
+msgstr "Adatta al supporto"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{n} path"
+msgid_plural "{n} paths"
+msgstr[0] "{n} tracciato"
+msgstr[1] "{n} tracciati"
+
+#: src/opencutter/gui/window.py
+msgid "No material"
+msgstr "Nessun materiale"
+
+#: src/opencutter/gui/window.py
+msgid "No action"
+msgstr "Nessuna azione"
+
+#: src/opencutter/gui/window.py
+msgid "Placement is locked while the machine is moving"
+msgstr "Posizione bloccata: la macchina si muove"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "Status: <span weight='500'>{status}</span>"
+msgstr "Stato: <span weight='500'>{status}</span>"
+
+#: src/opencutter/gui/window.py
+msgid "Paused on the machine"
+msgstr "In pausa sulla macchina"
+
+#: src/opencutter/gui/window.py
+msgid "Waiting for Cut (outline check)"
+msgstr "In attesa di Taglia (controllo del contorno)"
+
+#. Translators: what the machine does, and how far: "Cutting 40%".
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{activity} {percent}%"
+msgstr "{activity} {percent}%"
+
+#: src/opencutter/gui/window.py
+msgid "Send (Ctrl+Enter)"
+msgstr "Invia (Ctrl+Invio)"
+
+#: src/opencutter/gui/window.py
+msgid "This job cannot be sent"
+msgstr "Questo lavoro non può essere inviato"
+
+#: src/opencutter/gui/window.py
+msgid "The settings changed"
+msgstr "Le impostazioni sono cambiate"
+
+#: src/opencutter/gui/window.py
+msgid "Nothing was sent. Press Test Cut again to cut with the new settings."
+msgstr ""
+"Non è stato inviato nulla. Premi di nuovo Taglio di prova per tagliare con "
+"le nuove impostazioni."
+
+#: src/opencutter/gui/window.py
+msgid "The job changed before it was sent. Check it again."
+msgstr "Il lavoro è cambiato prima di essere inviato. Controllalo di nuovo."
+
+#: src/opencutter/gui/window.py
+msgid "The job kept changing"
+msgstr "Il lavoro continuava a cambiare"
+
+#: src/opencutter/gui/window.py
+msgid "Nothing was sent. Check the design and the settings, then send again."
+msgstr ""
+"Non è stato inviato nulla. Controlla il progetto e le impostazioni, poi "
+"invia di nuovo."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{holder}: {tool} detected"
+msgstr "{holder}: {tool} presente"
+
+#: src/opencutter/gui/window.py
+msgid "<b>Test Complete.</b> Check that the square peels off cleanly."
+msgstr ""
+"<b>Prova completata.</b> Controlla che il quadrato si stacchi in modo pulito."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "<b>{action} complete</b>"
+msgstr "<b>Completato: {action}</b>"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "machine: {status}"
+msgstr "macchina: {status}"
+
+#: src/opencutter/gui/window.py
+msgid "Nudge the design by 0.1 in (Shift: 1 in)"
+msgstr "Sposta il progetto di 0.1 in (Maiusc: 1 in)"
+
+#: src/opencutter/device/daemon.py
+msgid "nothing was sent"
+msgstr "non è stato inviato nulla"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"the machine is not connected yet: switch it off and on; the daemon "
+"reconnects by itself"
+msgstr ""
+"la macchina non è ancora connessa: spegnila e riaccendila; il servizio in "
+"background si riconnette da solo"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The mat was unloaded during the job; nothing more was sent. Load it and send "
+"the job again."
+msgstr ""
+"Il tappetino è stato scaricato durante il lavoro; non è stato inviato altro. "
+"Caricalo e invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The mat was unloaded during the job, so OpenCutter ended it with the stop "
+"and sends nothing more. Load the mat, then send the job again."
+msgstr ""
+"Il tappetino è stato scaricato durante il lavoro, quindi OpenCutter lo ha "
+"terminato con il comando di arresto e non invia altro. Carica il tappetino, "
+"poi invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The machine did not confirm the unit (U). Unload and load the mat, then send "
+"again."
+msgstr ""
+"La macchina non ha confermato l’unità (U). Scarica e ricarica il tappetino, "
+"poi invia di nuovo."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The machine left Pause without going on with the cut, so it may have been "
+"cancelled on its panel. OpenCutter ended the job with the stop and sends "
+"nothing more. Press Unload on the machine, check that the tool is up, then "
+"load the mat and send the job again."
+msgstr ""
+"La macchina è uscita dalla pausa senza continuare il taglio, quindi il "
+"lavoro potrebbe essere stato annullato dal suo pannello. OpenCutter ha "
+"terminato il lavoro con il comando di arresto e non invia altro. Premi "
+"Scarica sulla macchina, controlla che l’utensile sia sollevato, poi carica "
+"il tappetino e invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"stopped on request (Cancel in the app, or `opencutter stop`); nothing more "
+"was sent"
+msgstr ""
+"fermato su richiesta (Annulla nell’app, oppure `opencutter stop`); non è "
+"stato inviato altro"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"A stop request (Cancel in the app, or `opencutter stop` from a terminal) "
+"stopped the machine before this step; nothing more was sent. Press Unload on "
+"the machine, check that the tool is up, then load the mat and {again}."
+msgstr ""
+"Una richiesta di arresto (Annulla nell’app, oppure `opencutter stop` da un "
+"terminale) ha fermato la macchina prima di questo passaggio; non è stato "
+"inviato altro. Premi Scarica sulla macchina, controlla che l’utensile sia "
+"sollevato, poi carica il tappetino e {again}."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"A stop request (Cancel in the app, or `opencutter stop` from a terminal) "
+"came during the unit check (U); nothing more was sent. Press Unload on the "
+"machine, then load the mat and {again}."
+msgstr ""
+"Una richiesta di arresto (Annulla nell’app, oppure `opencutter stop` da un "
+"terminale) è arrivata durante il controllo dell’unità (U); non è stato "
+"inviato altro. Premi Scarica sulla macchina, poi carica il tappetino e "
+"{again}."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "{reason} Nothing more is sent to it."
+msgstr "{reason} Non le viene inviato altro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "{problem}; nothing was sent"
+msgstr "{problem}; non è stato inviato nulla"
+
+#: src/opencutter/device/daemon.py
+msgid "the background service is stopping"
+msgstr "il servizio in background si sta fermando"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"a program or job is running; cancel it first (in the app, or with "
+"`opencutter stop`)"
+msgstr ""
+"è in corso un programma o un lavoro; annullalo prima (nell’app, oppure con "
+"`opencutter stop`)"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"this background service is {service}, but the app or command is {client}: "
+"nothing was sent. Run `opencutter service stop`, then try again"
+msgstr ""
+"questo servizio in background è {service}, ma l’app o il comando è {client}: "
+"non è stato inviato nulla. Esegui `opencutter service stop`, poi riprova"
+
+#: src/opencutter/device/daemon.py
+msgid "send the job again"
+msgstr "invia di nuovo il lavoro"
+
+#: src/opencutter/device/daemon.py
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "status {status} = {term}"
+msgstr "stato {status} = {term}"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine was paused ({shown}). OpenCutter ended the job with the stop and "
+"sends nothing more: press Unload on the machine (or switch it off), check "
+"that the tool is up, then load the mat and send the job again."
+msgstr ""
+"La macchina era in pausa ({shown}). OpenCutter ha terminato il lavoro con il "
+"comando di arresto e non invia altro: premi Scarica sulla macchina (o "
+"spegnila), controlla che l’utensile sia sollevato, poi carica il tappetino e "
+"invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine was paused ({shown}) before this step; nothing of this step was "
+"sent. OpenCutter ended the job with the stop and sends nothing more: press "
+"Unload on the machine (or switch it off), check that the tool is up, then "
+"load the mat and send the job again."
+msgstr ""
+"La macchina era in pausa ({shown}) prima di questo passaggio; non è stato "
+"inviato nulla di questo passaggio. OpenCutter ha terminato il lavoro con il "
+"comando di arresto e non invia altro: premi Scarica sulla macchina (o "
+"spegnila), controlla che l’utensile sia sollevato, poi carica il tappetino e "
+"invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine cancelled the job ({shown}). OpenCutter ended the job with the "
+"stop and sends nothing more. Press Unload on the machine, check that the "
+"tool is up, then load the mat and send the job again."
+msgstr ""
+"La macchina ha annullato il lavoro ({shown}). OpenCutter ha terminato il "
+"lavoro con il comando di arresto e non invia altro. Premi Scarica sulla "
+"macchina, controlla che l’utensile sia sollevato, poi carica il tappetino e "
+"invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine cancelled the job ({shown}) before this step; nothing of this "
+"step was sent. OpenCutter ended the job with the stop and sends nothing "
+"more. Press Unload on the machine, check that the tool is up, then load the "
+"mat and send the job again."
+msgstr ""
+"La macchina ha annullato il lavoro ({shown}) prima di questo passaggio; non "
+"è stato inviato nulla di questo passaggio. OpenCutter ha terminato il lavoro "
+"con il comando di arresto e non invia altro. Premi Scarica sulla macchina, "
+"controlla che l’utensile sia sollevato, poi carica il tappetino e invia di "
+"nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine rejected a command ({shown}): another connection, such as USB, "
+"may hold it. OpenCutter ended the job with the stop. Close the other "
+"connection, then press Unload on the machine (or switch it off), check that "
+"the tool is up, then load the mat and send the job again."
+msgstr ""
+"La macchina ha rifiutato un comando ({shown}): potrebbe occuparla un’altra "
+"connessione, come USB. OpenCutter ha terminato il lavoro con il comando di "
+"arresto. Chiudi l’altra connessione, quindi premi Scarica sulla macchina (o "
+"spegnila), controlla che l’utensile sia sollevato, poi carica il tappetino e "
+"invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine rejected a command ({shown}) before this step; nothing of this "
+"step was sent: another connection, such as USB, may hold it. OpenCutter "
+"ended the job with the stop. Close the other connection, then press Unload "
+"on the machine (or switch it off), check that the tool is up, then load the "
+"mat and send the job again."
+msgstr ""
+"La macchina ha rifiutato un comando ({shown}) prima di questo passaggio; non "
+"è stato inviato nulla di questo passaggio: potrebbe occuparla un’altra "
+"connessione, come USB. OpenCutter ha terminato il lavoro con il comando di "
+"arresto. Chiudi l’altra connessione, quindi premi Scarica sulla macchina (o "
+"spegnila), controlla che l’utensile sia sollevato, poi carica il tappetino e "
+"invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine still reported Busy {seconds} s after the previous step "
+"({shown}). OpenCutter ended the job with the stop; if the machine keeps "
+"moving, press its power button. Then press Unload on the machine (or switch "
+"it off), check that the tool is up, then load the mat and send the job again."
+msgstr ""
+"La macchina risultava ancora occupata {seconds} s dopo il passaggio "
+"precedente ({shown}). OpenCutter ha terminato il lavoro con il comando di "
+"arresto; se la macchina continua a muoversi, premi il suo pulsante di "
+"accensione. Quindi premi Scarica sulla macchina (o spegnila), controlla che "
+"l’utensile sia sollevato, poi carica il tappetino e invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine still reported Busy {seconds} s after the previous step "
+"({shown}) before this step; nothing of this step was sent. OpenCutter ended "
+"the job with the stop; if the machine keeps moving, press its power button. "
+"Then press Unload on the machine (or switch it off), check that the tool is "
+"up, then load the mat and send the job again."
+msgstr ""
+"La macchina risultava ancora occupata {seconds} s dopo il passaggio "
+"precedente ({shown}) prima di questo passaggio; non è stato inviato nulla di "
+"questo passaggio. OpenCutter ha terminato il lavoro con il comando di "
+"arresto; se la macchina continua a muoversi, premi il suo pulsante di "
+"accensione. Quindi premi Scarica sulla macchina (o spegnila), controlla che "
+"l’utensile sia sollevato, poi carica il tappetino e invia di nuovo il lavoro."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"unexpected status {status} = {term} before this step; nothing of this step "
+"was sent, and OpenCutter ended the job with the stop"
+msgstr ""
+"stato imprevisto {status} = {term} prima di questo passaggio; non è stato "
+"inviato nulla di questo passaggio, e OpenCutter ha terminato il lavoro con "
+"il comando di arresto"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "unexpected status {status} = {term}"
+msgstr "stato imprevisto {status} = {term}"
+
+#: src/opencutter/device/daemon.py
+msgid "no job is running"
+msgstr "nessun lavoro in corso"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is not connected"
+msgstr "la macchina non è connessa"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is not answering (the link is down)"
+msgstr "la macchina non risponde (il collegamento è interrotto)"
+
+#: src/opencutter/device/daemon.py
+msgid "a stop was asked for: the job is ending"
+msgstr "è stato richiesto l’arresto: il lavoro sta terminando"
+
+#: src/opencutter/device/daemon.py
+msgid "the job is ending"
+msgstr "il lavoro sta terminando"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the {model} has not been tested with resume: press its Pause key"
+msgstr ""
+"la ripresa dalla pausa non è stata provata sulla {model}: premi il suo tasto "
+"Pausa"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the {model} has not been tested with pause: press its Pause key"
+msgstr ""
+"la messa in pausa non è stata provata sulla {model}: premi il suo tasto Pausa"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the machine is not paused ({shown})"
+msgstr "la macchina non è in pausa ({shown})"
+
+#: src/opencutter/device/daemon.py
+msgid "the job has not started yet"
+msgstr "il lavoro non è ancora iniziato"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is already paused"
+msgstr "la macchina è già in pausa"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the machine is neither ready nor busy ({shown})"
+msgstr "la macchina non è né pronta né occupata ({shown})"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"the machine is not answering (its status could not be read within {seconds} "
+"s)"
+msgstr ""
+"la macchina non risponde (non è stato possibile leggerne lo stato entro "
+"{seconds} s)"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is not answering (no reply to ESC 05)"
+msgstr "la macchina non risponde (nessuna risposta a ESC 05)"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"the machine's status could not be read for sure (an earlier reply is still "
+"due); try again"
+msgstr ""
+"non è stato possibile leggere con certezza lo stato della macchina (si "
+"attende ancora una risposta precedente); riprova"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"the resume write failed ({error}); whether it arrived is unknown, and it is "
+"not sent again"
+msgstr ""
+"la scrittura del comando Riprendi non è riuscita ({error}); non si sa se sia "
+"arrivato, e non viene inviato di nuovo"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"the pause write failed ({error}); whether it arrived is unknown, and it is "
+"not sent again"
+msgstr ""
+"la scrittura del comando Pausa non è riuscita ({error}); non si sa se sia "
+"arrivato, e non viene inviato di nuovo"
+
+#: src/opencutter/device/protocol.py
+msgid ""
+"Do not press Pause to continue: press Unload on the machine (or switch it "
+"off and on), check that the tool is up, then load the Cutting Mat right "
+"before the job."
+msgstr ""
+"Non premere Pausa per continuare: premi Scarica sulla macchina (o spegnila e "
+"riaccendila), controlla che l’utensile sia sollevato, poi carica il "
+"tappetino da taglio subito prima del lavoro."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine is busy ({shown}): it is still working, or another connection "
+"such as USB holds it. Nothing was sent. Wait until it shows Ready, then try "
+"again."
+msgstr ""
+"La macchina è occupata ({shown}): sta ancora lavorando, oppure la occupa "
+"un’altra connessione come USB. Non è stato inviato nulla. Aspetta che "
+"indichi Pronta, poi riprova."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "The machine is paused ({shown}). Nothing was sent. {advice}"
+msgstr "La macchina è in pausa ({shown}). Non è stato inviato nulla. {advice}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine is still ending a cancel ({shown}). Nothing was sent. Wait until "
+"it shows Ready or Load Media. {advice}"
+msgstr ""
+"La macchina sta ancora completando un annullamento ({shown}). Non è stato "
+"inviato nulla. Aspetta che indichi Pronta o Carica supporto. {advice}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine rejected a command ({shown}): another connection, such as USB, "
+"held it. Nothing was sent. Close the other connection, then try again."
+msgstr ""
+"La macchina ha rifiutato un comando ({shown}): la occupava un’altra "
+"connessione, come USB. Non è stato inviato nulla. Chiudi l’altra "
+"connessione, poi riprova."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine is not ready ({shown}). Load the Cutting Mat on the machine "
+"right before the job."
+msgstr ""
+"La macchina non è pronta ({shown}). Carica il tappetino da taglio sulla "
+"macchina subito prima del lavoro."
+
+#: src/opencutter/device/protocol.py
+msgid ""
+"This machine did not report its model. OpenCutter cannot drive it and will "
+"not send anything to it."
+msgstr ""
+"Questa macchina non ha comunicato il suo modello. OpenCutter non può "
+"controllarla e non le invierà nulla."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as \"{model}\". OpenCutter cannot drive it and "
+"will not send anything to it."
+msgstr ""
+"Questa macchina si presenta come “{model}”. OpenCutter non può controllarla "
+"e non le invierà nulla."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as \"{model}\", a name that more than one model "
+"uses, so OpenCutter cannot tell which model it is and will not send anything "
+"to it."
+msgstr ""
+"Questa macchina si presenta come “{model}”, un nome usato da più modelli, "
+"quindi OpenCutter non sa quale modello sia e non le invierà nulla."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply} is not a unit reply (two numbers and a comma). Stopping before "
+"anything is drawn.{report}"
+msgstr ""
+"U = {reply} non è una risposta di unità (due numeri e una virgola). Arresto "
+"prima di disegnare qualsiasi cosa.{report}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}: not checked. The reply the {mat} gives on this model is not "
+"known yet, so the cut area could not be checked."
+msgstr ""
+"U = {reply}: non verificata. La risposta che dà il {mat} su questo modello "
+"non è ancora nota, quindi non è stato possibile verificare l’area di taglio."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}: no reply is known for the {mat}, so the unit cannot be "
+"confirmed. Stopping before anything is drawn."
+msgstr ""
+"U = {reply}: non è nota nessuna risposta per il {mat}, quindi l’unità non "
+"può essere confermata. Arresto prima di disegnare qualsiasi cosa."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "U = {reply}: 0.05 mm per unit, confirmed"
+msgstr "U = {reply}: 0.05 mm per unità, confermata"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}: the unit looks like {size}, not 0.05 mm. Stopping before "
+"anything is drawn.{report}"
+msgstr ""
+"U = {reply}: l’unità sembra {size}, non 0.05 mm. Arresto prima di disegnare "
+"qualsiasi cosa.{report}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}, not {a},{b}: the mat type ({tg}) probably did not take effect "
+"because the {mat} was not loaded right before the job. Unload and Load it on "
+"the machine, then retry.{report}"
+msgstr ""
+"U = {reply}, non {a},{b}: probabilmente il tipo di tappetino ({tg}) non è "
+"stato applicato perché il {mat} non è stato caricato subito prima del "
+"lavoro. Scaricalo e ricaricalo sulla macchina, poi riprova.{report}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "{size} mat"
+msgstr "tappetino {size}"
+
+#: src/opencutter/device/protocol.py
+msgid "mat"
+msgstr "tappetino"
+
+#. Translators: added after a sentence: keep the space at the start.
+#: src/opencutter/device/protocol.py
+msgid ""
+" The expected reply comes from the firmware analysis and was not measured on "
+"this model yet: if the mat was loaded right before the job, please report "
+"this reply."
+msgstr ""
+" La risposta attesa viene dall’analisi del firmware e non è ancora stata "
+"misurata su questo modello: se il tappetino è stato caricato subito prima "
+"del lavoro, segnala questa risposta."
+
+#. Translators: added after a sentence: keep the space at the start.
+#: src/opencutter/device/protocol.py
+msgid ""
+" If this happens again with the mat loaded right before the job, please "
+"report it."
+msgstr ""
+" Se succede di nuovo con il tappetino caricato subito prima del lavoro, "
+"segnalalo."
+
+#: src/opencutter/job/plan.py
+msgid "The mat may feed in and the carriage moves a little. The tool stays up."
+msgstr ""
+"Il tappetino potrebbe entrare e il carrello si muove un po’. L’utensile "
+"resta sollevato."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The mat may feed in about {feed} mm and the carriage moves a little. The "
+"tool stays up."
+msgstr ""
+"Il tappetino potrebbe entrare di circa {feed} mm e il carrello si muove un "
+"po’. L’utensile resta sollevato."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "Header: {mat} cutting mat"
+msgstr "Intestazione: tappetino da taglio {mat}"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The machine should reply {a},{b}: {unit} mm per unit, mat command accepted."
+msgstr ""
+"La macchina dovrebbe rispondere {a},{b}: {unit} mm per unità, comando del "
+"tappetino accettato."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The reply is logged and shown but not checked: the {machine}'s reply with "
+"the {mat} mat is not known, so the cut area could not be checked on this "
+"model."
+msgstr ""
+"La risposta viene registrata e mostrata ma non verificata: la risposta della "
+"{machine} con il tappetino {mat} non è nota, quindi non è stato possibile "
+"verificare l’area di taglio su questo modello."
+
+#: src/opencutter/job/plan.py
+msgid "Check units (no motion)"
+msgstr "Verifica unità (nessun movimento)"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{holder}: {tool}, Force {force}, Speed {speed}"
+msgstr "{holder}: {tool}, Forza {force}, Velocità {speed}"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"{holder}: {tool}, Blade Depth {depth} ({mm}), Force {force}, Speed {speed}"
+msgstr ""
+"{holder}: {tool}, Profondità lama {depth} ({mm}), Forza {force}, Velocità "
+"{speed}"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{holder} is selected; the carriage may move. Nothing touches the media."
+msgstr ""
+"{holder} selezionato; il carrello potrebbe muoversi. Nulla tocca il supporto."
+
+#: src/opencutter/job/plan.py
+msgid ""
+"The tool settings are sent; the carriage may move. Nothing touches the media."
+msgstr ""
+"Le impostazioni dell’utensile vengono inviate; il carrello potrebbe "
+"muoversi. Nulla tocca il supporto."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"{holder} is selected; the carriage may move. Nothing touches the media. Then "
+"the {tool} is set at its station on the left (about 10 s)."
+msgstr ""
+"{holder} selezionato; il carrello potrebbe muoversi. Nulla tocca il "
+"supporto. Poi l’utensile {tool} viene regolato nella sua stazione a sinistra "
+"(circa 10 s)."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The tool settings are sent; the carriage may move. Nothing touches the "
+"media. Then the {tool} is set at its station (about 10 s)."
+msgstr ""
+"Le impostazioni dell’utensile vengono inviate; il carrello potrebbe "
+"muoversi. Nulla tocca il supporto. Poi l’utensile {tool} viene regolato "
+"nella sua stazione (circa 10 s)."
+
+#: src/opencutter/job/plan.py
+msgid "Preview outline (tool up)"
+msgstr "Anteprima del contorno (utensile sollevato)"
+
+#: src/opencutter/job/plan.py
+msgid ""
+"The tool stays up and traces the outer box of the design. Check that it "
+"stays over the media."
+msgstr ""
+"L’utensile resta sollevato e traccia il riquadro esterno del progetto. "
+"Controlla che resti sopra il supporto."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: 1 path, {length} mm, {passes} passes."
+msgstr "L’utensile si abbassa: 1 tracciato, {length} mm, {passes} passate."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: {paths} paths, {length} mm, {passes} passes."
+msgstr ""
+"L’utensile si abbassa: {paths} tracciati, {length} mm, {passes} passate."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: 1 path, {length} mm."
+msgstr "L’utensile si abbassa: 1 tracciato, {length} mm."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: {paths} paths, {length} mm."
+msgstr "L’utensile si abbassa: {paths} tracciati, {length} mm."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{action} with {holder} ({tool})"
+msgstr "{action} con il {holder} ({tool})"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{action} with the {tool}"
+msgstr "{action} con l’utensile {tool}"
+
+#: src/opencutter/job/plan.py
+msgid "Return to Origin"
+msgstr "Ritorno all’origine"
+
+#: src/opencutter/job/plan.py
+msgid ""
+"The tool moves up to the origin. The mat stays loaded; unload it on the "
+"machine."
+msgstr ""
+"L’utensile torna all’origine. Il tappetino resta caricato; scaricalo dalla "
+"macchina."
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "OpenCutter cannot drive the {name} yet"
+msgstr "OpenCutter non può ancora controllare la {name}"
+
+#: src/opencutter/job/validate.py
+msgid "the job has nothing to cut"
+msgstr "il lavoro non ha nulla da tagliare"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "{holder} is used with two different tools"
+msgstr "{holder} viene usato con due utensili diversi"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "the {name} has one tool holder, and the job uses two different tools"
+msgstr ""
+"la {name} ha un solo portautensile, e il lavoro usa due utensili diversi"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "more than {count} points"
+msgstr "più di {count} punti"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "the media does not fit on the {mat} cutting mat"
+msgstr "il supporto non entra nel tappetino da taglio {mat}"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "group {group}: point ({x}, {y}) mm lies outside the media"
+msgstr "gruppo {group}: il punto ({x}, {y}) mm è fuori dal supporto"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "group {group}: point ({x}, {y}) mm lies outside the cut area"
+msgstr "gruppo {group}: il punto ({x}, {y}) mm è fuori dall’area di taglio"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "Blade Depth (TF) needs the {tool} detected in {holder}"
+msgstr "Profondità lama (TF) richiede l’utensile {tool} rilevato nel {holder}"
+
+#: src/opencutter/machines/profile.py
+#, python-brace-format
+msgid "OpenCutter recognizes this {name} but cannot drive it yet: {reason}."
+msgstr ""
+"OpenCutter riconosce questa {name} ma non può ancora controllarla: {reason}."
+
+#: src/opencutter/machines/recognized.py
+msgid ""
+"there is no known way to stop it from the computer, and it does not report "
+"which tools are loaded"
+msgstr ""
+"non si conosce un modo per fermarla dal computer e non comunica quali "
+"utensili sono inseriti"
+
+#: src/opencutter/machines/recognized.py
+msgid ""
+"it needs a USB connection, which OpenCutter does not have, and there is no "
+"known way to stop it from the computer"
+msgstr ""
+"richiede una connessione USB, che OpenCutter non ha, e non si conosce un "
+"modo per fermarla dal computer"
+
+#: src/opencutter/machines/recognized.py
+msgid ""
+"the work area of its trays, its tool height and the material thickness are "
+"not known, and there is no way to confirm the work area before a cut"
+msgstr ""
+"l’area di lavoro dei suoi vassoi, l’altezza dell’utensile e lo spessore del "
+"materiale non sono noti, e non c’è modo di confermare l’area di lavoro prima "
+"di un taglio"
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: the file is damaged or not an SVG ({error})."
+msgstr ""
+"Impossibile leggere {name}: il file è danneggiato o non è un SVG ({error})."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: it is not an SVG file."
+msgstr "Impossibile leggere {name}: non è un file SVG."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: {error}"
+msgstr "Impossibile leggere {name}: {error}"
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Nothing to cut in {name}: it has no visible paths or shapes."
+msgstr "Niente da tagliare in {name}: non ha tracciati o forme visibili."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid ""
+"{n} text object ignored: convert text to paths in Inkscape (Path > Object to "
+"Path)."
+msgid_plural ""
+"{n} text objects ignored: convert text to paths in Inkscape (Path > Object "
+"to Path)."
+msgstr[0] ""
+"{n} oggetto di testo ignorato: converti il testo in tracciati in Inkscape "
+"(Tracciato > Da oggetto a tracciato)."
+msgstr[1] ""
+"{n} oggetti di testo ignorati: converti il testo in tracciati in Inkscape "
+"(Tracciato > Da oggetto a tracciato)."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid ""
+"{n} image ignored: trace images in Inkscape (Path > Trace Bitmap) to cut "
+"them."
+msgid_plural ""
+"{n} images ignored: trace images in Inkscape (Path > Trace Bitmap) to cut "
+"them."
+msgstr[0] ""
+"{n} immagine ignorata: vettorizza le immagini in Inkscape (Tracciato > "
+"Vettorizza bitmap) per tagliarle."
+msgstr[1] ""
+"{n} immagini ignorate: vettorizza le immagini in Inkscape (Tracciato > "
+"Vettorizza bitmap) per tagliarle."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid ""
+"{n} clipped or masked object: clips and masks are ignored, so the whole "
+"object is cut."
+msgid_plural ""
+"{n} clipped or masked objects: clips and masks are ignored, so the whole "
+"object is cut."
+msgstr[0] ""
+"{n} oggetto ritagliato o con maschera: ritagli e maschere vengono ignorati, "
+"quindi viene tagliato l’intero oggetto."
+msgstr[1] ""
+"{n} oggetti ritagliati o con maschera: ritagli e maschere vengono ignorati, "
+"quindi vengono tagliati gli interi oggetti."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not open {name}: {error}."
+msgstr "Impossibile aprire {name}: {error}."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: the compressed file is damaged."
+msgstr "Impossibile leggere {name}: il file compresso è danneggiato."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: the file is too large."
+msgstr "Impossibile leggere {name}: il file è troppo grande."

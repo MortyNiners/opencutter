@@ -105,6 +105,61 @@ every commit.
   README shows.
 - Tests use only the files of this repository and data they make up themselves.
 
+## Translations
+
+The window is translated with gettext (domain `opencutter`); English is the source language and
+the fallback. The command line, the background service and the logs stay in English. Fixes from
+native speakers are especially welcome: the first seven languages (`ro`, `de`, `fr`, `es`, `it`,
+`pt`, `ru`) were written with machine assistance and have not all been reviewed yet.
+
+The files:
+
+- `po/opencutter.pot`: the template, every English text of the window. Never edit it by hand;
+  `extract` writes it from the texts marked in the files that `po/POTFILES` lists.
+- `po/<code>.po`: one translation per language, listed in `po/LINGUAS`. Each starts with the
+  SPDX comment lines that every `po/` file carries.
+- `po/GLOSSARY.md`: the terms the translations share (Material, Action, Tool, Cutting Mat, ...),
+  what is never translated (machine and model names, commands, status digits, units) and the
+  rules for placeholders, markup, plural forms and length. Read it before you start.
+- `src/opencutter/locale/<code>/LC_MESSAGES/opencutter.mo`: the compiled catalogs. They are
+  package data and kept in the repository, so commit each `.mo` file together with its `.po`
+  file.
+
+`build-aux/translations.py` does every step in plain Python, so no gettext tools are needed:
+
+```sh
+python3 build-aux/translations.py extract      # po/opencutter.pot from the marked texts
+python3 build-aux/translations.py update       # merge the template into every po/<code>.po
+python3 build-aux/translations.py init <code>  # start a new language: po/<code>.po, po/LINGUAS
+python3 build-aux/translations.py compile      # po/<code>.po -> the .mo catalogs
+python3 build-aux/translations.py check        # all of the above is up to date (exit 1 if not)
+python3 build-aux/translations.py sdk-check    # extra: GNU msgfmt --check (host or GNOME SDK)
+```
+
+To fix a translation, edit the `msgstr` in `po/<code>.po`, then run `compile` and `check`.
+`compile` refuses a translation whose `{placeholders}` or markup tags differ from the English
+text, because the window could not show it; a text that is not translated, or marked fuzzy,
+stays English. `tests/test_i18n.py` fails when the template or a catalog is not up to date. To add
+a language, run `init <code>`, translate, then `compile`, and add the language's own name to
+`LANGUAGE_NAMES` in `src/opencutter/i18n.py` (without it the Preferences list shows the code).
+When you change or add a text in the code, mark it (`_()`, `ngettext()`, `pgettext()`, or `N_()`
+for a text shown later; see `src/opencutter/i18n.py`), then run `extract`, `update` and
+`compile`. A text whose English changed is a new text: `update` adds it untranslated (it shows
+English until someone translates it) and keeps the old translation at the end of each `.po` file
+as an obsolete entry, for the translator to reuse.
+
+- **Write your own translation.** Never copy texts from Silhouette Studio, its manuals or its
+  language files (see "What must never enter the repository"). The ordinary word of your language
+  for an ordinary thing (blade, cut, mat) is fine.
+- **Keep the labels short.** The header buttons (Open, Send, Cancel Job, Stop Machine), the
+  status pill, the sidebar tabs and the Tool cards have little room. Where a sentence names a
+  button ("press Cancel Job"), use that button's label exactly as your translation has it.
+- **Look at it.** Choose the language in Preferences → General → Language and start the app again
+  (or start it with `LANGUAGE=<code>` while the row is at System default). Check the main window
+  at its smallest width: in English the header keeps its button texts there.
+- **Review.** A pull request for a translation says which language it is and whether a native
+  speaker wrote or checked it. Changes to a language are best reviewed by another speaker of it.
+
 ## Building the Flatpak locally
 
 The manifest is `build-aux/flatpak/io.github.mortyniners.OpenCutter.yml`; the release bundles are

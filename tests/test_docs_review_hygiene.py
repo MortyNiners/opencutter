@@ -11,7 +11,9 @@ all four, and every basis in the registry is one of them. The README's Install s
 newest stable release and its known limitations. Since 0.1.1 the docs say what the machine's
 Pause key, the user's Pause and Resume and a stop of a paused machine do, as the code and the
 analysis of the CAMEO 4's firmware say, without claiming a hardware test, and never advise
-pressing Pause after a stop.
+pressing Pause after a stop. The README names every language of po/LINGUAS and how to choose
+one, CONTRIBUTING.md every command of build-aux/translations.py, and ARCHITECTURE.md the names
+of the i18n setup that the code has.
 """
 import xml.etree.ElementTree as ET
 import json
@@ -1040,3 +1042,82 @@ def test_readme_names_the_known_limitations():
                   "`sha256sum --check SHA256SUMS`",
                   "**From source, the app needs GNOME 49 or newer**"):
         assert words in known, words
+
+
+# --- the translations: README "Languages", CONTRIBUTING "Translations", ARCHITECTURE ------------
+PO_DIR = REPO / "po"
+TRANSLATIONS_TOOL = REPO / "build-aux" / "translations.py"
+DIALOGS = REPO / "src" / "opencutter" / "gui" / "dialogs.py"
+I18N = REPO / "src" / "opencutter" / "i18n.py"
+ENGLISH_NAMES = {"ro": "Romanian", "de": "German", "fr": "French", "es": "Spanish",
+                 "it": "Italian", "pt": "Portuguese", "ru": "Russian"}
+
+
+def linguas() -> list[str]:
+    codes = []
+    for line in text(PO_DIR / "LINGUAS").splitlines():
+        if not line.lstrip().startswith("#"):
+            codes += line.split()
+    return codes
+
+
+def doc_section(doc: str, title: str) -> str:
+    """The body of '## <title>' up to the next '## ' heading, flattened."""
+    m = re.search(rf"^## {re.escape(title)}$(.*?)(?=^## |\Z)", doc, re.M | re.S)
+    assert m, f"no section {title!r}"
+    return flat(m[1])
+
+
+def test_readme_languages_names_every_language_and_how_to_choose_one():
+    """Every language of po/LINGUAS by its English name, that the translations were machine
+    assisted and welcome corrections, the Preferences row the code has and the LANGUAGE
+    variable, that only the window is translated, and the way to CONTRIBUTING.md."""
+    langs = doc_section(text(README), "Languages")
+    codes = linguas()
+    assert codes and set(codes) <= set(ENGLISH_NAMES), codes
+    for code in codes:
+        assert ENGLISH_NAMES[code] in langs, code
+    for words in ("machine assistance", "native speakers",
+                  "**Preferences** → **General** → **Language**", "start OpenCutter again",
+                  "System default", "LANGUAGE=de .venv/bin/opencutter",
+                  f"flatpak run --env=LANGUAGE=de {APP_ID}", "Only the window is translated",
+                  "](CONTRIBUTING.md#translations)"):
+        assert words in langs, words
+    # the row is where the README says, and takes effect at the next start
+    dialogs = text(DIALOGS)
+    assert 'Adw.PreferencesGroup(title=_("General"))' in dialogs
+    assert "general.add(self._language_row())" in dialogs
+    assert 'Adw.ComboRow(title=_("Language"))' in dialogs
+    assert 'N_("Restart OpenCutter to use the new language")' in dialogs
+
+
+def test_contributing_translations_names_the_files_and_every_command():
+    """The template, the .po files, the glossary and the catalogs; every subcommand of
+    build-aux/translations.py; the compile and check step; no copied Studio texts; review by
+    native speakers."""
+    section_text = doc_section(text(CONTRIBUTING), "Translations")
+    commands = re.findall(r'sub\.add_parser\("([a-z-]+)"\)', text(TRANSLATIONS_TOOL))
+    assert set(commands) == {"extract", "init", "update", "compile", "check", "sdk-check"}
+    for command in commands:
+        assert f"python3 build-aux/translations.py {command}" in section_text, command
+    for words in ("`po/opencutter.pot`", "`po/<code>.po`", "`po/LINGUAS`", "`po/POTFILES`",
+                  "`po/GLOSSARY.md`", "src/opencutter/locale/<code>/LC_MESSAGES/opencutter.mo",
+                  "then run `compile` and `check`", "`tests/test_i18n.py`",
+                  "Never copy texts from Silhouette Studio", "native speaker",
+                  "`LANGUAGE_NAMES`"):
+        assert words in section_text, words
+    assert "LANGUAGE_NAMES = {" in text(I18N)
+
+
+def test_architecture_describes_the_translations():
+    doc = text(ARCHITECTURE)
+    for words in ("i18n.py ", "locale/ ", "build-aux/translations.py ", "po/ "):
+        assert words in doc, words
+    section_text = doc_section(doc, "Translations")
+    for name in ("`setup()`", "`translate_text()`", "`N_()`", "`NC_()`", "`MACHINE_WORDS`",
+                 "`GuiSettings.language`", "`apply_language_choice()`", "`MainWindow._fit_header()`",
+                 "`MIN_TEMPLATE_TEXT`", "`SERVICE_DEPTH`", "`PRODUCT_NAMES`"):
+        assert name in section_text, name
+        assert name.strip("`").split("(")[0].split(".")[-1] in (
+            text(I18N) + text(REPO / "src" / "opencutter" / "gui" / "window.py")
+            + text(REPO / "src" / "opencutter" / "gui" / "settings.py")), name

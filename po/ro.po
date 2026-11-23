@@ -1,0 +1,3184 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# OpenCutter's translation into ro. po/GLOSSARY.md explains the terms.
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenCutter\n"
+"Report-Msgid-Bugs-To: https://github.com/MortyNiners/opencutter/issues\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ro\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2);\n"
+
+#: src/opencutter/i18n.py
+#: src/opencutter/gui/sidebar.py
+msgid "Cut Settings"
+msgstr "Setări de tăiere"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Ready"
+msgstr "Pregătită"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Busy"
+msgstr "Ocupată"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Load Media"
+msgstr "Așteaptă covorașul"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Paused"
+msgstr "În pauză"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Cancelling"
+msgstr "Se anulează"
+
+#: src/opencutter/i18n.py
+msgctxt "machine status"
+msgid "Rejected"
+msgstr "Respinsă"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "No Tool Detected"
+msgstr "Nicio unealtă detectată"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Ratchet Blade"
+msgstr "Lamă cu clichet"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Deep-Cut Blade"
+msgstr "Lamă pentru tăiere adâncă"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Kraft Blade, 2mm"
+msgstr "Lamă Kraft, 2mm"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Kraft Blade, 3mm"
+msgstr "Lamă Kraft, 3mm"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Rotary Blade"
+msgstr "Lamă rotativă"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Punch Tool"
+msgstr "Unealtă de perforare"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Sketch Pen"
+msgstr "Cariocă de desen"
+
+#: src/opencutter/i18n.py
+msgctxt "tool"
+msgid "Foil Tool"
+msgstr "Unealtă pentru folie"
+
+#: src/opencutter/i18n.py
+#, python-brace-format
+msgctxt "tool holder"
+msgid "Tool {number}"
+msgstr "Unealta {number}"
+
+#: src/opencutter/i18n.py
+msgctxt "tool holder"
+msgid "Tool"
+msgstr "Unealta"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Cut"
+msgstr "Tăiere"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Kraft Cut"
+msgstr "Tăiere Kraft"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Rotary Cut"
+msgstr "Tăiere rotativă"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Punch"
+msgstr "Perforare"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Sketch"
+msgstr "Desenare"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Foil"
+msgstr "Aplicare folie"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "Score"
+msgstr "Biguire"
+
+#: src/opencutter/i18n.py
+msgctxt "action"
+msgid "No Cut"
+msgstr "Fără tăiere"
+
+#: src/opencutter/i18n.py
+msgctxt "material"
+msgid "Vinyl"
+msgstr "Vinil"
+
+#: src/opencutter/i18n.py
+msgctxt "material"
+msgid "Paper"
+msgstr "Hârtie"
+
+#: src/opencutter/i18n.py
+msgctxt "material"
+msgid "Sketch Pen"
+msgstr "Cariocă de desen"
+
+#. Translators: the caption under the mat, in capitals; {mat} is its size ("12 × 12 in").
+#: src/opencutter/gui/canvas.py
+#, python-brace-format
+msgid "CUTTING MAT {mat}"
+msgstr "COVORAȘ DE TĂIERE {mat}"
+
+#: src/opencutter/gui/canvas.py
+msgid "Cut area"
+msgstr "Zonă de tăiere"
+
+#: src/opencutter/gui/canvas.py
+msgid "Origin"
+msgstr "Origine"
+
+#: src/opencutter/gui/canvas.py
+msgid "Feeds into machine"
+msgstr "Intră în mașină"
+
+#: src/opencutter/gui/canvas.py
+msgid "The design on the mat"
+msgstr "Designul pe covoraș"
+
+#: src/opencutter/gui/canvas.py
+msgid "Cutting mat"
+msgstr "Covoraș de tăiere"
+
+#: src/opencutter/gui/connection.py
+msgid "Pair the machine once in <b>Settings → Bluetooth</b>."
+msgstr "Asociați mașina o singură dată în <b>Configurări → Bluetooth</b>."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid ""
+"The {name} accepts a Bluetooth connection only right after it is switched "
+"on. If the app can’t connect, switch the machine off and on."
+msgstr ""
+"{name} acceptă o conexiune Bluetooth doar imediat după pornire. Dacă "
+"aplicația nu se poate conecta, opriți și porniți din nou mașina."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "If the app can’t connect to the {name}, switch the machine off and on."
+msgstr ""
+"Dacă aplicația nu se poate conecta la {name}, opriți și porniți din nou "
+"mașina."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid ""
+"Make sure the {name} is switched on and paired. If it still fails, switch it "
+"off and on again."
+msgstr ""
+"Asigurați-vă că {name} este pornită și asociată. Dacă tot nu merge, opriți-o "
+"și porniți-o din nou."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "Make sure the {name} is switched on and paired."
+msgstr "Asigurați-vă că {name} este pornită și asociată."
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "Releases the {name} so other apps can connect to it."
+msgstr "Eliberează {name}, ca alte aplicații să se poată conecta la ea."
+
+#: src/opencutter/gui/connection.py
+msgid "Available when the job has ended."
+msgstr "Disponibil după ce se termină lucrarea."
+
+#: src/opencutter/gui/connection.py
+msgid "Scanning for devices"
+msgstr "Se caută dispozitive"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/machine.py
+msgid "Could not Connect"
+msgstr "Conectare eșuată"
+
+#: src/opencutter/gui/connection.py
+msgid "Not Supported"
+msgstr "Neacceptată"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/dialogs.py
+msgid "Unknown machine"
+msgstr "Mașină necunoscută"
+
+#. Translators: the first words of a banner ("Could not Connect"), then why.
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "{title}. {problem}"
+msgstr "{title}. {problem}"
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "<b>{title}.</b> {problem}"
+msgstr "<b>{title}.</b> {problem}"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/machine.py
+msgid "Not Connected"
+msgstr "Neconectată"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/machine.py
+msgid "Connecting…"
+msgstr "Se conectează…"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/machine.py
+msgid "Connected"
+msgstr "Conectată"
+
+#: src/opencutter/gui/connection.py
+#, python-brace-format
+msgid "Machine status: {status}. Open connection"
+msgstr "Starea mașinii: {status}. Deschide conexiunea"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+msgid "Connect"
+msgstr "Conectează"
+
+#: src/opencutter/gui/connection.py
+msgid "Disconnect"
+msgstr "Deconectează"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+msgid ""
+"Nothing moves when you connect. The machine moves only after you press Send, "
+"Test Cut or Cut."
+msgstr ""
+"La conectare nu se mișcă nimic. Mașina se mișcă doar după ce apăsați "
+"Trimite, Tăiere de probă sau Taie."
+
+#: src/opencutter/gui/connection.py
+msgid "Firmware"
+msgstr "Firmware"
+
+#: src/opencutter/gui/connection.py
+msgid "Status"
+msgstr "Stare"
+
+#: src/opencutter/gui/connection.py
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/window.py
+msgid "Try again"
+msgstr "Reîncearcă"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"Not affiliated with or endorsed by Silhouette America, Inc. Silhouette, "
+"CAMEO, Portrait and CURIO are trademarks of their respective owners."
+msgstr ""
+"OpenCutter nu este afiliat cu Silhouette America, Inc. și nici susținut de "
+"aceasta. Silhouette, CAMEO, Portrait și CURIO sunt mărci comerciale ale "
+"proprietarilor lor."
+
+#: src/opencutter/gui/dialogs.py
+msgid "Recognized, not supported yet"
+msgstr "Recunoscut, dar încă neacceptat"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Not supported"
+msgstr "Neacceptată"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Restart OpenCutter to use the new language"
+msgstr "Reporniți OpenCutter pentru a folosi noua limbă"
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid "Drives the {models}."
+msgstr "Lucrează cu {models}."
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid "{not_supported_yet}: {models}."
+msgstr "{not_supported_yet}: {models}."
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid ""
+"Send SVG designs to a Silhouette cutting machine over Bluetooth. {machines}"
+msgstr ""
+"Trimite designuri SVG către o mașină de tăiat Silhouette prin Bluetooth. "
+"{machines}"
+
+#: src/opencutter/gui/dialogs.py
+msgid "A job is running"
+msgstr "O lucrare este în curs"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Cancel the job and quit? The machine stops right away."
+msgstr "Anulați lucrarea și ieșiți? Mașina se oprește imediat."
+
+#: src/opencutter/gui/dialogs.py
+msgid "Keep cutting"
+msgstr "Continuă tăierea"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Cancel Job and quit"
+msgstr "Anulează lucrarea și ieși"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid "Connection lost during the job"
+msgstr "Conexiunea s-a pierdut în timpul lucrării"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid ""
+"OpenCutter cannot stop the machine without the connection. If it is still "
+"moving, press its power button. Then switch it on again to reconnect."
+msgstr ""
+"Fără conexiune, OpenCutter nu poate opri mașina. Dacă încă se mișcă, apăsați "
+"butonul ei de pornire/oprire. Apoi porniți-o din nou pentru a vă reconecta."
+
+#: src/opencutter/gui/dialogs.py
+msgid "Close"
+msgstr "Închide"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Reconnect"
+msgstr "Reconectează"
+
+#: src/opencutter/gui/dialogs.py
+msgid "The stop could not be sent"
+msgstr "Oprirea nu a putut fi trimisă"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"Press the machine's power button now. The window stays open; close it again "
+"once the machine has stopped."
+msgstr ""
+"Apăsați acum butonul de pornire/oprire al mașinii. Fereastra rămâne "
+"deschisă; închideți-o din nou după ce mașina s-a oprit."
+
+#: src/opencutter/gui/dialogs.py
+msgid "OK"
+msgstr "OK"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"OpenCutter could not send the stop to the machine. If it moves, press its "
+"power button now."
+msgstr ""
+"OpenCutter nu a putut trimite oprirea către mașină. Dacă se mișcă, apăsați "
+"acum butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/dialogs.py
+msgid "The machine still reports Busy"
+msgstr "Mașina raportează în continuare starea Ocupată"
+
+#: src/opencutter/gui/dialogs.py
+msgid ""
+"The stop was sent, but the machine still reports Busy. If it moves, press "
+"its power button now."
+msgstr ""
+"Oprirea a fost trimisă, dar mașina raportează în continuare starea Ocupată. "
+"Dacă se mișcă, apăsați acum butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/dialogs.py
+msgid "The machine still reports Paused"
+msgstr "Mașina raportează în continuare starea În pauză"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid "Preferences"
+msgstr "Preferințe"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/window.py
+msgid "General"
+msgstr "General"
+
+#: src/opencutter/gui/dialogs.py
+msgctxt "unit"
+msgid "in"
+msgstr "in"
+
+#: src/opencutter/gui/dialogs.py
+msgctxt "unit"
+msgid "mm"
+msgstr "mm"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Units"
+msgstr "Unități"
+
+#: src/opencutter/gui/dialogs.py
+msgid "For positions and sizes"
+msgstr "Pentru poziții și dimensiuni"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Default Media Size"
+msgstr "Dimensiune implicită a foii"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/sidebar.py
+msgid "Preview outline before cutting"
+msgstr "Previzualizează conturul înainte de tăiere"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Trace the outer box with the tool up first"
+msgstr "Parcurge mai întâi chenarul exterior cu unealta ridicată"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Presets"
+msgstr "Presetări"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Source"
+msgstr "Sursă"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Materials"
+msgstr "Materiale"
+
+#: src/opencutter/gui/dialogs.py
+#: src/opencutter/gui/sidebar.py
+msgid "Machine"
+msgstr "Mașină"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Pair it in Settings → Bluetooth"
+msgstr "Asociați-o în Configurări → Bluetooth"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Model"
+msgstr "Model"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Default Cutting Mat"
+msgstr "Covoraș de tăiere implicit"
+
+#: src/opencutter/gui/dialogs.py
+#, python-brace-format
+msgid "For the {machine}"
+msgstr "Pentru {machine}"
+
+#: src/opencutter/gui/dialogs.py
+msgid "System default"
+msgstr "Limba sistemului"
+
+#: src/opencutter/gui/dialogs.py
+msgid "Language"
+msgstr "Limbă"
+
+#: src/opencutter/gui/firstrun.py
+msgid "your machine"
+msgstr "mașina dumneavoastră"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Cut your designs on your machine from Linux."
+msgstr "Tăiați-vă designurile pe mașina dumneavoastră, din Linux."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid "Cut your designs on a Silhouette {machine} from Linux."
+msgstr "Tăiați-vă designurile pe o mașină Silhouette {machine}, din Linux."
+
+#: src/opencutter/gui/firstrun.py
+msgid ""
+"Switch your machine on. Some machines accept a Bluetooth connection only "
+"right after they are switched on: if the app can’t connect, switch it off "
+"and on."
+msgstr ""
+"Porniți mașina. Unele mașini acceptă o conexiune Bluetooth doar imediat după "
+"pornire: dacă aplicația nu se poate conecta, opriți-o și porniți-o din nou."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid ""
+"Switch the {machine} on. It accepts a Bluetooth connection only right after "
+"it is switched on: if the app can’t connect, switch it off and on."
+msgstr ""
+"Porniți {machine}. Acceptă o conexiune Bluetooth doar imediat după pornire: "
+"dacă aplicația nu se poate conecta, opriți-o și porniți-o din nou."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid ""
+"Switch the {machine} on. If the app can’t connect, switch it off and on."
+msgstr ""
+"Porniți {machine}. Dacă aplicația nu se poate conecta, opriți-o și porniți-o "
+"din nou."
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid "Switch the {machine} on. OpenCutter then connects to it by itself."
+msgstr "Porniți {machine}. Apoi OpenCutter se conectează singur la ea."
+
+#: src/opencutter/gui/firstrun.py
+msgid "Welcome"
+msgstr "Bun venit"
+
+#: src/opencutter/gui/firstrun.py
+#, python-brace-format
+msgid "Step {step} of {steps}"
+msgstr "Pasul {step} din {steps}"
+
+#: src/opencutter/gui/firstrun.py
+msgid ""
+"Draw in Inkscape, place the design on the mat here, choose Material, Action "
+"and Tool, and send it over Bluetooth."
+msgstr ""
+"Desenați în Inkscape, așezați aici designul pe covoraș, alegeți Material, "
+"Acțiune și Unealtă, apoi trimiteți-l prin Bluetooth."
+
+#: src/opencutter/gui/firstrun.py
+msgid "Get started"
+msgstr "Să începem"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Optional"
+msgstr "Opțional"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Connect your machine"
+msgstr "Conectați mașina"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Back"
+msgstr "Înapoi"
+
+#: src/opencutter/gui/firstrun.py
+msgid "Skip for now"
+msgstr "Omite deocamdată"
+
+#: src/opencutter/gui/firstrun.py
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sidebar.py
+msgid "Done"
+msgstr "Gata"
+
+#: src/opencutter/gui/geometry.py
+msgid "Not measured on this machine yet"
+msgstr "Încă nemăsurat pe această mașină"
+
+#: src/opencutter/gui/geometry.py
+msgid "The cut area cannot be checked with this mat on this model yet."
+msgstr ""
+"Zona de tăiere nu poate fi verificată încă cu acest covoraș pe acest model."
+
+#: src/opencutter/gui/geometry.py
+msgctxt "paper size"
+msgid "Letter"
+msgstr "Letter"
+
+#: src/opencutter/gui/geometry.py
+#: src/opencutter/gui/window.py
+msgid "Center to Page"
+msgstr "Centrează pe pagină"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Left"
+msgstr "Aliniază la stânga"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Center"
+msgstr "Aliniază pe centru"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Right"
+msgstr "Aliniază la dreapta"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Top"
+msgstr "Aliniază sus"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Middle"
+msgstr "Aliniază la mijloc"
+
+#: src/opencutter/gui/geometry.py
+msgid "Align Bottom"
+msgstr "Aliniază jos"
+
+#: src/opencutter/gui/geometry.py
+#, python-brace-format
+msgid "{seconds} s"
+msgstr "{seconds} s"
+
+#: src/opencutter/gui/geometry.py
+#, python-brace-format
+msgid "{minutes} min {seconds} s"
+msgstr "{minutes} min {seconds} s"
+
+#: src/opencutter/gui/geometry.py
+#, python-brace-format
+msgid "{minutes} min"
+msgstr "{minutes} min"
+
+#: src/opencutter/gui/jobview.py
+msgid "If the machine keeps moving, press its power button."
+msgstr ""
+"Dacă mașina continuă să se miște, apăsați butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/jobview.py
+msgid "The stop could not be sent. Press the machine's power button now."
+msgstr ""
+"Oprirea nu a putut fi trimisă. Apăsați acum butonul de pornire/oprire al "
+"mașinii."
+
+#: src/opencutter/gui/jobview.py
+msgid "Stopping…"
+msgstr "Se oprește…"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Waiting for the machine to confirm the stop. If the machine keeps moving, "
+"press its power button."
+msgstr ""
+"Se așteaptă ca mașina să confirme oprirea. Dacă mașina continuă să se miște, "
+"apăsați butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/jobview.py
+msgid "Nothing was sent"
+msgstr "Nu s-a trimis nimic"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Before the next job: check that the tool is up, press <b>Unload</b>, then "
+"load the mat."
+msgstr ""
+"Înainte de următoarea lucrare: verificați că unealta este ridicată, apăsați "
+"<b>Unload</b>, apoi încărcați covorașul."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Once the machine has stopped, check that the tool is up and load the mat "
+"again before the next job."
+msgstr ""
+"După ce mașina s-a oprit, verificați că unealta este ridicată și încărcați "
+"din nou covorașul înainte de următoarea lucrare."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Press <b>Unload</b> on the machine to remove the mat. Load the mat again "
+"right before the next job."
+msgstr ""
+"Apăsați <b>Unload</b> pe mașină pentru a scoate covorașul. Încărcați-l din "
+"nou chiar înainte de următoarea lucrare."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid ""
+"The connection to the {name} was lost while the job waited at the outline "
+"check, so the stop could not be sent. The machine was waiting there with the "
+"tool up; nothing more was sent. If it moves, press its power button."
+msgstr ""
+"Conexiunea cu {name} s-a pierdut cât timp lucrarea aștepta la verificarea "
+"conturului, așa că oprirea nu a putut fi trimisă. Mașina aștepta acolo cu "
+"unealta ridicată; nu s-a mai trimis nimic. Dacă se mișcă, apăsați butonul ei "
+"de pornire/oprire."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "The connection to the {name} was lost. Nothing more is sent."
+msgstr "Conexiunea cu {name} s-a pierdut. Nu se mai trimite nimic."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"The connection was lost while the job waited here, so Cut cannot be sent in "
+"this job: press Cancel."
+msgstr ""
+"Conexiunea s-a pierdut cât timp lucrarea aștepta aici, așa că Taie nu mai "
+"poate fi trimis în această lucrare: apăsați Anulează."
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"The machine still reports Busy. If it moves, press Stop Machine or its power "
+"button."
+msgstr ""
+"Mașina raportează în continuare starea Ocupată. Dacă se mișcă, apăsați Stop "
+"sau butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid ""
+"The stop has not reached the {name} yet: OpenCutter sends it as soon as the "
+"{name} is connected again. If it moves, press its power button."
+msgstr ""
+"Oprirea nu a ajuns încă la {name}: OpenCutter o trimite imediat ce {name} "
+"este conectată din nou. Dacă se mișcă, apăsați butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/jobview.py
+msgid "Stop Machine"
+msgstr "Stop"
+
+#: src/opencutter/gui/jobview.py
+msgid "Send Again…"
+msgstr "Trimite din nou…"
+
+#: src/opencutter/gui/jobview.py
+msgid "Cut Again"
+msgstr "Taie din nou"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/runner.py
+msgid "Resume"
+msgstr "Reia"
+
+#: src/opencutter/gui/jobview.py
+msgid "Resuming…"
+msgstr "Se reia…"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/runner.py
+msgid "Pause"
+msgstr "Pauză"
+
+#: src/opencutter/gui/jobview.py
+msgid "Pausing…"
+msgstr "Se pune pe pauză…"
+
+#: src/opencutter/gui/jobview.py
+msgid "Cancelling…"
+msgstr "Se anulează…"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Cancelling… A paused machine ends the job about 5 seconds after the stop."
+msgstr ""
+"Se anulează… O mașină pusă pe pauză încheie lucrarea la circa 5 secunde după "
+"oprire."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid ""
+"The machine still reports Paused {n} s after the stop. Press Unload on the "
+"machine; if anything moves, press its power button."
+msgstr ""
+"Mașina raportează în continuare starea În pauză la {n} s după oprire. "
+"Apăsați Unload pe mașină; dacă se mișcă ceva, apăsați butonul ei de "
+"pornire/oprire."
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{step} progress"
+msgstr "Progres: {step}"
+
+#: src/opencutter/gui/jobview.py
+msgid "Is the outline in the right place?"
+msgstr "Conturul este la locul potrivit?"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"The tool traced the outer box of the design with the tool up. Nothing was "
+"cut yet. To adjust the material, press Cancel; do not unload the mat."
+msgstr ""
+"Unealta a parcurs chenarul exterior al designului fără să coboare. Încă nu "
+"s-a tăiat nimic. Ca să ajustați poziția materialului, apăsați Anulează; nu "
+"scoateți covorașul."
+
+#. Translators: the button at the outline check that lowers the tool and cuts.
+#: src/opencutter/gui/jobview.py
+msgctxt "button"
+msgid "Cut"
+msgstr "Taie"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+msgid "Cancel"
+msgstr "Anulează"
+
+#: src/opencutter/gui/jobview.py
+msgid "Estimated from the plan, not reported by the machine"
+msgstr "Estimat după plan, nu raportat de mașină"
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{time} elapsed"
+msgstr "au trecut {time}"
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "about {time} left"
+msgstr "mai sunt circa {time}"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job in progress"
+msgstr "Lucrare în curs"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job steps"
+msgstr "Pașii lucrării"
+
+#: src/opencutter/gui/jobview.py
+msgid ""
+"Pause the machine: it finishes the few moves it has planned, lifts the tool "
+"and waits"
+msgstr ""
+"Pune mașina pe pauză: termină cele câteva mișcări deja planificate, ridică "
+"unealta și așteaptă"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Cancel Job"
+msgstr "Anulează"
+
+#. Translators: the Escape key, as printed on keyboards.
+#: src/opencutter/gui/jobview.py
+msgctxt "key"
+msgid "Esc"
+msgstr "Esc"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sidebar.py
+msgid "Test Cut"
+msgstr "Tăiere de probă"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Test in Progress"
+msgstr "Probă în curs"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/runner.py
+msgid "Preparing"
+msgstr "Pregătire"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Check the position"
+msgstr "Verificați poziția"
+
+#: src/opencutter/gui/jobview.py
+msgid "Stop not confirmed"
+msgstr "Oprire neconfirmată"
+
+#: src/opencutter/gui/jobview.py
+msgid "Test Complete"
+msgstr "Probă încheiată"
+
+#: src/opencutter/gui/jobview.py
+msgid "Test stopped"
+msgstr "Probă oprită"
+
+#. Translators: {action} is the action's name: "Cut complete", "Sketch complete".
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{action} complete"
+msgstr "{action} încheiată"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job complete"
+msgstr "Lucrare încheiată"
+
+#: src/opencutter/gui/jobview.py
+#, python-brace-format
+msgid "{action} stopped"
+msgstr "{action} oprită"
+
+#: src/opencutter/gui/jobview.py
+msgid "Job cancelled"
+msgstr "Lucrare anulată"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/window.py
+msgid "Connection lost"
+msgstr "Conexiune pierdută"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Material"
+msgstr "Material"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Action"
+msgstr "Acțiune"
+
+#: src/opencutter/gui/jobview.py
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Passes"
+msgstr "Treceri"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it, then switch "
+"the {name} off and on."
+msgstr ""
+"Alt program folosește {name} prin Bluetooth. Închideți-l, apoi opriți și "
+"porniți din nou {name}."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it: OpenCutter "
+"then connects to it by itself."
+msgstr ""
+"Alt program folosește {name} prin Bluetooth. Închideți-l: apoi OpenCutter se "
+"conectează singur la ea."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it, switch the "
+"{name} off and on, then press Try again."
+msgstr ""
+"Alt program folosește {name} prin Bluetooth. Închideți-l, opriți și porniți "
+"din nou {name}, apoi apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another program is using the {name} over Bluetooth. Close it, then press Try "
+"again."
+msgstr ""
+"Alt program folosește {name} prin Bluetooth. Închideți-l, apoi apăsați "
+"Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "Switch the {name} off and on, then press Try again."
+msgstr "Opriți și porniți din nou {name}, apoi apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "Make sure the {name} is switched on, then press Try again."
+msgstr "Asigurați-vă că {name} este pornită, apoi apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"No paired {name} was found. Pair it in Settings → Bluetooth, then press Try "
+"again."
+msgstr ""
+"Nu s-a găsit nicio mașină {name} asociată. Asociați-o în Configurări → "
+"Bluetooth, apoi apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Another OpenCutter version is using the {name}. Close it, then press Try "
+"again."
+msgstr ""
+"O altă versiune OpenCutter folosește {name}. Închideți-o, apoi apăsați "
+"Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "The {name} is free for other apps. Press Connect to use it here again."
+msgstr ""
+"{name} este liberă pentru alte aplicații. Apăsați Conectează pentru a o "
+"folosi din nou aici."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "Releasing the {name} for other apps…"
+msgstr "Se eliberează {name} pentru alte aplicații…"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"Not disconnected: a job is running on the {name}. Press Disconnect again "
+"when it has ended."
+msgstr ""
+"Nu s-a deconectat: o lucrare rulează pe {name}. Apăsați din nou Deconectează "
+"după ce se termină."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The connection to the {name} was lost. Switch the {name} off and on; "
+"OpenCutter reconnects by itself."
+msgstr ""
+"Conexiunea cu {name} s-a pierdut. Opriți și porniți din nou {name}; "
+"OpenCutter se reconectează singur."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The connection to the {name} was lost. Make sure the {name} is switched on; "
+"OpenCutter reconnects by itself."
+msgstr ""
+"Conexiunea cu {name} s-a pierdut. Asigurați-vă că {name} este pornită; "
+"OpenCutter se reconectează singur."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} is connected to this computer, but not to OpenCutter: the system "
+"may have reconnected it by itself, or another program uses it. Switch the "
+"{name} off and on."
+msgstr ""
+"{name} este conectată la acest calculator, dar nu la OpenCutter: poate "
+"sistemul a reconectat-o singur sau o folosește alt program. Opriți și "
+"porniți din nou {name}."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} is connected to this computer, but not to OpenCutter: the system "
+"may have reconnected it by itself, or another program uses it. Close the "
+"other program."
+msgstr ""
+"{name} este conectată la acest calculator, dar nu la OpenCutter: poate "
+"sistemul a reconectat-o singur sau o folosește alt program. Închideți "
+"celălalt program."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"Bluetooth is off or not available. Turn it on in Settings → Bluetooth, then "
+"press Try again."
+msgstr ""
+"Bluetooth este oprit sau indisponibil. Porniți-l în Configurări → Bluetooth, "
+"apoi apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is already running but does not answer. Wait "
+"a moment, then press Try again."
+msgstr ""
+"Serviciul de fundal OpenCutter rulează deja, dar nu răspunde. Așteptați "
+"puțin, apoi apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"OpenCutter’s background service stopped unexpectedly. Press Try again; if it "
+"keeps stopping, see {log}."
+msgstr ""
+"Serviciul de fundal OpenCutter s-a oprit neașteptat. Apăsați Reîncearcă; "
+"dacă se tot oprește, consultați {log}."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter could not start its background service. Press Try again; if it "
+"keeps failing, start OpenCutter from a terminal to see why."
+msgstr ""
+"OpenCutter nu și-a putut porni serviciul de fundal. Apăsați Reîncearcă; dacă "
+"tot nu merge, porniți OpenCutter dintr-un terminal ca să vedeți de ce."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"An older OpenCutter background service is still running. Press Try again; if "
+"it keeps failing, restart the computer."
+msgstr ""
+"Un serviciu de fundal OpenCutter mai vechi încă rulează. Apăsați Reîncearcă; "
+"dacă tot nu merge, reporniți calculatorul."
+
+#: src/opencutter/gui/machine.py
+msgid "Updating OpenCutter’s background service…"
+msgstr "Se actualizează serviciul de fundal OpenCutter…"
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is from another version; it will be updated "
+"when its current job ends."
+msgstr ""
+"Serviciul de fundal OpenCutter este din altă versiune; va fi actualizat când "
+"se termină lucrarea lui curentă."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service from another version did not stop. Wait a "
+"moment, then press Try again."
+msgstr ""
+"Serviciul de fundal OpenCutter din altă versiune nu s-a oprit. Așteptați "
+"puțin, apoi apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service from another version could not be stopped. "
+"Restart the computer, then open OpenCutter again."
+msgstr ""
+"Serviciul de fundal OpenCutter din altă versiune nu a putut fi oprit. "
+"Reporniți calculatorul, apoi deschideți din nou OpenCutter."
+
+#: src/opencutter/gui/machine.py
+msgid "OpenCutter was updated while it was open. Close it and open it again."
+msgstr ""
+"OpenCutter a fost actualizat cât timp era deschis. Închideți-l și "
+"deschideți-l din nou."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is still stopping. Wait a moment, then press "
+"Try again."
+msgstr ""
+"Serviciul de fundal OpenCutter încă se oprește. Așteptați puțin, apoi "
+"apăsați Reîncearcă."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"OpenCutter’s background service is from another version, so nothing was "
+"sent. Send again once it has been updated."
+msgstr ""
+"Serviciul de fundal OpenCutter este din altă versiune, așa că nu s-a trimis "
+"nimic. Trimiteți din nou după ce a fost actualizat."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"Not disconnected: OpenCutter’s background service did not stop. Try again in "
+"a moment."
+msgstr ""
+"Nu s-a deconectat: serviciul de fundal OpenCutter nu s-a oprit. Reîncercați "
+"peste puțin timp."
+
+#: src/opencutter/gui/machine.py
+msgid "Not disconnected: OpenCutter’s background service is being updated."
+msgstr "Nu s-a deconectat: serviciul de fundal OpenCutter se actualizează."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as “{model}”. OpenCutter cannot drive it and "
+"will not send jobs to it."
+msgstr ""
+"Această mașină se prezintă drept „{model}”. OpenCutter nu o poate comanda și "
+"nu îi va trimite lucrări."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"This machine did not report its model. OpenCutter cannot drive it and will "
+"not send jobs to it."
+msgstr ""
+"Această mașină nu și-a raportat modelul. OpenCutter nu o poate comanda și nu "
+"îi va trimite lucrări."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as “{model}”, a name that more than one model "
+"uses, so OpenCutter cannot tell which model it is and will not send jobs to "
+"it."
+msgstr ""
+"Această mașină se prezintă drept „{model}”, un nume folosit de mai multe "
+"modele, așa că OpenCutter nu poate ști ce model este și nu îi va trimite "
+"lucrări."
+
+#: src/opencutter/gui/machine.py
+msgid "Unsupported Machine"
+msgstr "Mașină neacceptată"
+
+#: src/opencutter/gui/machine.py
+msgid "This machine is not supported."
+msgstr "Această mașină nu este acceptată."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"To use one, pair it in Settings → Bluetooth and switch it on: OpenCutter "
+"connects to it by itself."
+msgstr ""
+"Ca să folosiți una, asociați-o în Configurări → Bluetooth și porniți-o: "
+"OpenCutter se conectează singur la ea."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"The machine is paused. OpenCutter sends nothing more until it goes on. To go "
+"on from where it stopped, press Resume here or the Pause key on the machine. "
+"To end the job, press Cancel Job."
+msgstr ""
+"Mașina este în pauză. OpenCutter nu mai trimite nimic până nu continuă. Ca "
+"să continuați de unde s-a oprit, apăsați Reia aici sau butonul de pauză de "
+"pe mașină. Ca să încheiați lucrarea, apăsați Anulează."
+
+#: src/opencutter/gui/machine.py
+msgid ""
+"The machine is paused. OpenCutter sends nothing more until it goes on. To go "
+"on from where it stopped, press the Pause key on the machine. To end the "
+"job, press Cancel Job."
+msgstr ""
+"Mașina este în pauză. OpenCutter nu mai trimite nimic până nu continuă. Ca "
+"să continuați de unde s-a oprit, apăsați butonul de pauză de pe mașină. Ca "
+"să încheiați lucrarea, apăsați Anulează."
+
+#: src/opencutter/gui/machine.py
+msgid "Checking connection"
+msgstr "Se verifică conexiunea"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"No answer from the machine for {n} s. OpenCutter keeps waiting and sends "
+"nothing new. If it moves when it should not, press Cancel Job or its power "
+"button."
+msgstr ""
+"Niciun răspuns de la mașină de {n} s. OpenCutter așteaptă în continuare și "
+"nu trimite nimic nou. Dacă se mișcă atunci când nu ar trebui, apăsați "
+"Anulează sau butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"No answer from the machine for {n} s. OpenCutter keeps waiting and sends "
+"nothing new. If it moves when it should not, press Cancel Job or its power "
+"button. It still reports its status ({term})."
+msgstr ""
+"Niciun răspuns de la mașină de {n} s. OpenCutter așteaptă în continuare și "
+"nu trimite nimic nou. Dacă se mișcă atunci când nu ar trebui, apăsați "
+"Anulează sau butonul ei de pornire/oprire. Mașina își raportează încă starea "
+"({term})."
+
+#. Translators: the end of a list of machine names: "CAMEO 4, CAMEO 5 and Portrait 3".
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "{items} and {last}"
+msgstr "{items} și {last}"
+
+#: src/opencutter/gui/machine.py
+msgctxt "list separator"
+msgid ", "
+msgstr ", "
+
+#. Translators: between two firmware lines: "V1.xx or V5.xx".
+#: src/opencutter/gui/machine.py
+msgctxt "list separator"
+msgid " or "
+msgstr " sau "
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "{model} (firmware {lines})"
+msgstr "{model} (firmware {lines})"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "OpenCutter drives these models: {models}. {hint}"
+msgstr "OpenCutter lucrează cu aceste modele: {models}. {hint}"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid "{tool} (Detected)"
+msgstr "{tool} (detectată)"
+
+#: src/opencutter/gui/machine.py
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Unclear reply “{reply}”"
+msgstr "Răspuns neclar „{reply}”"
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} reported its tool as “{reply}”, which OpenCutter cannot read for "
+"this model, so nothing is sent. Please report this reply."
+msgstr ""
+"{name} și-a raportat unealta drept „{reply}”, ceea ce OpenCutter nu poate "
+"citi pentru acest model, așa că nu se trimite nimic. Vă rugăm să raportați "
+"acest răspuns."
+
+#: src/opencutter/gui/machine.py
+#, python-brace-format
+msgid ""
+"The {name} reported its tools as “{reply}”, which OpenCutter cannot read for "
+"this model, so nothing is sent. Please report this reply."
+msgstr ""
+"{name} și-a raportat uneltele drept „{reply}”, ceea ce OpenCutter nu poate "
+"citi pentru acest model, așa că nu se trimite nimic. Vă rugăm să raportați "
+"acest răspuns."
+
+#: src/opencutter/gui/materials.py
+msgid "Use Cut Settings"
+msgstr "Folosește setările de tăiere"
+
+#: src/opencutter/gui/materials.py
+msgid "Recent"
+msgstr "Recente"
+
+#: src/opencutter/gui/materials.py
+msgid "Other"
+msgstr "Altele"
+
+#: src/opencutter/gui/materials.py
+msgid ""
+"Basic set: one vinyl cut setting and a Sketch Pen starting point. For other "
+"materials, start from the closest one and adjust Speed, Force and Blade "
+"Depth in Cut Settings, then make a Test Cut."
+msgstr ""
+"Set de bază: o setare de tăiere pentru vinil și un punct de pornire pentru "
+"cariocă. Pentru alte materiale, porniți de la cel mai apropiat și ajustați "
+"Viteza, Forța și Adâncimea lamei în Setări de tăiere, apoi faceți o tăiere "
+"de probă."
+
+#: src/opencutter/gui/materials.py
+msgid ""
+"Basic set from the CAMEO 4. Start light: adjust Speed, Force and Blade Depth "
+"in Cut Settings, then make a Test Cut."
+msgstr ""
+"Set de bază de la CAMEO 4. Începeți cu valori mici: ajustați Viteza, Forța "
+"și Adâncimea lamei în Setări de tăiere, apoi faceți o tăiere de probă."
+
+#: src/opencutter/gui/materials.py
+msgid "Search materials"
+msgstr "Caută materiale"
+
+#: src/opencutter/gui/runner.py
+msgid "Unload and load the mat on the machine, then send again."
+msgstr ""
+"Scoateți covorașul și încărcați-l din nou în mașină (Unload, apoi Load), "
+"după care trimiteți din nou."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "Unload and load the {label} mat on the machine, then send again."
+msgstr ""
+"Scoateți covorașul {label} și încărcați-l din nou în mașină (Unload, apoi "
+"Load), după care trimiteți din nou."
+
+#: src/opencutter/gui/runner.py
+msgid "The cut area could not be checked on this model."
+msgstr "Zona de tăiere nu a putut fi verificată pe acest model."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid ""
+"The cut area could not be checked on this model. The machine answered "
+"“{reply}”."
+msgstr ""
+"Zona de tăiere nu a putut fi verificată pe acest model. Mașina a răspuns "
+"„{reply}”."
+
+#: src/opencutter/gui/runner.py
+#: src/opencutter/device/daemon.py
+msgid "the Bluetooth link was lost"
+msgstr "legătura Bluetooth s-a pierdut"
+
+#: src/opencutter/gui/runner.py
+msgid ""
+"Stopped from outside the app (for example with the opencutter stop command). "
+"Nothing was cut."
+msgstr ""
+"Oprită din afara aplicației (de exemplu cu comanda opencutter stop). Nu s-a "
+"tăiat nimic."
+
+#: src/opencutter/gui/runner.py
+msgid "Previewing outline"
+msgstr "Previzualizare contur"
+
+#: src/opencutter/gui/runner.py
+msgid "Returning to origin"
+msgstr "Revenire la origine"
+
+#: src/opencutter/gui/runner.py
+msgid ""
+"The machine is still paused. Press its Pause key to go on, or Cancel Job."
+msgstr ""
+"Mașina este încă în pauză. Apăsați butonul ei de pauză ca să continue sau "
+"apăsați Anulează."
+
+#: src/opencutter/gui/runner.py
+msgid ""
+"The machine has not reported Paused yet. It pauses only after the few moves "
+"it has already planned, so it may still pause. If it keeps cutting, press "
+"Pause here again, or Cancel Job to end the job."
+msgstr ""
+"Mașina nu a raportat încă starea În pauză. Intră în pauză doar după cele "
+"câteva mișcări deja planificate, deci poate intra încă în pauză. Dacă tot "
+"taie, apăsați din nou Pauză aici sau Anulează ca să încheiați lucrarea."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "{what} was not sent: {reason}."
+msgstr "Comanda „{what}” nu a fost trimisă: {reason}."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid ""
+"{what} may not have reached the machine ({reason}). OpenCutter does not send "
+"it again."
+msgstr ""
+"Comanda „{what}” poate să nu fi ajuns la mașină ({reason}). OpenCutter nu o "
+"trimite din nou."
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "the write failed: {error}"
+msgstr "scrierea a eșuat: {error}"
+
+#: src/opencutter/gui/runner.py
+msgid "a Resume or Pause is already being sent"
+msgstr "o comandă Reia sau Pauză se trimite deja"
+
+#: src/opencutter/gui/runner.py
+msgid "no answer"
+msgstr "niciun răspuns"
+
+#: src/opencutter/gui/runner.py
+msgid "no reason given"
+msgstr "niciun motiv indicat"
+
+#: src/opencutter/gui/runner.py
+#, python-brace-format
+msgid "The machine did not confirm the unit ({detail}). {hint}"
+msgstr "Mașina nu a confirmat unitatea ({detail}). {hint}"
+
+#: src/opencutter/gui/runner.py
+msgid "The machine refused the job."
+msgstr "Mașina a refuzat lucrarea."
+
+#: src/opencutter/gui/runner.py
+msgid "Step"
+msgstr "Pas"
+
+#: src/opencutter/gui/runner.py
+msgid "The step failed."
+msgstr "Pasul a eșuat."
+
+#: src/opencutter/gui/runner.py
+msgid "this background service cannot do it"
+msgstr "acest serviciu de fundal nu poate face asta"
+
+#: src/opencutter/gui/sending.py
+msgid "Choose a material first."
+msgstr "Alegeți mai întâi un material."
+
+#: src/opencutter/gui/sending.py
+msgid "No materials for this machine yet"
+msgstr "Încă nu există materiale pentru această mașină"
+
+#: src/opencutter/gui/sending.py
+msgid ""
+"Set the tool, Force and Speed in Cut Settings, then make a Test Cut. A "
+"presets file can add materials for this machine."
+msgstr ""
+"Setați unealta, Forța și Viteza în Setări de tăiere, apoi faceți o tăiere de "
+"probă. Un fișier de presetări poate adăuga materiale pentru această mașină."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Use {name}"
+msgstr "Folosește {name}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid ""
+"The connected machine is a {name}. The layout was made for the {old}, so it "
+"now uses the {name}’s cutting mat; your design stays where it is. Check it, "
+"then press Use {name}."
+msgstr ""
+"Mașina conectată este {name}. Așezarea a fost făcută pentru {old}, așa că "
+"acum folosește covorașul pentru {name}; designul rămâne unde este. "
+"Verificați-l, apoi apăsați Folosește {name}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Check the layout for the {name}, then press Use {name}."
+msgstr "Verificați așezarea pentru {name}, apoi apăsați Folosește {name}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid ""
+"The layout was made for the {layout}, but the connected machine is a {name}."
+msgstr ""
+"Așezarea a fost făcută pentru {layout}, dar mașina conectată este {name}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "The {name} has no {label}."
+msgstr "{name} nu are {label}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Choose a Cutting Mat for the {name} in Page Setup."
+msgstr "Alegeți un covoraș de tăiere pentru {name} în Configurare pagină."
+
+#: src/opencutter/gui/sending.py
+msgid "Move the design inside the cut area."
+msgstr "Mutați designul în interiorul zonei de tăiere."
+
+#: src/opencutter/gui/sending.py
+msgid ""
+"Move the design onto the media, or set Media Size to your sheet in Page "
+"Setup."
+msgstr ""
+"Mutați designul pe foaie sau setați Dimensiune foaie la foaia dumneavoastră "
+"în Configurare pagină."
+
+#: src/opencutter/gui/sending.py
+msgid "A job is already running."
+msgstr "O lucrare rulează deja."
+
+#: src/opencutter/gui/sending.py
+msgid "Open a design first."
+msgstr "Deschideți mai întâi un design."
+
+#: src/opencutter/gui/sending.py
+msgid "The design has no paths to cut."
+msgstr "Designul nu are trasee de tăiat."
+
+#: src/opencutter/gui/sending.py
+msgid "Connect the machine first."
+msgstr "Conectați mai întâi mașina."
+
+#: src/opencutter/gui/sending.py
+msgid "Choose a material and action."
+msgstr "Alegeți un material și o acțiune."
+
+#: src/opencutter/gui/sending.py
+msgid "Waiting for the machine to report its tools."
+msgstr "Se așteaptă ca mașina să-și raporteze uneltele."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into {holder}."
+msgstr "Montați în {holder}: {tool}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into the tool holder."
+msgstr "Montați în suport: {tool}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into {holder} to send."
+msgstr "Pentru a trimite, montați în {holder}: {tool}."
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Load the {tool} into the tool holder to send."
+msgstr "Pentru a trimite, montați în suport: {tool}."
+
+#: src/opencutter/gui/sending.py
+msgid "Basic set"
+msgstr "Set de bază"
+
+#: src/opencutter/gui/sending.py
+msgid "Presets file"
+msgstr "Fișier de presetări"
+
+#. Translators: the short form of Acceleration in a settings line.
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Accel. {value}"
+msgstr "Accel. {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Blade Depth {value}"
+msgstr "Adâncime lamă {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Force {value}"
+msgstr "Forță {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "Speed {value}"
+msgstr "Viteză {value}"
+
+#: src/opencutter/gui/sending.py
+#, python-brace-format
+msgid "{n} pass"
+msgid_plural "{n} passes"
+msgstr[0] "{n} trecere"
+msgstr[1] "{n} treceri"
+msgstr[2] "{n} de treceri"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Place the media on the mat, line the mat up with the guide, then press the "
+"<b>Load</b> button on the machine. Load the mat right before every job."
+msgstr ""
+"Puneți foaia pe covoraș, aliniați covorașul cu ghidajul, apoi apăsați "
+"butonul <b>Load</b> de pe mașină. Încărcați covorașul chiar înainte de "
+"fiecare lucrare."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid ""
+"Place the media on the {mat} mat, line the mat up with the guide, then press "
+"the <b>Load</b> button on the machine. Load the mat right before every job."
+msgstr ""
+"Puneți foaia pe covorașul {mat}, aliniați covorașul cu ghidajul, apoi "
+"apăsați butonul <b>Load</b> de pe mașină. Încărcați covorașul chiar înainte "
+"de fiecare lucrare."
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Put the top-left corner of the sheet on the top-left corner of the mat's "
+"grid: OpenCutter lays the design out from there. Media Size in Page Setup "
+"must match the sheet."
+msgstr ""
+"Puneți colțul din stânga sus al foii pe colțul din stânga sus al grilei "
+"covorașului: OpenCutter așază designul pornind de acolo. Dimensiune foaie "
+"din Configurare pagină trebuie să corespundă foii."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid ""
+"Put the top-left corner of the sheet on the top-left corner of the mat's "
+"grid: OpenCutter lays the design out from there. Media Size in Page Setup "
+"must match the sheet (now {media})."
+msgstr ""
+"Puneți colțul din stânga sus al foii pe colțul din stânga sus al grilei "
+"covorașului: OpenCutter așază designul pornind de acolo. Dimensiune foaie "
+"din Configurare pagină trebuie să corespundă foii (acum {media})."
+
+#: src/opencutter/gui/sheets.py
+msgid "Cutting mat loaded"
+msgstr "Covoraș încărcat"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Press <b>Unload</b> on the machine. With the media for the next job on the "
+"mat, press <b>Load</b>: the machine applies the mat setting only right after "
+"a load."
+msgstr ""
+"Apăsați <b>Unload</b> pe mașină. Cu foaia pentru următoarea lucrare pe "
+"covoraș, apăsați <b>Load</b>: mașina aplică setarea covorașului doar imediat "
+"după încărcare."
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Press <b>Unload</b> on the machine and check that the tool is up. Then put "
+"the media on the mat and press <b>Load</b>."
+msgstr ""
+"Apăsați <b>Unload</b> pe mașină și verificați că unealta este ridicată. Apoi "
+"puneți foaia pe covoraș și apăsați <b>Load</b>."
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The connection to the machine dropped since the mat was loaded. Press "
+"<b>Unload</b> on the machine and check that the tool is up. Then put the "
+"media on the mat and press <b>Load</b>."
+msgstr ""
+"Conexiunea cu mașina s-a întrerupt după ce covorașul a fost încărcat. "
+"Apăsați <b>Unload</b> pe mașină și verificați că unealta este ridicată. Apoi "
+"puneți foaia pe covoraș și apăsați <b>Load</b>."
+
+#: src/opencutter/gui/sheets.py
+msgid "Loaded before the last job"
+msgstr "Încărcat înainte de ultima lucrare"
+
+#: src/opencutter/gui/sheets.py
+msgid "Loaded before the connection dropped"
+msgstr "Încărcat înainte de întreruperea conexiunii"
+
+#: src/opencutter/gui/sheets.py
+msgid "Load Cutting Mat"
+msgstr "Încărcați covorașul"
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Busy"
+msgstr "Mașină ocupată"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The machine is still busy. Wait until it stops; if it keeps moving, press "
+"its power button. Then load the mat."
+msgstr ""
+"Mașina este încă ocupată. Așteptați până se oprește; dacă tot se mișcă, "
+"apăsați butonul ei de pornire/oprire. Apoi încărcați covorașul."
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Paused"
+msgstr "Mașină în pauză"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The machine is paused. OpenCutter does not resume it: press <b>Unload</b> on "
+"the machine (or switch it off and on), then load the mat. Do not press Pause "
+"to continue."
+msgstr ""
+"Mașina este în pauză. OpenCutter nu o face să continue: apăsați "
+"<b>Unload</b> pe mașină (sau opriți-o și porniți-o din nou), apoi încărcați "
+"covorașul. Nu apăsați butonul de pauză ca să continuați."
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Cancelling"
+msgstr "Mașină în curs de anulare"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"The machine is ending a cancel. Wait until it has ended, then press "
+"<b>Unload</b> and load the mat. Do not press Pause to continue."
+msgstr ""
+"Mașina încheie o anulare. Așteptați să termine, apoi apăsați <b>Unload</b> "
+"și încărcați covorașul. Nu apăsați butonul de pauză ca să continuați."
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine Held Elsewhere"
+msgstr "Mașină ocupată de altă conexiune"
+
+#: src/opencutter/gui/sheets.py
+msgid ""
+"Another connection (for example USB) holds the machine. Close it, then load "
+"the mat."
+msgstr ""
+"O altă conexiune (de exemplu USB) ține ocupată mașina. Închideți-o, apoi "
+"încărcați covorașul."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "Cutting mat loaded ({mat})"
+msgstr "Covoraș încărcat ({mat})"
+
+#: src/opencutter/gui/sheets.py
+msgid "Not loaded again yet"
+msgstr "Încă neîncărcat din nou"
+
+#: src/opencutter/gui/sheets.py
+msgid "A cutting mat entering the machine"
+msgstr "Un covoraș de tăiere care intră în mașină"
+
+#: src/opencutter/gui/sheets.py
+msgid "Machine state"
+msgstr "Starea mașinii"
+
+#: src/opencutter/gui/sheets.py
+msgid "Waiting for media…"
+msgstr "Se așteaptă foaia…"
+
+#: src/opencutter/gui/sheets.py
+msgid "Changes to Ready by itself"
+msgstr "Trece singură în starea Pregătită"
+
+#: src/opencutter/gui/sheets.py
+msgid "Continue"
+msgstr "Continuă"
+
+#: src/opencutter/gui/sheets.py
+msgid "Waiting for the machine"
+msgstr "Se așteaptă mașina"
+
+#: src/opencutter/gui/sheets.py
+msgid "Ready — the mat is loaded"
+msgstr "Pregătită — covorașul este încărcat"
+
+#: src/opencutter/gui/sheets.py
+msgid "If you loaded it before the last job, press Unload, then Load."
+msgstr ""
+"Dacă l-ați încărcat înainte de ultima lucrare, apăsați Unload, apoi Load."
+
+#: src/opencutter/gui/sheets.py
+msgid "Press Unload, then Load."
+msgstr "Apăsați Unload, apoi Load."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "Send to {machine}"
+msgstr "Trimite la {machine}"
+
+#: src/opencutter/gui/sheets.py
+msgid "Media"
+msgstr "Foaie"
+
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+msgid "Tool"
+msgstr "Unealtă"
+
+#: src/opencutter/gui/sheets.py
+msgid "Settings"
+msgstr "Setări"
+
+#: src/opencutter/gui/sheets.py
+msgid "Preview"
+msgstr "Previzualizare"
+
+#: src/opencutter/gui/sheets.py
+msgid "Outline first, tool up"
+msgstr "Întâi conturul, unealta ridicată"
+
+#: src/opencutter/gui/sheets.py
+msgid "Off"
+msgstr "Dezactivată"
+
+#: src/opencutter/gui/sheets.py
+msgid "Estimated time"
+msgstr "Timp estimat"
+
+#: src/opencutter/gui/sheets.py
+msgid "Paths"
+msgstr "Trasee"
+
+#: src/opencutter/gui/sheets.py
+msgid "Before the machine moves"
+msgstr "Înainte ca mașina să se miște"
+
+#: src/opencutter/gui/sheets.py
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgid "Send"
+msgstr "Trimite"
+
+#: src/opencutter/gui/sheets.py
+msgid "Send stays disabled while any check fails."
+msgstr "Butonul Trimite rămâne dezactivat cât timp o verificare eșuează."
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "{check}: passed"
+msgstr "{check}: în regulă"
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "{check}: failed"
+msgstr "{check}: nu este în regulă"
+
+#: src/opencutter/gui/sheets.py
+#, python-brace-format
+msgid "about {time}"
+msgstr "circa {time}"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Choose a material"
+msgstr "Alegeți un material"
+
+#: src/opencutter/gui/sidebar.py
+msgid "(Detected)"
+msgstr "(detectată)"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not detected"
+msgstr "Nedetectată"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not detected yet"
+msgstr "Încă nedetectată"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Your own settings"
+msgstr "Setările dumneavoastră"
+
+#: src/opencutter/gui/sidebar.py
+msgid "The tool in the chosen holder"
+msgstr "Unealta din suportul ales"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Blade Depth"
+msgstr "Adâncime lamă"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Force"
+msgstr "Forță"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Speed"
+msgstr "Viteză"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Acceleration"
+msgstr "Accelerație"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Cutting Mat"
+msgstr "Covoraș de tăiere"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom width"
+msgstr "Lățime personalizată"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom height"
+msgstr "Înălțime personalizată"
+
+#. Translators: W and H are the short forms of Width and Height.
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgctxt "width"
+msgid "W"
+msgstr "L"
+
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgctxt "height"
+msgid "H"
+msgstr "Î"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Media Size"
+msgstr "Dimensiune foaie"
+
+#. Translators: the page orientation (not the Portrait machines).
+#: src/opencutter/gui/sidebar.py
+msgctxt "orientation"
+msgid "Portrait"
+msgstr "Portret"
+
+#: src/opencutter/gui/sidebar.py
+msgctxt "orientation"
+msgid "Landscape"
+msgstr "Peisaj"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Orientation"
+msgstr "Orientare"
+
+#: src/opencutter/gui/sidebar.py
+#: src/opencutter/gui/window.py
+msgid "Reveal Cutting Mat"
+msgstr "Arată covorașul de tăiere"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom"
+msgstr "Personalizat"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Custom…"
+msgstr "Personalizat…"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Changed"
+msgstr "Modificat"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Modified"
+msgstr "Modificat"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Reset to preset"
+msgstr "Revino la presetare"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Tool mismatch"
+msgstr "Unealtă nepotrivită"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Edit"
+msgstr "Editează"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Line Segment Overcut"
+msgstr "Supratăiere la segmente"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Overcut"
+msgstr "Supratăiere"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Reset"
+msgstr "Resetează"
+
+#: src/opencutter/gui/sidebar.py
+msgid "No material chosen"
+msgstr "Niciun material ales"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Not used for {action}"
+msgstr "Nu se folosește la {action}"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not used for this action"
+msgstr "Nu se folosește la această acțiune"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Detected"
+msgstr "Detectată"
+
+#: src/opencutter/gui/sidebar.py
+msgid "Not used"
+msgstr "Nefolosită"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Detected · required for {action}"
+msgstr "Detectată · necesară pentru {action}"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Detected · {tool} required"
+msgstr "Detectată · e nevoie de {tool}"
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Load the <b>{tool}</b> into <b>the tool holder</b>."
+msgstr "Montați în <b>suport</b>: <b>{tool}</b>."
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Load the <b>{tool}</b> into <b>{holder}</b>."
+msgstr "Montați în <b>{holder}</b>: <b>{tool}</b>."
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Currently: {tool} detected."
+msgstr "Acum e detectată: {tool}."
+
+#: src/opencutter/gui/sidebar.py
+#, python-brace-format
+msgid "Currently: {tool}."
+msgstr "Acum: {tool}."
+
+#: src/opencutter/gui/sidebar.py
+msgid "Page Setup"
+msgstr "Configurare pagină"
+
+#: src/opencutter/gui/window.py
+msgid "Sketching"
+msgstr "Se desenează"
+
+#: src/opencutter/gui/window.py
+msgid "Scoring"
+msgstr "Se biguiește"
+
+#: src/opencutter/gui/window.py
+msgid "Cutting"
+msgstr "Se taie"
+
+#: src/opencutter/gui/window.py
+msgid "A send is already in progress."
+msgstr "O trimitere este deja în curs."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "A job is running on the {name}"
+msgstr "O lucrare rulează pe {name}"
+
+#: src/opencutter/gui/window.py
+msgid "The connected machine changed"
+msgstr "Mașina conectată s-a schimbat"
+
+#: src/opencutter/gui/window.py
+msgid ""
+"Nothing was sent. Check the layout for the connected machine, then send "
+"again."
+msgstr ""
+"Nu s-a trimis nimic. Verificați așezarea pentru mașina conectată, apoi "
+"trimiteți din nou."
+
+#: src/opencutter/gui/window.py
+msgid "Part of the design is outside the cut area."
+msgstr "O parte din design este în afara zonei de tăiere."
+
+#: src/opencutter/gui/window.py
+msgid "Design on the media and inside the cut area"
+msgstr "Designul este pe foaie și în zona de tăiere"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "Part of the design is off the media ({media})."
+msgstr "O parte din design iese de pe foaie ({media})."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid ""
+"Media Size is the whole mat ({media}), so OpenCutter cannot keep the blade "
+"on a smaller sheet. If your sheet is smaller, set Media Size in Page Setup."
+msgstr ""
+"Dimensiune foaie este tot covorașul ({media}), așa că OpenCutter nu poate "
+"ține lama pe o foaie mai mică. Dacă foaia dumneavoastră e mai mică, setați "
+"Dimensiune foaie în Configurare pagină."
+
+#: src/opencutter/gui/window.py
+msgid "<b>The stop could not be sent.</b> Press the machine's power button."
+msgstr ""
+"<b>Oprirea nu a putut fi trimisă.</b> Apăsați butonul de pornire/oprire al "
+"mașinii."
+
+#: src/opencutter/gui/window.py
+msgid "Stop sent. If the machine keeps moving, press its power button."
+msgstr ""
+"Oprire trimisă. Dacă mașina continuă să se miște, apăsați butonul ei de "
+"pornire/oprire."
+
+#: src/opencutter/gui/window.py
+msgid "Not connected: press the machine's power button."
+msgstr "Neconectată: apăsați butonul de pornire/oprire al mașinii."
+
+#: src/opencutter/gui/window.py
+msgid "Waiting for the machine to confirm the stop…"
+msgstr "Se așteaptă ca mașina să confirme oprirea…"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid ""
+"A stop could not get through to the {name}. OpenCutter sends it as soon as "
+"the {name} is connected again. If it moves, press its power button."
+msgstr ""
+"O oprire nu a putut ajunge la {name}. OpenCutter o trimite imediat ce {name} "
+"este conectată din nou. Dacă se mișcă, apăsați butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid ""
+"The stop that could not get through was sent to the {name} when it connected "
+"again."
+msgstr ""
+"Oprirea care nu a putut ajunge a fost trimisă către {name} când s-a conectat "
+"din nou."
+
+#: src/opencutter/gui/window.py
+msgid "Connection lost while cutting"
+msgstr "Conexiunea s-a pierdut în timpul tăierii"
+
+#: src/opencutter/gui/window.py
+msgid ""
+"The connection came back, but this job has ended and does not go on. If the "
+"machine moves, press Stop Machine or its power button."
+msgstr ""
+"Conexiunea a revenit, dar această lucrare s-a încheiat și nu continuă. Dacă "
+"mașina se mișcă, apăsați Stop sau butonul ei de pornire/oprire."
+
+#: src/opencutter/gui/window.py
+msgid "Open…"
+msgstr "Deschide…"
+
+#: src/opencutter/gui/window.py
+msgid "Keyboard Shortcuts"
+msgstr "Scurtături de tastatură"
+
+#: src/opencutter/gui/window.py
+msgid "About OpenCutter"
+msgstr "Despre OpenCutter"
+
+#: src/opencutter/gui/window.py
+msgid "Main menu"
+msgstr "Meniu principal"
+
+#: src/opencutter/gui/window.py
+msgid "Open"
+msgstr "Deschide"
+
+#: src/opencutter/gui/window.py
+msgid "Open an SVG design (Ctrl+O)"
+msgstr "Deschide un design SVG (Ctrl+O)"
+
+#: src/opencutter/gui/window.py
+msgid "No design open"
+msgstr "Niciun design deschis"
+
+#: src/opencutter/gui/window.py
+msgid "Moved since opening"
+msgstr "Mutat după deschidere"
+
+#: src/opencutter/gui/window.py
+msgid "Show sidebar"
+msgstr "Arată bara laterală"
+
+#: src/opencutter/gui/window.py
+msgid "Cancel Job (Esc)"
+msgstr "Anulează (Esc)"
+
+#: src/opencutter/gui/window.py
+msgid "Fit to Mat"
+msgstr "Potrivește la covoraș"
+
+#: src/opencutter/gui/window.py
+msgid "Open an SVG design"
+msgstr "Deschideți un design SVG"
+
+#: src/opencutter/gui/window.py
+msgid "Drag a file here, or choose one from your computer."
+msgstr "Trageți un fișier aici sau alegeți unul din calculator."
+
+#: src/opencutter/gui/window.py
+msgid "Open design…"
+msgstr "Deschide un design…"
+
+#: src/opencutter/gui/window.py
+msgid "Design in Inkscape, then open the SVG here."
+msgstr "Creați designul în Inkscape, apoi deschideți aici fișierul SVG."
+
+#. Translators: the short names of the design's position and size: X, Y, Width, Height.
+#: src/opencutter/gui/window.py
+msgctxt "position"
+msgid "X"
+msgstr "X"
+
+#. Translators: the short names of the design's position and size: X, Y, Width, Height.
+#: src/opencutter/gui/window.py
+msgctxt "position"
+msgid "Y"
+msgstr "Y"
+
+#: src/opencutter/gui/window.py
+msgid "Rotate 90°"
+msgstr "Rotește cu 90°"
+
+#: src/opencutter/gui/window.py
+msgid "Align"
+msgstr "Aliniere"
+
+#: src/opencutter/gui/window.py
+msgid "Zoom out"
+msgstr "Micșorează"
+
+#: src/opencutter/gui/window.py
+msgid "Zoom in"
+msgstr "Mărește"
+
+#: src/opencutter/gui/window.py
+msgid "Fit"
+msgstr "Potrivește"
+
+#: src/opencutter/gui/window.py
+msgid "Fit (Ctrl+0)"
+msgstr "Potrivește (Ctrl+0)"
+
+#: src/opencutter/gui/window.py
+msgid "SVG designs"
+msgstr "Designuri SVG"
+
+#: src/opencutter/gui/window.py
+msgid "Could not open the design"
+msgstr "Designul nu a putut fi deschis"
+
+#: src/opencutter/gui/window.py
+msgid "The design was not opened: a job is being sent."
+msgstr "Designul nu a fost deschis: se trimite o lucrare."
+
+#. Translators: the window title: the design's file name, then the app's name.
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{design} — OpenCutter"
+msgstr "{design} — OpenCutter"
+
+#: src/opencutter/gui/window.py
+msgid "Details"
+msgstr "Detalii"
+
+#: src/opencutter/gui/window.py
+msgid "Some objects were ignored"
+msgstr "Unele obiecte au fost ignorate"
+
+#: src/opencutter/gui/window.py
+msgid "Fit to Media"
+msgstr "Potrivește la foaie"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{n} path"
+msgid_plural "{n} paths"
+msgstr[0] "{n} traseu"
+msgstr[1] "{n} trasee"
+msgstr[2] "{n} de trasee"
+
+#: src/opencutter/gui/window.py
+msgid "No material"
+msgstr "Niciun material"
+
+#: src/opencutter/gui/window.py
+msgid "No action"
+msgstr "Nicio acțiune"
+
+#: src/opencutter/gui/window.py
+msgid "Placement is locked while the machine is moving"
+msgstr "Poziție blocată: mașina se mișcă"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "Status: <span weight='500'>{status}</span>"
+msgstr "Stare: <span weight='500'>{status}</span>"
+
+#: src/opencutter/gui/window.py
+msgid "Paused on the machine"
+msgstr "Pauză de la mașină"
+
+#: src/opencutter/gui/window.py
+msgid "Waiting for Cut (outline check)"
+msgstr "Se așteaptă Taie (verificarea conturului)"
+
+#. Translators: what the machine does, and how far: "Cutting 40%".
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{activity} {percent}%"
+msgstr "{activity}: {percent}%"
+
+#: src/opencutter/gui/window.py
+msgid "Send (Ctrl+Enter)"
+msgstr "Trimite (Ctrl+Enter)"
+
+#: src/opencutter/gui/window.py
+msgid "This job cannot be sent"
+msgstr "Această lucrare nu poate fi trimisă"
+
+#: src/opencutter/gui/window.py
+msgid "The settings changed"
+msgstr "Setările s-au schimbat"
+
+#: src/opencutter/gui/window.py
+msgid "Nothing was sent. Press Test Cut again to cut with the new settings."
+msgstr ""
+"Nu s-a trimis nimic. Apăsați din nou Tăiere de probă ca să tăiați cu noile "
+"setări."
+
+#: src/opencutter/gui/window.py
+msgid "The job changed before it was sent. Check it again."
+msgstr "Lucrarea s-a schimbat înainte de a fi trimisă. Verificați-o din nou."
+
+#: src/opencutter/gui/window.py
+msgid "The job kept changing"
+msgstr "Lucrarea s-a tot schimbat"
+
+#: src/opencutter/gui/window.py
+msgid "Nothing was sent. Check the design and the settings, then send again."
+msgstr ""
+"Nu s-a trimis nimic. Verificați designul și setările, apoi trimiteți din nou."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "{holder}: {tool} detected"
+msgstr "{holder}: {tool} detectată"
+
+#: src/opencutter/gui/window.py
+msgid "<b>Test Complete.</b> Check that the square peels off cleanly."
+msgstr "<b>Probă încheiată.</b> Verificați dacă pătratul se dezlipește curat."
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "<b>{action} complete</b>"
+msgstr "<b>{action} încheiată</b>"
+
+#: src/opencutter/gui/window.py
+#, python-brace-format
+msgid "machine: {status}"
+msgstr "mașina: {status}"
+
+#: src/opencutter/gui/window.py
+msgid "Nudge the design by 0.1 in (Shift: 1 in)"
+msgstr "Mută designul cu 0,1 in (Shift: 1 in)"
+
+#: src/opencutter/device/daemon.py
+msgid "nothing was sent"
+msgstr "nu s-a trimis nimic"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"the machine is not connected yet: switch it off and on; the daemon "
+"reconnects by itself"
+msgstr ""
+"mașina nu este încă conectată: opriți-o și porniți-o din nou; serviciul de "
+"fundal se reconectează singur"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The mat was unloaded during the job; nothing more was sent. Load it and send "
+"the job again."
+msgstr ""
+"Covorașul a fost scos în timpul lucrării; nu s-a mai trimis nimic. "
+"Încărcați-l și trimiteți din nou lucrarea."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The mat was unloaded during the job, so OpenCutter ended it with the stop "
+"and sends nothing more. Load the mat, then send the job again."
+msgstr ""
+"Covorașul a fost scos în timpul lucrării, așa că OpenCutter a încheiat-o cu "
+"oprirea și nu mai trimite nimic. Încărcați covorașul, apoi trimiteți din nou "
+"lucrarea."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The machine did not confirm the unit (U). Unload and load the mat, then send "
+"again."
+msgstr ""
+"Mașina nu a confirmat unitatea (U). Scoateți covorașul și încărcați-l din "
+"nou (Unload, apoi Load), după care trimiteți din nou."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"The machine left Pause without going on with the cut, so it may have been "
+"cancelled on its panel. OpenCutter ended the job with the stop and sends "
+"nothing more. Press Unload on the machine, check that the tool is up, then "
+"load the mat and send the job again."
+msgstr ""
+"Mașina a ieșit din pauză fără să continue tăierea, deci este posibil să fi "
+"fost anulată de pe panoul ei. OpenCutter a încheiat lucrarea cu oprirea și "
+"nu mai trimite nimic. Apăsați Unload pe mașină, verificați că unealta este "
+"ridicată, apoi încărcați covorașul și trimiteți din nou lucrarea."
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"stopped on request (Cancel in the app, or `opencutter stop`); nothing more "
+"was sent"
+msgstr ""
+"oprită la cerere (Anulează în aplicație sau `opencutter stop`); nu s-a mai "
+"trimis nimic"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"A stop request (Cancel in the app, or `opencutter stop` from a terminal) "
+"stopped the machine before this step; nothing more was sent. Press Unload on "
+"the machine, check that the tool is up, then load the mat and {again}."
+msgstr ""
+"O cerere de oprire (Anulează în aplicație sau `opencutter stop` dintr-un "
+"terminal) a oprit mașina înainte de acest pas; nu s-a mai trimis nimic. "
+"Apăsați Unload pe mașină, verificați că unealta este ridicată, apoi "
+"încărcați covorașul și {again}."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"A stop request (Cancel in the app, or `opencutter stop` from a terminal) "
+"came during the unit check (U); nothing more was sent. Press Unload on the "
+"machine, then load the mat and {again}."
+msgstr ""
+"O cerere de oprire (Anulează în aplicație sau `opencutter stop` dintr-un "
+"terminal) a venit în timpul verificării unității (U); nu s-a mai trimis "
+"nimic. Apăsați Unload pe mașină, apoi încărcați covorașul și {again}."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "{reason} Nothing more is sent to it."
+msgstr "{reason} Nu i se mai trimite nimic."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "{problem}; nothing was sent"
+msgstr "{problem}; nu s-a trimis nimic"
+
+#: src/opencutter/device/daemon.py
+msgid "the background service is stopping"
+msgstr "serviciul de fundal se oprește"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"a program or job is running; cancel it first (in the app, or with "
+"`opencutter stop`)"
+msgstr ""
+"rulează un program sau o lucrare; anulați-o mai întâi (în aplicație sau cu "
+"`opencutter stop`)"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"this background service is {service}, but the app or command is {client}: "
+"nothing was sent. Run `opencutter service stop`, then try again"
+msgstr ""
+"acest serviciu de fundal este {service}, dar aplicația sau comanda este "
+"{client}: nu s-a trimis nimic. Rulați `opencutter service stop`, apoi "
+"încercați din nou"
+
+#: src/opencutter/device/daemon.py
+msgid "send the job again"
+msgstr "trimiteți din nou lucrarea"
+
+#: src/opencutter/device/daemon.py
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "status {status} = {term}"
+msgstr "starea {status} = {term}"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine was paused ({shown}). OpenCutter ended the job with the stop and "
+"sends nothing more: press Unload on the machine (or switch it off), check "
+"that the tool is up, then load the mat and send the job again."
+msgstr ""
+"Mașina a fost pusă pe pauză ({shown}). OpenCutter a încheiat lucrarea cu "
+"oprirea și nu mai trimite nimic: apăsați Unload pe mașină (sau opriți-o), "
+"verificați că unealta este ridicată, apoi încărcați covorașul și trimiteți "
+"din nou lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine was paused ({shown}) before this step; nothing of this step was "
+"sent. OpenCutter ended the job with the stop and sends nothing more: press "
+"Unload on the machine (or switch it off), check that the tool is up, then "
+"load the mat and send the job again."
+msgstr ""
+"Mașina a fost pusă pe pauză ({shown}) înainte de acest pas; nu s-a trimis "
+"nimic din acest pas. OpenCutter a încheiat lucrarea cu oprirea și nu mai "
+"trimite nimic: apăsați Unload pe mașină (sau opriți-o), verificați că "
+"unealta este ridicată, apoi încărcați covorașul și trimiteți din nou "
+"lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine cancelled the job ({shown}). OpenCutter ended the job with the "
+"stop and sends nothing more. Press Unload on the machine, check that the "
+"tool is up, then load the mat and send the job again."
+msgstr ""
+"Mașina a anulat lucrarea ({shown}). OpenCutter a încheiat lucrarea cu "
+"oprirea și nu mai trimite nimic. Apăsați Unload pe mașină, verificați că "
+"unealta este ridicată, apoi încărcați covorașul și trimiteți din nou "
+"lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine cancelled the job ({shown}) before this step; nothing of this "
+"step was sent. OpenCutter ended the job with the stop and sends nothing "
+"more. Press Unload on the machine, check that the tool is up, then load the "
+"mat and send the job again."
+msgstr ""
+"Mașina a anulat lucrarea ({shown}) înainte de acest pas; nu s-a trimis nimic "
+"din acest pas. OpenCutter a încheiat lucrarea cu oprirea și nu mai trimite "
+"nimic. Apăsați Unload pe mașină, verificați că unealta este ridicată, apoi "
+"încărcați covorașul și trimiteți din nou lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine rejected a command ({shown}): another connection, such as USB, "
+"may hold it. OpenCutter ended the job with the stop. Close the other "
+"connection, then press Unload on the machine (or switch it off), check that "
+"the tool is up, then load the mat and send the job again."
+msgstr ""
+"Mașina a respins o comandă ({shown}): poate o ține ocupată altă conexiune, "
+"de exemplu USB. OpenCutter a încheiat lucrarea cu oprirea. Închideți "
+"cealaltă conexiune, apoi apăsați Unload pe mașină (sau opriți-o), verificați "
+"că unealta este ridicată, după care încărcați covorașul și trimiteți din nou "
+"lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine rejected a command ({shown}) before this step; nothing of this "
+"step was sent: another connection, such as USB, may hold it. OpenCutter "
+"ended the job with the stop. Close the other connection, then press Unload "
+"on the machine (or switch it off), check that the tool is up, then load the "
+"mat and send the job again."
+msgstr ""
+"Mașina a respins o comandă ({shown}) înainte de acest pas, poate pentru că o "
+"ține ocupată altă conexiune, de exemplu USB; nu s-a trimis nimic din acest "
+"pas. OpenCutter a încheiat lucrarea cu oprirea. Închideți cealaltă "
+"conexiune, apoi apăsați Unload pe mașină (sau opriți-o), verificați că "
+"unealta este ridicată, după care încărcați covorașul și trimiteți din nou "
+"lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine still reported Busy {seconds} s after the previous step "
+"({shown}). OpenCutter ended the job with the stop; if the machine keeps "
+"moving, press its power button. Then press Unload on the machine (or switch "
+"it off), check that the tool is up, then load the mat and send the job again."
+msgstr ""
+"Mașina raporta încă starea Ocupată la {seconds} s după pasul anterior "
+"({shown}). OpenCutter a încheiat lucrarea cu oprirea; dacă mașina continuă "
+"să se miște, apăsați butonul ei de pornire/oprire. Apoi apăsați Unload pe "
+"mașină (sau opriți-o), verificați că unealta este ridicată, după care "
+"încărcați covorașul și trimiteți din nou lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"The machine still reported Busy {seconds} s after the previous step "
+"({shown}) before this step; nothing of this step was sent. OpenCutter ended "
+"the job with the stop; if the machine keeps moving, press its power button. "
+"Then press Unload on the machine (or switch it off), check that the tool is "
+"up, then load the mat and send the job again."
+msgstr ""
+"Mașina raporta încă starea Ocupată la {seconds} s după pasul anterior "
+"({shown}), înainte de acest pas; nu s-a trimis nimic din acest pas. "
+"OpenCutter a încheiat lucrarea cu oprirea; dacă mașina continuă să se miște, "
+"apăsați butonul ei de pornire/oprire. Apoi apăsați Unload pe mașină (sau "
+"opriți-o), verificați că unealta este ridicată, după care încărcați "
+"covorașul și trimiteți din nou lucrarea."
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"unexpected status {status} = {term} before this step; nothing of this step "
+"was sent, and OpenCutter ended the job with the stop"
+msgstr ""
+"stare neașteptată {status} = {term} înainte de acest pas; nu s-a trimis "
+"nimic din acest pas, iar OpenCutter a încheiat lucrarea cu oprirea"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "unexpected status {status} = {term}"
+msgstr "stare neașteptată {status} = {term}"
+
+#: src/opencutter/device/daemon.py
+msgid "no job is running"
+msgstr "nu rulează nicio lucrare"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is not connected"
+msgstr "mașina nu este conectată"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is not answering (the link is down)"
+msgstr "mașina nu răspunde (legătura este întreruptă)"
+
+#: src/opencutter/device/daemon.py
+msgid "a stop was asked for: the job is ending"
+msgstr "s-a cerut oprirea: lucrarea se încheie"
+
+#: src/opencutter/device/daemon.py
+msgid "the job is ending"
+msgstr "lucrarea se încheie"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the {model} has not been tested with resume: press its Pause key"
+msgstr ""
+"comanda Reia nu a fost testată pe {model}: apăsați butonul de pauză de pe "
+"mașină"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the {model} has not been tested with pause: press its Pause key"
+msgstr ""
+"comanda Pauză nu a fost testată pe {model}: apăsați butonul de pauză de pe "
+"mașină"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the machine is not paused ({shown})"
+msgstr "mașina nu este în pauză ({shown})"
+
+#: src/opencutter/device/daemon.py
+msgid "the job has not started yet"
+msgstr "lucrarea nu a început încă"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is already paused"
+msgstr "mașina este deja în pauză"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid "the machine is neither ready nor busy ({shown})"
+msgstr "mașina nu este nici pregătită, nici ocupată ({shown})"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"the machine is not answering (its status could not be read within {seconds} "
+"s)"
+msgstr "mașina nu răspunde (starea ei nu a putut fi citită în {seconds} s)"
+
+#: src/opencutter/device/daemon.py
+msgid "the machine is not answering (no reply to ESC 05)"
+msgstr "mașina nu răspunde (niciun răspuns la ESC 05)"
+
+#: src/opencutter/device/daemon.py
+msgid ""
+"the machine's status could not be read for sure (an earlier reply is still "
+"due); try again"
+msgstr ""
+"starea mașinii nu a putut fi citită cu siguranță (se mai așteaptă un răspuns "
+"anterior); încercați din nou"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"the resume write failed ({error}); whether it arrived is unknown, and it is "
+"not sent again"
+msgstr ""
+"scrierea comenzii Reia a eșuat ({error}); nu se știe dacă a ajuns la mașină "
+"și nu se trimite din nou"
+
+#: src/opencutter/device/daemon.py
+#, python-brace-format
+msgid ""
+"the pause write failed ({error}); whether it arrived is unknown, and it is "
+"not sent again"
+msgstr ""
+"scrierea comenzii Pauză a eșuat ({error}); nu se știe dacă a ajuns la mașină "
+"și nu se trimite din nou"
+
+#: src/opencutter/device/protocol.py
+msgid ""
+"Do not press Pause to continue: press Unload on the machine (or switch it "
+"off and on), check that the tool is up, then load the Cutting Mat right "
+"before the job."
+msgstr ""
+"Nu apăsați butonul de pauză ca să continuați: apăsați Unload pe mașină (sau "
+"opriți-o și porniți-o din nou), verificați că unealta este ridicată, apoi "
+"încărcați covorașul de tăiere chiar înainte de lucrare."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine is busy ({shown}): it is still working, or another connection "
+"such as USB holds it. Nothing was sent. Wait until it shows Ready, then try "
+"again."
+msgstr ""
+"Mașina este ocupată ({shown}): încă lucrează sau o ține ocupată altă "
+"conexiune, de exemplu USB. Nu s-a trimis nimic. Așteptați până arată "
+"Pregătită, apoi încercați din nou."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "The machine is paused ({shown}). Nothing was sent. {advice}"
+msgstr "Mașina este în pauză ({shown}). Nu s-a trimis nimic. {advice}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine is still ending a cancel ({shown}). Nothing was sent. Wait until "
+"it shows Ready or Load Media. {advice}"
+msgstr ""
+"Mașina încă încheie o anulare ({shown}). Nu s-a trimis nimic. Așteptați până "
+"arată Pregătită sau Așteaptă covorașul. {advice}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine rejected a command ({shown}): another connection, such as USB, "
+"held it. Nothing was sent. Close the other connection, then try again."
+msgstr ""
+"Mașina a respins o comandă ({shown}): o ținea ocupată altă conexiune, de "
+"exemplu USB. Nu s-a trimis nimic. Închideți cealaltă conexiune, apoi "
+"încercați din nou."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"The machine is not ready ({shown}). Load the Cutting Mat on the machine "
+"right before the job."
+msgstr ""
+"Mașina nu este pregătită ({shown}). Încărcați covorașul de tăiere în mașină "
+"chiar înainte de lucrare."
+
+#: src/opencutter/device/protocol.py
+msgid ""
+"This machine did not report its model. OpenCutter cannot drive it and will "
+"not send anything to it."
+msgstr ""
+"Această mașină nu și-a raportat modelul. OpenCutter nu o poate comanda și nu "
+"îi va trimite nimic."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as \"{model}\". OpenCutter cannot drive it and "
+"will not send anything to it."
+msgstr ""
+"Această mașină se prezintă drept „{model}”. OpenCutter nu o poate comanda și "
+"nu îi va trimite nimic."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"This machine reports itself as \"{model}\", a name that more than one model "
+"uses, so OpenCutter cannot tell which model it is and will not send anything "
+"to it."
+msgstr ""
+"Această mașină se prezintă drept „{model}”, un nume folosit de mai multe "
+"modele, așa că OpenCutter nu poate ști ce model este și nu îi va trimite "
+"nimic."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply} is not a unit reply (two numbers and a comma). Stopping before "
+"anything is drawn.{report}"
+msgstr ""
+"U = {reply} nu este un răspuns de unitate (două numere și o virgulă). Oprire "
+"înainte de a desena ceva.{report}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}: not checked. The reply the {mat} gives on this model is not "
+"known yet, so the cut area could not be checked."
+msgstr ""
+"U = {reply}: neverificat. Răspunsul dat cu {mat} pe acest model nu este încă "
+"cunoscut, așa că zona de tăiere nu a putut fi verificată."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}: no reply is known for the {mat}, so the unit cannot be "
+"confirmed. Stopping before anything is drawn."
+msgstr ""
+"U = {reply}: nu se cunoaște niciun răspuns pentru {mat}, așa că unitatea nu "
+"poate fi confirmată. Oprire înainte de a desena ceva."
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "U = {reply}: 0.05 mm per unit, confirmed"
+msgstr "U = {reply}: 0,05 mm pe unitate, confirmat"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}: the unit looks like {size}, not 0.05 mm. Stopping before "
+"anything is drawn.{report}"
+msgstr ""
+"U = {reply}: unitatea pare să fie {size}, nu 0,05 mm. Oprire înainte de a "
+"desena ceva.{report}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid ""
+"U = {reply}, not {a},{b}: the mat type ({tg}) probably did not take effect "
+"because the {mat} was not loaded right before the job. Unload and Load it on "
+"the machine, then retry.{report}"
+msgstr ""
+"U = {reply}, nu {a},{b}: probabil tipul de covoraș ({tg}) nu a avut efect, "
+"pentru că {mat} nu a fost încărcat chiar înainte de lucrare. Scoateți-l și "
+"încărcați-l din nou în mașină (Unload, apoi Load), apoi reîncercați.{report}"
+
+#: src/opencutter/device/protocol.py
+#, python-brace-format
+msgid "{size} mat"
+msgstr "covorașul {size}"
+
+#: src/opencutter/device/protocol.py
+msgid "mat"
+msgstr "covorașul"
+
+#. Translators: added after a sentence: keep the space at the start.
+#: src/opencutter/device/protocol.py
+msgid ""
+" The expected reply comes from the firmware analysis and was not measured on "
+"this model yet: if the mat was loaded right before the job, please report "
+"this reply."
+msgstr ""
+" Răspunsul așteptat provine din analiza firmware-ului și nu a fost încă "
+"măsurat pe acest model: dacă covorașul a fost încărcat chiar înainte de "
+"lucrare, vă rugăm să raportați acest răspuns."
+
+#. Translators: added after a sentence: keep the space at the start.
+#: src/opencutter/device/protocol.py
+msgid ""
+" If this happens again with the mat loaded right before the job, please "
+"report it."
+msgstr ""
+" Dacă se întâmplă din nou cu covorașul încărcat chiar înainte de lucrare, vă "
+"rugăm să raportați."
+
+#: src/opencutter/job/plan.py
+msgid "The mat may feed in and the carriage moves a little. The tool stays up."
+msgstr ""
+"Covorașul poate intra în mașină, iar căruciorul se mișcă puțin. Unealta "
+"rămâne ridicată."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The mat may feed in about {feed} mm and the carriage moves a little. The "
+"tool stays up."
+msgstr ""
+"Covorașul poate intra circa {feed} mm, iar căruciorul se mișcă puțin. "
+"Unealta rămâne ridicată."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "Header: {mat} cutting mat"
+msgstr "Antet: covoraș de tăiere {mat}"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The machine should reply {a},{b}: {unit} mm per unit, mat command accepted."
+msgstr ""
+"Mașina ar trebui să răspundă {a},{b}: {unit} mm pe unitate, comanda de "
+"covoraș acceptată."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The reply is logged and shown but not checked: the {machine}'s reply with "
+"the {mat} mat is not known, so the cut area could not be checked on this "
+"model."
+msgstr ""
+"Răspunsul este înregistrat și afișat, dar nu este verificat: nu se cunoaște "
+"răspunsul mașinii {machine} cu covorașul {mat}, așa că zona de tăiere nu a "
+"putut fi verificată pe acest model."
+
+#: src/opencutter/job/plan.py
+msgid "Check units (no motion)"
+msgstr "Verificare unități (fără mișcare)"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{holder}: {tool}, Force {force}, Speed {speed}"
+msgstr "{holder}: {tool}, forță {force}, viteză {speed}"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"{holder}: {tool}, Blade Depth {depth} ({mm}), Force {force}, Speed {speed}"
+msgstr ""
+"{holder}: {tool}, adâncime lamă {depth} ({mm}), forță {force}, viteză {speed}"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{holder} is selected; the carriage may move. Nothing touches the media."
+msgstr ""
+"Este selectată {holder}; căruciorul se poate mișca. Nimic nu atinge foaia."
+
+#: src/opencutter/job/plan.py
+msgid ""
+"The tool settings are sent; the carriage may move. Nothing touches the media."
+msgstr ""
+"Se trimit setările uneltei; căruciorul se poate mișca. Nimic nu atinge foaia."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"{holder} is selected; the carriage may move. Nothing touches the media. Then "
+"the {tool} is set at its station on the left (about 10 s)."
+msgstr ""
+"Este selectată {holder}; căruciorul se poate mișca. Nimic nu atinge foaia. "
+"Apoi {tool} se reglează la stația ei din stânga (circa 10 s)."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid ""
+"The tool settings are sent; the carriage may move. Nothing touches the "
+"media. Then the {tool} is set at its station (about 10 s)."
+msgstr ""
+"Se trimit setările uneltei; căruciorul se poate mișca. Nimic nu atinge "
+"foaia. Apoi {tool} se reglează la stația ei (circa 10 s)."
+
+#: src/opencutter/job/plan.py
+msgid "Preview outline (tool up)"
+msgstr "Previzualizare contur (unealta ridicată)"
+
+#: src/opencutter/job/plan.py
+msgid ""
+"The tool stays up and traces the outer box of the design. Check that it "
+"stays over the media."
+msgstr ""
+"Unealta rămâne ridicată și parcurge chenarul exterior al designului. "
+"Verificați că rămâne deasupra foii."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: 1 path, {length} mm, {passes} passes."
+msgstr "Unealta coboară: 1 traseu, {length} mm, treceri: {passes}."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: {paths} paths, {length} mm, {passes} passes."
+msgstr ""
+"Unealta coboară. Trasee: {paths}, lungime: {length} mm, treceri: {passes}."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: 1 path, {length} mm."
+msgstr "Unealta coboară: 1 traseu, {length} mm."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "The tool goes down: {paths} paths, {length} mm."
+msgstr "Unealta coboară. Trasee: {paths}, lungime: {length} mm."
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{action} with {holder} ({tool})"
+msgstr "{action} cu {holder} ({tool})"
+
+#: src/opencutter/job/plan.py
+#, python-brace-format
+msgid "{action} with the {tool}"
+msgstr "{action} cu {tool}"
+
+#: src/opencutter/job/plan.py
+msgid "Return to Origin"
+msgstr "Revenire la origine"
+
+#: src/opencutter/job/plan.py
+msgid ""
+"The tool moves up to the origin. The mat stays loaded; unload it on the "
+"machine."
+msgstr ""
+"Unealta se mută la origine. Covorașul rămâne încărcat; scoateți-l de pe "
+"mașină."
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "OpenCutter cannot drive the {name} yet"
+msgstr "OpenCutter nu poate comanda încă mașina {name}"
+
+#: src/opencutter/job/validate.py
+msgid "the job has nothing to cut"
+msgstr "lucrarea nu are nimic de tăiat"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "{holder} is used with two different tools"
+msgstr "în {holder} sunt folosite două unelte diferite"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "the {name} has one tool holder, and the job uses two different tools"
+msgstr ""
+"mașina {name} are un singur suport de unealtă, iar lucrarea folosește două "
+"unelte diferite"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "more than {count} points"
+msgstr "mai mult de {count} de puncte"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "the media does not fit on the {mat} cutting mat"
+msgstr "foaia nu încape pe covorașul de tăiere {mat}"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "group {group}: point ({x}, {y}) mm lies outside the media"
+msgstr "grupul {group}: punctul ({x}, {y}) mm se află în afara foii"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "group {group}: point ({x}, {y}) mm lies outside the cut area"
+msgstr "grupul {group}: punctul ({x}, {y}) mm se află în afara zonei de tăiere"
+
+#: src/opencutter/job/validate.py
+#, python-brace-format
+msgid "Blade Depth (TF) needs the {tool} detected in {holder}"
+msgstr "Adâncimea lamei (TF) necesită ca {tool} să fie detectată în {holder}"
+
+#: src/opencutter/machines/profile.py
+#, python-brace-format
+msgid "OpenCutter recognizes this {name} but cannot drive it yet: {reason}."
+msgstr ""
+"OpenCutter recunoaște mașina {name}, dar încă nu o poate comanda: {reason}."
+
+#: src/opencutter/machines/recognized.py
+msgid ""
+"there is no known way to stop it from the computer, and it does not report "
+"which tools are loaded"
+msgstr ""
+"nu se cunoaște o metodă de a o opri de pe calculator și nu raportează ce "
+"unelte sunt montate"
+
+#: src/opencutter/machines/recognized.py
+msgid ""
+"it needs a USB connection, which OpenCutter does not have, and there is no "
+"known way to stop it from the computer"
+msgstr ""
+"are nevoie de o conexiune USB, pe care OpenCutter nu o are, și nu se "
+"cunoaște o metodă de a o opri de pe calculator"
+
+#: src/opencutter/machines/recognized.py
+msgid ""
+"the work area of its trays, its tool height and the material thickness are "
+"not known, and there is no way to confirm the work area before a cut"
+msgstr ""
+"nu se cunosc zona de lucru a tăvilor ei, înălțimea uneltei și grosimea "
+"materialului și nu există o metodă de a confirma zona de lucru înainte de "
+"tăiere"
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: the file is damaged or not an SVG ({error})."
+msgstr ""
+"{name} nu a putut fi citit: fișierul este deteriorat sau nu este SVG "
+"({error})."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: it is not an SVG file."
+msgstr "{name} nu a putut fi citit: nu este un fișier SVG."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: {error}"
+msgstr "{name} nu a putut fi citit: {error}"
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Nothing to cut in {name}: it has no visible paths or shapes."
+msgstr "Nimic de tăiat în {name}: nu are trasee sau forme vizibile."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid ""
+"{n} text object ignored: convert text to paths in Inkscape (Path > Object to "
+"Path)."
+msgid_plural ""
+"{n} text objects ignored: convert text to paths in Inkscape (Path > Object "
+"to Path)."
+msgstr[0] ""
+"{n} obiect text ignorat: transformați textul în trasee în Inkscape (Traseu > "
+"Obiect în traseu)."
+msgstr[1] ""
+"{n} obiecte text ignorate: transformați textul în trasee în Inkscape (Traseu "
+"> Obiect în traseu)."
+msgstr[2] ""
+"{n} de obiecte text ignorate: transformați textul în trasee în Inkscape "
+"(Traseu > Obiect în traseu)."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid ""
+"{n} image ignored: trace images in Inkscape (Path > Trace Bitmap) to cut "
+"them."
+msgid_plural ""
+"{n} images ignored: trace images in Inkscape (Path > Trace Bitmap) to cut "
+"them."
+msgstr[0] ""
+"{n} imagine ignorată: vectorizați imaginile în Inkscape (Traseu > "
+"Vectorizare bitmap) ca să le puteți tăia."
+msgstr[1] ""
+"{n} imagini ignorate: vectorizați imaginile în Inkscape (Traseu > "
+"Vectorizare bitmap) ca să le puteți tăia."
+msgstr[2] ""
+"{n} de imagini ignorate: vectorizați imaginile în Inkscape (Traseu > "
+"Vectorizare bitmap) ca să le puteți tăia."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid ""
+"{n} clipped or masked object: clips and masks are ignored, so the whole "
+"object is cut."
+msgid_plural ""
+"{n} clipped or masked objects: clips and masks are ignored, so the whole "
+"object is cut."
+msgstr[0] ""
+"{n} obiect decupat sau mascat: decupările și măștile sunt ignorate, așa că "
+"se taie tot obiectul."
+msgstr[1] ""
+"{n} obiecte decupate sau mascate: decupările și măștile sunt ignorate, așa "
+"că se taie obiectele întregi."
+msgstr[2] ""
+"{n} de obiecte decupate sau mascate: decupările și măștile sunt ignorate, "
+"așa că se taie obiectele întregi."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not open {name}: {error}."
+msgstr "{name} nu a putut fi deschis: {error}."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: the compressed file is damaged."
+msgstr "{name} nu a putut fi citit: fișierul comprimat este deteriorat."
+
+#: src/opencutter/svg/importer.py
+#, python-brace-format
+msgid "Could not read {name}: the file is too large."
+msgstr "{name} nu a putut fi citit: fișierul este prea mare."

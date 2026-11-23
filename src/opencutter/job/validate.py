@@ -39,6 +39,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from opencutter.i18n import N_
 from opencutter.machines import CAMEO4, MachineProfile, Mat, RecognizedModel, registry, safety
 
 from . import builder
@@ -90,6 +91,20 @@ class UnsafeJob(ValueError):
     """A job or a write that must not reach the machine."""
 
 
+# The refusals a job made in the window can meet, marked for the window: it shows them
+# translated (opencutter.i18n.translate_text); the service, its log and the command line keep
+# them in English. The others name a fault of the program that made the job.
+CANNOT_DRIVE = N_("OpenCutter cannot drive the {name} yet")
+NOTHING_TO_CUT = N_("the job has nothing to cut")
+HOLDER_TWO_TOOLS = N_("{holder} is used with two different tools")
+ONE_HOLDER_TWO_TOOLS = N_("the {name} has one tool holder, and the job uses two different tools")
+TOO_MANY_POINTS = N_("more than {count} points")
+MEDIA_NOT_ON_MAT = N_("the media does not fit on the {mat} cutting mat")
+OUTSIDE_MEDIA = N_("group {group}: point ({x}, {y}) mm lies outside the media")
+OUTSIDE_CUT_AREA = N_("group {group}: point ({x}, {y}) mm lies outside the cut area")
+DEPTH_NEEDS_DETECTED = N_("Blade Depth (TF) needs the {tool} detected in {holder}")
+
+
 def job_profile(spec: JobSpec, profile: MachineProfile | None = None) -> MachineProfile:
     """The machine profile `spec` is checked and built with. Raises UnsafeJob unless the spec
     names a profile jobs may use (JobSpec.machine: a TESTED or UNTESTED MachineProfile of the
@@ -121,7 +136,7 @@ def job_profile(spec: JobSpec, profile: MachineProfile | None = None) -> Machine
         except safety.UnsafeProfile as e:
             raise UnsafeJob(str(e)) from None
     if not profile.support.jobs_allowed:
-        raise UnsafeJob(f"OpenCutter cannot drive the {profile.name} yet")
+        raise UnsafeJob(CANNOT_DRIVE.format(name=profile.name))
     return profile
 
 
@@ -155,7 +170,7 @@ def _validate(spec: JobSpec, profile: MachineProfile | None) -> tuple[MachinePro
     mat = job_mat(spec, profile)
     _check_media(spec, mat)
     if type(spec.groups) is not list or not spec.groups:
-        raise UnsafeJob("the job has nothing to cut")
+        raise UnsafeJob(NOTHING_TO_CUT)
     tools: dict[int, int] = {}
     points = 0
     x, y, w, h = spec.media
@@ -168,13 +183,11 @@ def _validate(spec: JobSpec, profile: MachineProfile | None) -> tuple[MachinePro
         _check_settings(s, i, profile)
         if tools.setdefault(s.holder, s.tool_code) != s.tool_code:
             if len(profile.holders) > 1:
-                raise UnsafeJob(f"{profile.holder(s.holder).label} is used with two different "
-                                "tools")
-            raise UnsafeJob(f"the {profile.name} has one tool holder, and the job uses two "
-                            "different tools")
+                raise UnsafeJob(HOLDER_TWO_TOOLS.format(holder=profile.holder(s.holder).label))
+            raise UnsafeJob(ONE_HOLDER_TWO_TOOLS.format(name=profile.name))
         points += _check_paths(group, i, media, mat.area_su)
         if points > MAX_POINTS:
-            raise UnsafeJob(f"more than {MAX_POINTS} points")
+            raise UnsafeJob(TOO_MANY_POINTS.format(count=MAX_POINTS))
     if type(spec.preview_outline) is not bool:
         raise UnsafeJob("preview_outline must be a bool")
     _check_allow_unrecognized(spec, profile)
@@ -330,7 +343,7 @@ def _check_media(spec: JobSpec, mat: Mat) -> None:
     if w <= 0 or h <= 0:
         raise UnsafeJob("the media size must be positive")
     if x < 0 or y < 0 or x + w > width or y + h > height:
-        raise UnsafeJob(f"the media does not fit on the {spec.mat} cutting mat")
+        raise UnsafeJob(MEDIA_NOT_ON_MAT.format(mat=spec.mat))
 
 
 def _check_settings(s: ToolSettings, i: int, profile: MachineProfile) -> None:
@@ -383,10 +396,10 @@ def _check_paths(group: CutGroup, i: int, media: tuple[float, float, float, floa
                 raise UnsafeJob(f"group {i}: a point must be two finite numbers")
             x, y = pt
             if not (x0 <= x <= x1 and y0 <= y <= y1):
-                raise UnsafeJob(f"group {i}: point ({x:.2f}, {y:.2f}) mm lies outside the media")
+                raise UnsafeJob(OUTSIDE_MEDIA.format(group=i, x=f"{x:.2f}", y=f"{y:.2f}"))
             a, b = doc_to_cutter(x, y)
             if not (a0 <= a <= a1 and b0 <= b <= b1):
-                raise UnsafeJob(f"group {i}: point ({x:.2f}, {y:.2f}) mm lies outside the cut area")
+                raise UnsafeJob(OUTSIDE_CUT_AREA.format(group=i, x=f"{x:.2f}", y=f"{y:.2f}"))
         count += len(path)
     return count
 
@@ -401,8 +414,8 @@ def _check_allow_unrecognized(spec: JobSpec, profile: MachineProfile) -> None:
         s = g.settings
         if s.blade_depth is not None and allow.get(s.holder):
             holder = profile.holder(s.holder)
-            raise UnsafeJob(f"Blade Depth (TF) needs the {holder.tool(s.tool_code).name} "
-                            f"detected in {holder.label}")
+            raise UnsafeJob(DEPTH_NEEDS_DETECTED.format(tool=holder.tool(s.tool_code).name,
+                                                        holder=holder.label))
 
 
 def _holder_numbers(profile: MachineProfile) -> str:

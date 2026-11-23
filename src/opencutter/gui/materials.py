@@ -11,27 +11,33 @@ instead (BASIC_NOTE_UNTESTED), and nothing about testing.
 A machine whose view of the presets is empty (no Basic set for it, no rows for it in the
 presets file) gets the empty state instead: "No materials for this machine yet", which points to
 Cut Settings, and the button Use Cut Settings (the signal ``use-cut-settings``): the Send panel
-then takes its settings from Cut Settings, which the user sets, starting light."""
+then takes its settings from Cut Settings, which the user sets, starting light.
+
+The Basic set's material names and types are shown in the window's language (a presets file's
+own names stay as written), and the search finds a material by either name."""
 from __future__ import annotations
 
 from collections.abc import Callable
 
 from gi.repository import GObject, Gtk, Pango
 
+from opencutter.i18n import N_, _, material_label
 from opencutter.presets.model import PresetStore
 
 from .sending import NO_MATERIALS, NO_MATERIALS_HINT
 from .widgets import label
 
-USE_CUT_SETTINGS = "Use Cut Settings"
+USE_CUT_SETTINGS = N_("Use Cut Settings")
+RECENT = N_("Recent")                  # the group of the materials used last
+OTHER = N_("Other")                    # the group of a material without a Material Type
 
-BASIC_NOTE = ("Basic set: one vinyl cut setting and a Sketch Pen starting point. For other "
-              "materials, start from the closest one and adjust Speed, Force and Blade Depth in "
-              "Cut Settings, then make a Test Cut.")
+BASIC_NOTE = N_("Basic set: one vinyl cut setting and a Sketch Pen starting point. For other "
+                "materials, start from the closest one and adjust Speed, Force and Blade Depth "
+                "in Cut Settings, then make a Test Cut.")
 # The Basic set on a machine where none of its settings was cut (the CAMEO 4 Plus and Pro get
 # the CAMEO 4's rows, not verified on them): where they come from, and to start light
-BASIC_NOTE_UNTESTED = ("Basic set from the CAMEO 4. Start light: adjust Speed, Force and Blade "
-                       "Depth in Cut Settings, then make a Test Cut.")
+BASIC_NOTE_UNTESTED = N_("Basic set from the CAMEO 4. Start light: adjust Speed, Force and "
+                         "Blade Depth in Cut Settings, then make a Test Cut.")
 
 
 class MaterialPicker(Gtk.Popover):
@@ -49,8 +55,8 @@ class MaterialPicker(Gtk.Popover):
         self.add_css_class("material-picker")
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         box.set_size_request(320, -1)
-        self._search = Gtk.SearchEntry(placeholder_text="Search materials")
-        self._search.update_property([Gtk.AccessibleProperty.LABEL], ["Search materials"])
+        self._search = Gtk.SearchEntry(placeholder_text=_("Search materials"))
+        self._search.update_property([Gtk.AccessibleProperty.LABEL], [_("Search materials")])
         self._search.connect("search-changed", self._on_search)
         self._search.connect("activate", self._on_search_activate)
         box.append(self._search)
@@ -59,7 +65,7 @@ class MaterialPicker(Gtk.Popover):
         self._basic.add_css_class("inline-alert")
         self._basic.add_css_class("info")
         self._basic.append(Gtk.Image.new_from_icon_name("dialog-information-symbolic"))
-        note = label(BASIC_NOTE, "caption", wrap=True)
+        note = label(_(BASIC_NOTE), "caption", wrap=True)
         note.set_max_width_chars(40)      # wrap inside the 320 px list, not widen the popover
         note.set_hexpand(True)
         self._basic.append(note)
@@ -78,11 +84,11 @@ class MaterialPicker(Gtk.Popover):
 
         # no materials for this machine: say so, and point to Cut Settings
         self._empty = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        self._empty.append(label(NO_MATERIALS, "heading", wrap=True))
-        hint = label(NO_MATERIALS_HINT, "caption", "dim-label", wrap=True)
+        self._empty.append(label(_(NO_MATERIALS), "heading", wrap=True))
+        hint = label(_(NO_MATERIALS_HINT), "caption", "dim-label", wrap=True)
         hint.set_max_width_chars(40)
         self._empty.append(hint)
-        self._use = Gtk.Button(label=USE_CUT_SETTINGS, halign=Gtk.Align.START)
+        self._use = Gtk.Button(label=_(USE_CUT_SETTINGS), halign=Gtk.Align.START)
         self._use.add_css_class("pill-sm")
         self._use.connect("clicked", lambda *_: self._use_cut_settings())
         self._empty.append(self._use)
@@ -106,16 +112,16 @@ class MaterialPicker(Gtk.Popover):
         self._scroller.set_visible(not empty)
         self._basic.set_visible(store.source.get("kind") == "basic" and not empty)
         verified = any(p.verified for p in store.presets)
-        self._basic_note.set_text(BASIC_NOTE if verified else BASIC_NOTE_UNTESTED)
+        self._basic_note.set_text(_(BASIC_NOTE if verified else BASIC_NOTE_UNTESTED))
         while (row := self._list.get_row_at_index(0)) is not None:
             self._list.remove(row)
         known = set(store.materials())
-        groups = [("Recent", m) for m in recent if m in known]
+        groups = [(RECENT, m) for m in recent if m in known]
         for material in store.materials():
             presets = store.presets_for(material)
-            groups.append((presets[0].material_type if presets else "Other", material))
+            groups.append((presets[0].material_type if presets else OTHER, material))
         order = {t: i for i, t in enumerate(store.material_types())}
-        groups.sort(key=lambda g: -1 if g[0] == "Recent" else order.get(g[0], len(order)))
+        groups.sort(key=lambda g: -1 if g[0] == RECENT else order.get(g[0], len(order)))
         for group, material in groups:
             self._list.append(_MaterialRow(group, material, material == current))
         self.refresh_lines()
@@ -138,19 +144,25 @@ class MaterialPicker(Gtk.Popover):
 
     def _on_search(self, entry: Gtk.SearchEntry) -> None:
         text = entry.get_text().strip()
-        self._matches = set(self._store.search(text)) if text and self._store else None
+        if text and self._store:
+            folded = text.casefold()
+            self._matches = set(self._store.search(text)) | {
+                m for m in self._store.materials() if folded in material_label(m).casefold()}
+        else:
+            self._matches = None
         self._list.invalidate_filter()
 
     def _filter(self, row: "_MaterialRow") -> bool:
         if self._matches is None:
             return True
-        return row.group != "Recent" and row.material in self._matches
+        return row.group != RECENT and row.material in self._matches
 
     def _header(self, row: "_MaterialRow", before: "_MaterialRow | None") -> None:
         if before is not None and before.group == row.group:
             row.set_header(None)
             return
-        header = label(row.group, "material-group")
+        group = _(row.group) if row.group in (RECENT, OTHER) else material_label(row.group)
+        header = label(group, "material-group")
         row.set_header(header)
 
     def _on_search_activate(self, entry: Gtk.SearchEntry) -> None:
@@ -182,10 +194,15 @@ class _MaterialRow(Gtk.ListBoxRow):
         self.group, self.material = group, material
         box = Gtk.Box(spacing=8)
         texts = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, hexpand=True)
-        name = label(material)
+        name = label(material_label(material))
         name.set_ellipsize(Pango.EllipsizeMode.END)
         self._line = label("", "caption", "dim-label", "numeric")
+        # two lines when one is too short (a longer translation), then an ellipsis
         self._line.set_ellipsize(Pango.EllipsizeMode.END)
+        self._line.set_wrap(True)
+        self._line.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        self._line.set_natural_wrap_mode(Gtk.NaturalWrapMode.NONE)
+        self._line.set_lines(2)
         texts.append(name)
         texts.append(self._line)
         box.append(texts)
@@ -204,5 +221,6 @@ class _MaterialRow(Gtk.ListBoxRow):
         """Show the settings line; the tooltip carries the whole line (it may be ellipsized)."""
         self._line.set_text(line)
         self._line.set_visible(bool(line))
-        self.set_tooltip_text(f"{self.material}\n{tooltip}" if tooltip else self.material)
+        shown = material_label(self.material)
+        self.set_tooltip_text(f"{shown}\n{tooltip}" if tooltip else shown)
         self.update_property([Gtk.AccessibleProperty.DESCRIPTION], [line])

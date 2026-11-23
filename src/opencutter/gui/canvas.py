@@ -19,6 +19,7 @@ from dataclasses import dataclass
 
 from gi.repository import Adw, Gdk, GObject, Graphene, Gsk, Gtk, Pango
 
+from opencutter.i18n import _
 from opencutter.machines import CAMEO4, MachineProfile, Mat
 from opencutter.svg.importer import Design
 
@@ -256,7 +257,8 @@ def render(snapshot: Gtk.Snapshot, widget: Gtk.Widget, scene: Scene, view: View,
 
 def mat_caption(mat: Mat) -> str:
     """'CUTTING MAT 12 × 12 in': under the mat."""
-    return f"CUTTING MAT {mat.label}"
+    # Translators: the caption under the mat, in capitals; {mat} is its size ("12 × 12 in").
+    return _("CUTTING MAT {mat}").format(mat=mat.label)
 
 
 def _draw_mat(snapshot: Gtk.Snapshot, widget: Gtk.Widget, scene: Scene, view: View, pal: dict,
@@ -328,7 +330,7 @@ def _draw_cut_area(snapshot: Gtk.Snapshot, widget: Gtk.Widget, scene: Scene, vie
     snapshot.append_stroke(_rect_path(round(x) + 0.5, round(y) + 0.5, w, h), _stroke(1, [4, 3]),
                            pal["line_control"])
     if labels:
-        text(snapshot, widget, "Cut area", x + w - 6, y + h - 20, pal["ink_subtle"], align=1.0)
+        text(snapshot, widget, _("Cut area"), x + w - 6, y + h - 20, pal["ink_subtle"], align=1.0)
 
 
 def _draw_origin(snapshot: Gtk.Snapshot, widget: Gtk.Widget, view: View, pal: dict) -> None:
@@ -339,7 +341,7 @@ def _draw_origin(snapshot: Gtk.Snapshot, widget: Gtk.Widget, view: View, pal: di
     builder.line_to(x, y + 12)
     builder.close()
     snapshot.append_fill(builder.to_path(), Gsk.FillRule.WINDING, pal["ink"])
-    text(snapshot, widget, "Origin", x + 14, y + 1, pal["ink"], bold=True)
+    text(snapshot, widget, _("Origin"), x + 14, y + 1, pal["ink"], bold=True)
 
 
 def _draw_feed_label(snapshot: Gtk.Snapshot, widget: Gtk.Widget, scene: Scene, view: View,
@@ -354,7 +356,7 @@ def _draw_feed_label(snapshot: Gtk.Snapshot, widget: Gtk.Widget, scene: Scene, v
     arrow = _lines_path([(ax + 5, top + 15, ax + 5, top + 3), (ax + 1, top + 7, ax + 5, top + 3),
                          (ax + 5, top + 3, ax + 9, top + 7)])
     snapshot.append_stroke(arrow, _stroke(1.5, round_caps=True), pal["ink_muted"])
-    text(snapshot, widget, "Feeds into machine", ax + 15, top + 1, pal["ink_muted"], size=12, bold=True)
+    text(snapshot, widget, _("Feeds into machine"), ax + 15, top + 1, pal["ink_muted"], size=12, bold=True)
 
 
 def _draw_design(snapshot: Gtk.Snapshot, scene: Scene, view: View, pal: dict) -> None:
@@ -401,7 +403,7 @@ class MatThumbnail(Gtk.Widget):
         super().__init__(valign=Gtk.Align.START)
         self.scene = scene
         self.set_size_request(size, size)
-        self.update_property([Gtk.AccessibleProperty.LABEL], ["The design on the mat"])
+        self.update_property([Gtk.AccessibleProperty.LABEL], [_("The design on the mat")])
 
     def do_snapshot(self, snapshot: Gtk.Snapshot) -> None:
         """Draw the scene without labels or selection."""
@@ -435,7 +437,7 @@ class MatCanvas(Gtk.Widget):
         self._drag: tuple | None = None
         self._pinch_from = 1.0
         self.armed = True               # the arrow keys may nudge the design (park_focus)
-        self.update_property([Gtk.AccessibleProperty.LABEL], ["Cutting mat"])
+        self.update_property([Gtk.AccessibleProperty.LABEL], [_("Cutting mat")])
         Adw.StyleManager.get_default().connect("notify::dark", lambda *_: self.queue_draw())
 
         drag = Gtk.GestureDrag(button=0)

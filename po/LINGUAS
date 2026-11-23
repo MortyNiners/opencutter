@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 OpenCutter contributors
+#
+# The languages OpenCutter is translated into: one code per line (or several on a line), each
+# with its po/<code>.po. Start a language with: python3 build-aux/translations.py init <code>
+# (it adds the code here). Planned first: ro de fr es it pt ru.
+fr
+de
+ru
+es
+it
+pt
+ro

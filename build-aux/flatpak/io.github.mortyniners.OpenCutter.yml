@@ -114,14 +114,17 @@ modules:
       # --no-deps, pip checks that bleak, dbus-fast and svgelements are installed above.
       - pip3 install --no-index --no-build-isolation --prefix="${FLATPAK_DEST}" .
       # A smoke test of what was installed (no display, no D-Bus, nothing is started): the
-      # command runs, every module imports, and the style sheet and the icons are package data.
+      # command runs, every module imports, and the style sheet, the icons and the compiled
+      # translations (one catalog per po/<language>.po, kept in the repository) are package data.
       - ${FLATPAK_DEST}/bin/opencutter --version
       - >-
-        python3 -I -c 'import os, opencutter.device.daemon, opencutter.gui.app as app;
+        python3 -I -c 'import os, opencutter.device.daemon, opencutter.gui.app as app; import glob;
         icons = app.ICONS / "hicolor"; a = os.environ["FLATPAK_ID"];
         need = [app.STYLE, icons / "scalable/apps" / (a + ".svg"),
         icons / "symbolic/apps" / (a + "-symbolic.svg"),
         icons / "symbolic/apps" / (a + "-align-symbolic.svg")];
+        need += [app.i18n.LOCALE_DIR / os.path.basename(po)[:-3] / "LC_MESSAGES/opencutter.mo"
+        for po in glob.glob("po/*.po")];
         bad = [str(p) for p in need if not p.is_file()];
         raise SystemExit("not installed: %s" % bad if bad else 0)'
       - install -Dm644 -t "${FLATPAK_DEST}/share/applications" data/${FLATPAK_ID}.desktop

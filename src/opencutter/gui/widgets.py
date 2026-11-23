@@ -69,6 +69,39 @@ def label(text: str = "", *css: str, wrap: bool = False, xalign: float = 0.0,
     return widget
 
 
+def ellipsized(widget: Gtk.Label,
+               mode: Pango.EllipsizeMode = Pango.EllipsizeMode.END) -> Gtk.Label:
+    """Let ``widget`` shrink with an ellipsis when it is short of room (a longer translation, a
+    narrow window). While it is cut short, its tooltip shows the whole text (with the label's own
+    tooltip, or that of the widget around it); otherwise that tooltip shows as usual."""
+    widget.set_ellipsize(mode)
+    widget.set_has_tooltip(True)
+    # set_tooltip_text(None) turns has-tooltip off: keep it on
+    widget.connect("notify::has-tooltip",
+                   lambda w, _p: None if w.get_has_tooltip() else w.set_has_tooltip(True))
+    widget.connect("query-tooltip", _whole_text_tooltip)
+    return widget
+
+
+def _whole_text_tooltip(widget: Gtk.Label, _x: int, _y: int, _keyboard: bool,
+                        tooltip: Gtk.Tooltip) -> bool:
+    layout = widget.get_layout()
+    if layout is None or not layout.is_ellipsized():
+        return False                     # the label's own tooltip, or its button's
+    text = widget.get_text()
+    near = widget
+    for _level in range(3):              # the label, the widget around it, and the next one
+        own = near.get_tooltip_text()
+        if own:
+            text = own if own.startswith(text) else f"{text}\n{own}"
+            break
+        near = near.get_parent()
+        if near is None:
+            break
+    tooltip.set_text(text)
+    return True
+
+
 def icon_label(icon: str, text: str) -> Gtk.Box:
     """Icon followed by text, for button contents."""
     box = Gtk.Box(spacing=8, halign=Gtk.Align.CENTER)
@@ -93,7 +126,7 @@ class PropertyList(Gtk.Grid):
         key = label(name, "dim-label")
         val = label(value)
         val.set_hexpand(True)
-        val.set_ellipsize(Pango.EllipsizeMode.END)
+        ellipsized(val)
         self.attach(key, 0, self._rows, 1, 1)
         self.attach(val, 1, self._rows, 1, 1)
         self._rows += 1

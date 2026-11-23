@@ -36,19 +36,19 @@ How each one is named
 """
 from __future__ import annotations
 
-from .profile import Identity, RecognizedModel
+from .profile import N_, Identity, RecognizedModel
 
 SILHOUETTE_USB = 0x0B4D          # Studio 5.0.556 machine data: the vendor id of every model here
 
 # Why each one is refused: the part after "cannot drive it yet:", in plain words.
-NO_STOP_NO_TOOL_CHECK = ("there is no known way to stop it from the computer, and it does not "
-                         "report which tools are loaded")
+NO_STOP_NO_TOOL_CHECK = N_("there is no known way to stop it from the computer, and it does not "
+                           "report which tools are loaded")
 # USB_ONLY is true only while OpenCutter has no USB connection: these models have no Bluetooth,
 # so today the message cannot be reached. The USB package must reword it (the missing stop stays).
-USB_ONLY = ("it needs a USB connection, which OpenCutter does not have, and there is no known way "
-            "to stop it from the computer")
-CURIO2_REASON = ("the work area of its trays, its tool height and the material thickness are not "
-                 "known, and there is no way to confirm the work area before a cut")
+USB_ONLY = N_("it needs a USB connection, which OpenCutter does not have, and there is no known "
+              "way to stop it from the computer")
+CURIO2_REASON = N_("the work area of its trays, its tool height and the material thickness are "
+                   "not known, and there is no way to confirm the work area before a cut")
 
 # --- CURIO -----------------------------------------------------------------------------------
 # A flatbed with trays and a Z axis. Studio selects no mat for it and TG does nothing on V1.16,

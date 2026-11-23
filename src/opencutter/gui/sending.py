@@ -39,17 +39,23 @@ Pure helpers for the widgets
                          the Cut Settings slider ranges for that tool: Blade Depth only for a
                          tool that takes one, Acceleration None on a model without it (the row
                          is hidden), Offset and Overcut only for blade tools.
+
+Translations: the blockers and banners stay English (the window compares them; their templates
+are marked with N_() and the window translates them where it shows them). The settings lines
+(settings_summary, depth_note, preset_line) are only shown, and are made in the window's
+language.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 from opencutter.device.protocol import tool_name
+from opencutter.i18n import N_, _, action_label, ngettext, tool_label
 from opencutter.job import builder
-from opencutter.job.plan import blade_depth_mm, blade_depth_text, build_plan
+from opencutter.job.plan import blade_depth_mm, build_plan
 from opencutter.job.spec import DEFAULT_MACHINE, CutGroup, JobSpec, ToolSettings
 from opencutter.machines import CAMEO4, MachineProfile, Tool
-from opencutter.presets.model import Preset, PresetStore
+from opencutter.presets.model import BASIC_DESCRIPTION, FILE_DESCRIPTION, Preset, PresetStore
 
 from .document import PlacedDocument
 from .geometry import Rect, placement_problem, test_cut_spot
@@ -61,27 +67,38 @@ from .machine import NOT_SUPPORTED, MachineState, chosen_profile
 # (MachineProfile.unsupported_codes(); the same on every model OpenCutter drives).
 UNSUPPORTED_TOOL_CODES = CAMEO4.unsupported_codes()
 UNSUPPORTED_ACTIONS = frozenset({"Rotary Cut", "Punch"})
-CHOOSE_MATERIAL = "Choose a material first."
+CHOOSE_MATERIAL = N_("Choose a material first.")
 # a machine whose view of the presets is empty (no Basic set, no rows in the presets file)
-NO_MATERIALS = "No materials for this machine yet"
-NO_MATERIALS_HINT = ("Set the tool, Force and Speed in Cut Settings, then make a Test Cut. A "
-                     "presets file can add materials for this machine.")
+NO_MATERIALS = N_("No materials for this machine yet")
+NO_MATERIALS_HINT = N_("Set the tool, Force and Speed in Cut Settings, then make a Test Cut. A "
+                       "presets file can add materials for this machine.")
 # the detected machine is another than the layout's: the layout switched to it, and nothing is
 # sent until the user accepts it
-USE_MACHINE = "Use {name}"
-MACHINE_SWITCHED = ("The connected machine is a {name}. The layout was made for the {old}, so "
-                    "it now uses the {name}’s cutting mat; your design stays where it is. Check "
-                    "it, then press Use {name}.")
-CONFIRM_MACHINE = "Check the layout for the {name}, then press Use {name}."
+USE_MACHINE = N_("Use {name}")
+MACHINE_SWITCHED = N_("The connected machine is a {name}. The layout was made for the {old}, so "
+                      "it now uses the {name}’s cutting mat; your design stays where it is. "
+                      "Check it, then press Use {name}.")
+CONFIRM_MACHINE = N_("Check the layout for the {name}, then press Use {name}.")
 # the detected machine is another than the layout's and the layout did not switch to it (a
 # window that does not follow the detected machine: its jobs are made for the CAMEO 4)
-LAYOUT_MISMATCH = "The layout was made for the {layout}, but the connected machine is a {name}."
-NO_SUCH_HOLDER = "The {name} has no {label}."
+LAYOUT_MISMATCH = N_("The layout was made for the {layout}, but the connected machine is a "
+                     "{name}.")
+NO_SUCH_HOLDER = N_("The {name} has no {label}.")
 # the layout's Cutting Mat is not one the machine may use (Mat.offered at its own level)
-CHOOSE_MAT = "Choose a Cutting Mat for the {name} in Page Setup."
+CHOOSE_MAT = N_("Choose a Cutting Mat for the {name} in Page Setup.")
 # why Send waits for the design's place (geometry.placement_problem): the cut area comes first
-OUTSIDE_CUT_AREA = "Move the design inside the cut area."
-OFF_MEDIA = "Move the design onto the media, or set Media Size to your sheet in Page Setup."
+OUTSIDE_CUT_AREA = N_("Move the design inside the cut area.")
+OFF_MEDIA = N_("Move the design onto the media, or set Media Size to your sheet in Page Setup.")
+JOB_RUNNING = N_("A job is already running.")
+OPEN_DESIGN = N_("Open a design first.")
+NO_PATHS = N_("The design has no paths to cut.")
+CONNECT_FIRST = N_("Connect the machine first.")
+CHOOSE_ACTION = N_("Choose a material and action.")
+WAITING_FOR_TOOLS = N_("Waiting for the machine to report its tools.")
+LOAD_TOOL = N_("Load the {tool} into {holder}.")
+LOAD_TOOL_HOLDER = N_("Load the {tool} into the tool holder.")       # a one-holder model
+LOAD_TOOL_TO_SEND = N_("Load the {tool} into {holder} to send.")
+LOAD_TOOL_HOLDER_TO_SEND = N_("Load the {tool} into the tool holder to send.")
 PLACEMENT_BLOCKERS = {"cut-area": OUTSIDE_CUT_AREA, "media": OFF_MEDIA}
 
 
@@ -103,6 +120,22 @@ def materials_note(store: PresetStore) -> str | None:
     """NO_MATERIALS for a machine's view of the presets that is empty, else None. The Send panel
     then shows NO_MATERIALS_HINT, which points to Cut Settings."""
     return None if store.presets else NO_MATERIALS
+
+
+# the presets' own words for where they come from (presets.model, which imports nothing of the
+# translations), marked here for the catalog
+SOURCE_TEXTS = (N_("Basic set"), N_("Presets file"))
+assert SOURCE_TEXTS == (BASIC_DESCRIPTION, FILE_DESCRIPTION)
+
+
+def store_description(store: PresetStore) -> str:
+    """Where the presets come from, for the Source row: the presets file's own description
+    stays as written; the app's own words are translated."""
+    description = store.description
+    if description in (BASIC_DESCRIPTION, FILE_DESCRIPTION) and (
+            store.source.get("kind") == "basic" or description == FILE_DESCRIPTION):
+        return _(description)
+    return description
 
 
 @dataclass(frozen=True)
@@ -144,8 +177,15 @@ class ToolCheck:
         """The instruction to fix a mismatch, e.g. 'Load the AutoBlade into Tool 1.' ('... into
         the tool holder.' on a one-holder model)."""
         if len(self.profile.holders) == 1:
-            return f"Load the {self.required_name} into the tool holder."
-        return f"Load the {self.required_name} into {self.label}."
+            return LOAD_TOOL_HOLDER.format(tool=self.required_name)
+        return LOAD_TOOL.format(tool=self.required_name, holder=self.label)
+
+    @property
+    def send_text(self) -> str:
+        """mismatch_text as the reason Send waits: 'Load the AutoBlade into Tool 1 to send.'"""
+        if len(self.profile.holders) == 1:
+            return LOAD_TOOL_HOLDER_TO_SEND.format(tool=self.required_name)
+        return LOAD_TOOL_TO_SEND.format(tool=self.required_name, holder=self.label)
 
 
 def tool_check(settings: ToolSettings, machine: MachineState,
@@ -190,32 +230,54 @@ def choose_preset(store: PresetStore, material: str | None, action: str | None =
 def settings_summary(s: ToolSettings, with_passes: bool = True) -> str:
     """'Blade Depth 1 · Force 10 · Speed 5 · 1 pass' (or '... · Accel. 3' without passes).
     Blade Depth only for the AutoBlade: no other tool carries a depth value."""
-    parts = [] if s.blade_depth is None else [blade_depth_text(s.blade_depth)]
-    parts += [f"Force {s.force}", f"Speed {s.speed}"]
+    parts = [] if s.blade_depth is None else [depth_text(s.blade_depth)]
+    parts += [force_text(s.force), speed_text(s.speed)]
     if with_passes:
-        parts.append(f"{s.passes} pass" + ("" if s.passes == 1 else "es"))
+        parts.append(passes_text(s.passes))
     else:
-        parts.append(f"Accel. {s.acceleration}")
+        # Translators: the short form of Acceleration in a settings line.
+        parts.append(_("Accel. {value}").format(value=s.acceleration))
     return " · ".join(parts)
+
+
+def depth_text(depth: int) -> str:
+    """'Blade Depth 1' in the window's language (job.plan.blade_depth_text)."""
+    return _("Blade Depth {value}").format(value=depth)
+
+
+def force_text(force: int) -> str:
+    """'Force 10'."""
+    return _("Force {value}").format(value=force)
+
+
+def speed_text(speed: int) -> str:
+    """'Speed 5'."""
+    return _("Speed {value}").format(value=speed)
+
+
+def passes_text(passes: int) -> str:
+    """'1 pass', '2 passes'."""
+    return ngettext("{n} pass", "{n} passes", passes).format(n=passes)
 
 
 def depth_note(s: ToolSettings | None) -> str | None:
     """'Blade Depth 1 = 0.1 mm' for a tooltip, or None when the tool has no depth value."""
     if s is None or s.blade_depth is None:
         return None
-    return f"{blade_depth_text(s.blade_depth)} = {blade_depth_mm(s.blade_depth)}"
+    return f"{depth_text(s.blade_depth)} = {blade_depth_mm(s.blade_depth)}"
 
 
 def preset_line(preset: Preset, profile: MachineProfile = CAMEO4) -> str:
     """'Cut · AutoBlade · Blade Depth 1 · Force 10 · Speed 5': the settings a preset applies,
     for the material list. Blade Depth only when the tool has one; passes only when > 1."""
     s = preset.to_tool_settings()
-    parts = [preset.action, tool_name(preset.holder, preset.tool_code, profile)]
+    parts = [action_label(preset.action),
+             tool_label(tool_name(preset.holder, preset.tool_code, profile))]
     if s.blade_depth is not None:
-        parts.append(blade_depth_text(s.blade_depth))
-    parts += [f"Force {s.force}", f"Speed {s.speed}"]
+        parts.append(depth_text(s.blade_depth))
+    parts += [force_text(s.force), speed_text(s.speed)]
     if s.passes > 1:
-        parts.append(f"{s.passes} passes")
+        parts.append(passes_text(s.passes))
     return " · ".join(parts)
 
 
@@ -420,15 +482,15 @@ def send_blocker(doc: PlacedDocument | None, media: Rect, machine: MachineState,
     for by default) and `mat` its mat (default: that machine's default_mat): the design must
     lie in that mat's cut area."""
     if job_running:
-        return "A job is already running."
+        return JOB_RUNNING
     if machine.wrong_model:
         return NOT_SUPPORTED
     if not material_chosen:
         return CHOOSE_MATERIAL
     if doc is None:
-        return "Open a design first."
+        return OPEN_DESIGN
     if doc.is_empty:
-        return "The design has no paths to cut."
+        return NO_PATHS
     profile = layout.profile if layout is not None else CAMEO4
     key = mat if mat is not None else profile.default_mat
     why = blocker_for_test_cut(machine, check, False, material_chosen, layout=layout, mat=key)
@@ -443,7 +505,7 @@ def blocker_for_test_cut(machine: MachineState, check: ToolCheck | None, job_run
     nothing is sent while the detected machine is another one. `mat` is the layout's Cutting
     Mat (default: that machine's default_mat): one the machine may use (CHOOSE_MAT)."""
     if job_running:
-        return "A job is already running."
+        return JOB_RUNNING
     if machine.wrong_model:              # the service refused the machine for its model
         return NOT_SUPPORTED
     if not material_chosen:
@@ -451,18 +513,18 @@ def blocker_for_test_cut(machine: MachineState, check: ToolCheck | None, job_run
     if machine.blocker:                  # e.g. a background service of another version
         return machine.blocker
     if not machine.connected:
-        return "Connect the machine first."
+        return CONNECT_FIRST
     layout = layout if layout is not None else LayoutMachine()
     if why := layout.blocker(machine):
         return why
     if mat is not None and not mat_offered(layout.profile, mat):
         return CHOOSE_MAT.format(name=layout.profile.name)
     if check is None:
-        return "Choose a material and action."
+        return CHOOSE_ACTION
     if not check.exists:
         return NO_SUCH_HOLDER.format(name=check.profile.name, label=f"Tool {check.holder}")
     if not check.known:                  # a reply it cannot read for this model says so
-        return machine.tools_problem or "Waiting for the machine to report its tools."
+        return machine.tools_problem or WAITING_FOR_TOOLS
     if not check.matches:
-        return f"{check.mismatch_text[:-1]} to send."
+        return check.send_text
     return None

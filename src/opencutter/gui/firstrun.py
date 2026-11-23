@@ -14,34 +14,39 @@ from __future__ import annotations
 from gi.repository import Adw, GObject, Gtk, Pango
 
 from opencutter import APP_ID
+from opencutter.i18n import N_, _, translate_text
 from opencutter.machines import MachineProfile
 
 from .connection import DEVICE_NAME_CHARS, PAIR_HINT, device_line, shown_problem
-from .machine import OTHER_MACHINE_HINT, Link, MachineState, power_cycle_seen
+from .machine import Link, MachineState, drivable_hint, power_cycle_seen
 from .widgets import StatusDot, label
 
 STEPS = 2
-YOUR_MACHINE = "your machine"           # the machine, before one is known
+YOUR_MACHINE = N_("your machine")       # the machine, before one is known
 
 
 def welcome_text(profile: MachineProfile | None = None) -> str:
     """'Cut your designs on a Silhouette CAMEO 4 from Linux.', or on 'your machine'."""
     if profile is None:
-        return f"Cut your designs on {YOUR_MACHINE} from Linux."
-    return f"Cut your designs on a Silhouette {profile.name} from Linux."
+        return _("Cut your designs on your machine from Linux.")
+    return _("Cut your designs on a Silhouette {machine} from Linux.").format(
+        machine=profile.name)
 
 
 def switch_on_step(profile: MachineProfile | None = None) -> str:
     """The second step: switch the machine on (and off and on when it needs that)."""
     if profile is None:
-        return ("Switch your machine on. Some machines accept a Bluetooth connection only right "
-                "after they are switched on: if the app can’t connect, switch it off and on.")
+        return _("Switch your machine on. Some machines accept a Bluetooth connection only right "
+                 "after they are switched on: if the app can’t connect, switch it off and on.")
     if power_cycle_seen(profile):
-        return (f"Switch the {profile.name} on. It accepts a Bluetooth connection only right "
-                "after it is switched on: if the app can’t connect, switch it off and on.")
+        return _("Switch the {machine} on. It accepts a Bluetooth connection only right after it "
+                 "is switched on: if the app can’t connect, switch it off and on.").format(
+            machine=profile.name)
     if profile.power_cycle_to_connect:        # not seen on this model: advice only
-        return f"Switch the {profile.name} on. If the app can’t connect, switch it off and on."
-    return f"Switch the {profile.name} on. OpenCutter then connects to it by itself."
+        return _("Switch the {machine} on. If the app can’t connect, switch it off and on.").format(
+            machine=profile.name)
+    return _("Switch the {machine} on. OpenCutter then connects to it by itself.").format(
+        machine=profile.name)
 
 
 class FirstRunDialog(Adw.Dialog):
@@ -55,7 +60,7 @@ class FirstRunDialog(Adw.Dialog):
     def __init__(self, profile: MachineProfile | None = None):
         """Build the pages for ``profile`` (None: the machine is not known yet); the window
         feeds machine states with ``update_machine``."""
-        super().__init__(title="Welcome", content_width=560, content_height=560)
+        super().__init__(title=_("Welcome"), content_width=560, content_height=560)
         self.profile = profile
         self._stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.SLIDE_LEFT_RIGHT,
                                 vexpand=True)
@@ -76,7 +81,7 @@ class FirstRunDialog(Adw.Dialog):
         footer = Gtk.Box(spacing=8)
         footer.add_css_class("sheet-footer")
         dots = Gtk.Box(spacing=6, valign=Gtk.Align.CENTER, hexpand=True)
-        dots.update_property([Gtk.AccessibleProperty.LABEL], [f"Step {step} of {STEPS}"])
+        dots.update_property([Gtk.AccessibleProperty.LABEL], [_("Step {step} of {steps}").format(step=step, steps=STEPS)])
         for i in range(1, STEPS + 1):
             dots.append(StatusDot("accent" if i == step else "neutral"))
         footer.append(dots)
@@ -92,10 +97,10 @@ class FirstRunDialog(Adw.Dialog):
         body.append(label("OpenCutter", "title-1", xalign=0.5))
         self._welcome = label(welcome_text(self.profile), "title-4", wrap=True, xalign=0.5)
         body.append(self._welcome)
-        body.append(label("Draw in Inkscape, place the design on the mat here, choose Material, "
-                          "Action and Tool, and send it over Bluetooth.", "dim-label", wrap=True,
+        body.append(label(_("Draw in Inkscape, place the design on the mat here, choose Material, "
+                            "Action and Tool, and send it over Bluetooth."), "dim-label", wrap=True,
                           xalign=0.5))
-        start = Gtk.Button(label="Get started")
+        start = Gtk.Button(label=_("Get started"))
         start.add_css_class("suggested-action")
         start.add_css_class("pill-md")
         start.connect("clicked", lambda *_: self._stack.set_visible_child_name("connect"))
@@ -103,11 +108,11 @@ class FirstRunDialog(Adw.Dialog):
 
     def _connect_page(self) -> Gtk.Widget:
         body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        body.append(label("Optional", "field-label"))
-        body.append(label("Connect your machine", "title-2"))
+        body.append(label(_("Optional"), "field-label"))
+        body.append(label(_("Connect your machine"), "title-2"))
         self._steps = []        # hidden for a machine refused for its model: they cannot help
         self._step_texts = []
-        for number, text in (("1", PAIR_HINT), ("2", switch_on_step(self.profile))):
+        for number, text in (("1", _(PAIR_HINT)), ("2", switch_on_step(self.profile))):
             row = Gtk.Box(spacing=12)
             badge = label(number, "step-number", xalign=0.5)
             badge.set_valign(Gtk.Align.START)
@@ -126,7 +131,7 @@ class FirstRunDialog(Adw.Dialog):
         self._device_name.set_max_width_chars(DEVICE_NAME_CHARS)
         state = Gtk.Box(spacing=6)
         self._device_dot = StatusDot()
-        self._device_state = label("Not Connected", "caption", "dim-label")
+        self._device_state = label(_("Not Connected"), "caption", "dim-label")
         state.append(self._device_dot)
         state.append(self._device_state)
         names.append(self._device_name)
@@ -135,24 +140,24 @@ class FirstRunDialog(Adw.Dialog):
         self._problem.set_visible(False)
         names.append(self._problem)
         # a machine refused for its model: which machines OpenCutter drives (plain text)
-        self._hint = label(OTHER_MACHINE_HINT, "caption", "dim-label", wrap=True)
+        self._hint = label(drivable_hint(shown=True), "caption", "dim-label", wrap=True)
         self._hint.set_visible(False)
         names.append(self._hint)
         device.append(names)
-        self._connect = Gtk.Button(label="Connect", valign=Gtk.Align.CENTER)
+        self._connect = Gtk.Button(label=_("Connect"), valign=Gtk.Align.CENTER)
         self._connect.add_css_class("suggested-action")
         self._connect.add_css_class("pill-sm")
         self._connect.connect("clicked", lambda *_: self.emit("connect"))
         device.append(self._connect)
         body.append(device)
-        self._note = label("Nothing moves when you connect. The machine moves only after you "
-                           "press Send, Test Cut or Cut.", "caption", "dim-label", wrap=True)
+        self._note = label(_("Nothing moves when you connect. The machine moves only after you "
+                             "press Send, Test Cut or Cut."), "caption", "dim-label", wrap=True)
         body.append(self._note)
-        back = Gtk.Button(label="Back")
+        back = Gtk.Button(label=_("Back"))
         back.add_css_class("flat")
         back.add_css_class("pill-md")
         back.connect("clicked", lambda *_: self._stack.set_visible_child_name("welcome"))
-        self._finish = Gtk.Button(label="Skip for now")
+        self._finish = Gtk.Button(label=_("Skip for now"))
         self._finish.add_css_class("pill-md")
         self._finish.connect("clicked", lambda *_: self.close())
         return self._page(2, body, back, self._finish)
@@ -177,7 +182,7 @@ class FirstRunDialog(Adw.Dialog):
             self.set_profile(detected)
         name, text, tone = device_line(state)
         if state.link is Link.FAILED and not state.wrong_model:
-            text = "Could not Connect"
+            text = _("Could not Connect")
         self._device_name.set_text(name)        # plain text: it may come from the machine
         self._device_name.set_tooltip_text(name if len(name) > DEVICE_NAME_CHARS else None)
         self._device_state.set_text(text)
@@ -185,9 +190,9 @@ class FirstRunDialog(Adw.Dialog):
         # a machine of another model: Try again cannot change it
         self._connect.set_visible(state.link in (Link.NO_DAEMON, Link.FAILED)
                                   and not state.wrong_model)
-        self._connect.set_label("Try again" if state.link is Link.FAILED else "Connect")
+        self._connect.set_label(_("Try again") if state.link is Link.FAILED else _("Connect"))
         line = shown_problem(state) if state.link is Link.FAILED else state.note
-        self._problem.set_text(line or "")
+        self._problem.set_text(translate_text(line) or "")
         self._problem.set_visible(bool(line))
         # a machine of another model: pairing it or switching it off and on does not help, and
         # it never moves; say which machines OpenCutter drives, as the connection popover does
@@ -195,7 +200,7 @@ class FirstRunDialog(Adw.Dialog):
         self._note.set_visible(not state.wrong_model)
         for row in self._steps:
             row.set_visible(not state.wrong_model)
-        self._finish.set_label("Done" if state.connected else "Skip for now")
+        self._finish.set_label(_("Done") if state.connected else _("Skip for now"))
         if state.connected:
             self._finish.add_css_class("suggested-action")
         else:

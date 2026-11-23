@@ -17,16 +17,25 @@ gi.events) skips the test module, or the test, that does it, but only when the i
 the tests or from opencutter.gui. Code of OpenCutter outside opencutter.gui (the service, the
 command line, the machine profiles) never needs GTK: if it imports gi, directly or through a GUI
 module, the import fails as it would without PyGObject, so the CI run fails instead of quietly
-skipping the tests of that code. With PyGObject installed, the stand-in is never made."""
+skipping the tests of that code. With PyGObject installed, the stand-in is never made.
+
+Every test runs in English, whatever the language of the computer that runs the suite: the
+locale is C.UTF-8 and LANGUAGE is unset before GTK starts (GTK's and libadwaita's own texts, and
+the numbers GTK formats), and the window's translations (opencutter.i18n) are English around
+every test. A test of the translations sets up its own catalog (tests/test_i18n.py)."""
 import importlib.abc
 import importlib.util
 import os
 import sys
 import types
 
-import pytest
+os.environ.pop("LANGUAGE", None)
+os.environ["LC_ALL"] = "C.UTF-8"
 
-from opencutter.device import protocol      # no Bluetooth: protocol imports neither bleak nor dbus_fast
+import pytest  # noqa: E402
+
+from opencutter import i18n  # noqa: E402
+from opencutter.device import protocol  # noqa: E402  no Bluetooth: neither bleak nor dbus_fast
 
 HAVE_PYGOBJECT = importlib.util.find_spec("gi") is not None
 NO_PYGOBJECT = "needs GTK 4, and PyGObject is not installed"
@@ -91,3 +100,10 @@ def pytest_collection_modifyitems(items):
 @pytest.fixture(autouse=True)
 def outside_a_flatpak_sandbox(monkeypatch):
     monkeypatch.setattr(protocol, "FLATPAK_INFO", os.path.join(os.sep, "nonexistent", ".flatpak-info"))
+
+
+@pytest.fixture(autouse=True)
+def in_english():
+    i18n.use_english()
+    yield
+    i18n.use_english()

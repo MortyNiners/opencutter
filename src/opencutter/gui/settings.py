@@ -11,6 +11,11 @@ Machine profiles (opencutter.machines)
            the profile's default_mat (mat_for).
   A file written before machine profiles has neither key and loads as before: the CAMEO 4
   with its 12 x 12 in mat. Builds before machine profiles ignore both keys.
+
+language   the window's language (Preferences): "" follows the system's language, else a
+           language code ("ro", "pt_BR"; opencutter.i18n). It takes effect at the next start
+           (app.main). A file without it, or with a value that is not a language code, loads as
+           "".
 """
 from __future__ import annotations
 
@@ -19,6 +24,7 @@ import os
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
+from opencutter.i18n import valid_language
 from opencutter.machines import CAMEO4, MachineProfile, enabled_profile
 
 RECENT_LIMIT = 3
@@ -45,6 +51,7 @@ class GuiSettings:
     recent_materials: list[str] = field(default_factory=list)
     machine: str = DEFAULT_MACHINE
     mats: dict[str, str] = field(default_factory=dict)
+    language: str = ""
     path: Path | None = field(default=None, repr=False, compare=False)
 
     @classmethod
@@ -80,6 +87,8 @@ class GuiSettings:
             if profile is not None and isinstance(key, str):
                 mats[machine] = key if _offers(profile, key) else profile.default_mat
         settings.mats = mats
+        if not valid_language(settings.language):
+            settings.language = defaults.language
         return settings
 
     def save(self) -> None:

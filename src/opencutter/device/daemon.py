@@ -101,6 +101,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .. import __version__
+from ..i18n import N_
 from ..identity import API_VERSION, BUILD, identity, started_by
 from ..machines import (CAMEO4, Detection, MachineProfile, Mat, Support, Verdict, detect,
                         registry)
@@ -135,49 +136,53 @@ BUSY_CREDIT_MAX = BUSY_POLL + 1.0
 BATCH_BYTES = CAMEO4.batch_bytes            # 1024: at most this much is queued before a ready wait
 SLOWEST_SU_PER_S = CAMEO4.slowest_su_per_s  # Speed 1 = 1 cm/s = 200 SU/s: bounds a batch's run
 MAX_REQUEST = 64 << 20     # one JSON line; a JobSpec with 500 000 points fits easily
-NOTHING_SENT = "nothing was sent"
-NOT_CONNECTED = ("the machine is not connected yet: switch it off and on; "
-                 "the daemon reconnects by itself")
-MEDIA_CHANGED = ("The mat was unloaded during the job; nothing more was sent. "
-                 "Load it and send the job again.")
+# The texts the window shows are marked with N_(): the window translates them where it shows
+# them (opencutter.i18n.translate_text); the service, its log and the command line keep English.
+NOTHING_SENT = N_("nothing was sent")
+NOT_CONNECTED = N_("the machine is not connected yet: switch it off and on; the daemon reconnects "
+                   "by itself")
+MEDIA_CHANGED = N_("The mat was unloaded during the job; nothing more was sent. Load it and send "
+                   "the job again.")
 MEDIA_CHANGED_PROGRAM = ("The mat was unloaded during the program; nothing more was sent. "
                          "Load it and run the program again.")
 # the same during a step: that step ends with the stop
-MEDIA_CHANGED_STEP = ("The mat was unloaded during the job, so OpenCutter ended it with the stop "
-                      "and sends nothing more. Load the mat, then send the job again.")
+MEDIA_CHANGED_STEP = N_("The mat was unloaded during the job, so OpenCutter ended it with the "
+                        "stop and sends nothing more. Load the mat, then send the job again.")
 MEDIA_CHANGED_STEP_PROGRAM = ("The mat was unloaded during the program, so OpenCutter ended it "
                               "with the stop and sends nothing more. Load the mat, then run the "
                               "program again.")
-UNITS_UNCONFIRMED = ("The machine did not confirm the unit (U). Unload and load the mat, "
-                     "then send again.")
+UNITS_UNCONFIRMED = N_("The machine did not confirm the unit (U). Unload and load the mat, then "
+                       "send again.")
 # The machine left Pause with '0' although the pause came in the middle of a batch, and neither
 # '1' (it went on) nor Cancelling was seen: maybe a cancel on its panel whose Cancelling status
 # was missed (it is shown only for a moment). The job ends with the stop.
-LEFT_PAUSE = ("The machine left Pause without going on with the cut, so it may have been "
-              "cancelled on its panel. OpenCutter ended the job with the stop and sends nothing "
-              "more. Press Unload on the machine, check that the tool is up, then load the mat "
-              "and send the job again.")
+LEFT_PAUSE = N_("The machine left Pause without going on with the cut, so it may have been "
+                "cancelled on its panel. OpenCutter ended the job with the stop and sends nothing "
+                "more. Press Unload on the machine, check that the tool is up, then load the mat "
+                "and send the job again.")
 LEFT_PAUSE_PROGRAM = ("The machine left Pause without going on with the program, so it may have "
                       "been cancelled on its panel. OpenCutter ended the program with the stop "
                       "and sends nothing more. Press Unload on the machine, check that the tool "
                       "is up, then load the mat and run the program again.")
 # what MotionSession.interrupted (and the ping's "interrupted") holds for that case
 LEFT_PAUSE_MARK = "left-pause"
-LINK_LOST = "the Bluetooth link was lost"
+LINK_LOST = N_("the Bluetooth link was lost")
 # a stop request (the stop op, a signal, the client going away) during a step
-STOPPED_IN_STEP = ("stopped on request (Cancel in the app, or `opencutter stop`); nothing more "
-                   "was sent")
+STOPPED_IN_STEP = N_("stopped on request (Cancel in the app, or `opencutter stop`); nothing more "
+                     "was sent")
 # ... and before a step: what to do next
-STOPPED_BEFORE_STEP = ("A stop request (Cancel in the app, or `opencutter stop` from a terminal) "
-                       "stopped the machine before this step; nothing more was sent. Press "
-                       "Unload on the machine, check that the tool is up, then load the mat and "
-                       "{again}.")
-STOPPED_IN_UNITS = ("A stop request (Cancel in the app, or `opencutter stop` from a terminal) "
-                    "came during the unit check (U); nothing more was sent. Press Unload on the "
-                    "machine, then load the mat and {again}.")
+STOPPED_BEFORE_STEP = N_("A stop request (Cancel in the app, or `opencutter stop` from a "
+                         "terminal) stopped the machine before this step; nothing more was sent. "
+                         "Press Unload on the machine, check that the tool is up, then load the "
+                         "mat and {again}.")
+STOPPED_IN_UNITS = N_("A stop request (Cancel in the app, or `opencutter stop` from a terminal) "
+                      "came during the unit check (U); nothing more was sent. Press Unload on the "
+                      "machine, then load the mat and {again}.")
 # After the plain-words reason of a model OpenCutter recognizes but does not drive (the ping's
 # "refused_reason", machines.detect's Detection.message): what that means for the machine.
 RECOGNIZED_REFUSAL = "Nothing more is sent to it."
+REFUSED_WITH_REASON = N_("{reason} Nothing more is sent to it.")   # ... after the reason
+NOTHING_SENT_AFTER = N_("{problem}; nothing was sent")             # NOTHING_SENT after a problem
 # What a ping with "machine": true adds (_machine_fields). The plain ping keeps its keys, which
 # clients and tests compare as a whole; a service from before machine profiles ignores the flag.
 PING_MACHINE_KEYS = ("profile", "support", "refused_reason")
@@ -216,11 +221,11 @@ PING_STOP_KEYS = ("stop_owed", "owed_stops_sent", "motion_stopped", "interrupted
 LEGACY_DAEMON = "the legacy prototype daemon holds cameo4.lock; stop it first"
 OLDER_DAEMON = ("an older OpenCutter background service is running; stop it with "
                 "`opencutter service stop`")
-STOPPING = "the background service is stopping"
-SESSION_RUNNING = ("a program or job is running; cancel it first (in the app, or with "
-                   "`opencutter stop`)")
-OTHER_BUILD = ("this background service is {service}, but the app or command is {client}: "
-               "nothing was sent. Run `opencutter service stop`, then try again")
+STOPPING = N_("the background service is stopping")
+SESSION_RUNNING = N_("a program or job is running; cancel it first (in the app, or with "
+                     "`opencutter stop`)")
+OTHER_BUILD = N_("this background service is {service}, but the app or command is {client}: "
+                 "nothing was sent. Run `opencutter service stop`, then try again")
 HELD_ELSEWHERE_WAIT = 3.0  # seconds between looks at a link that another program holds
 RETRY_WAIT = 3.0           # seconds before the next look after a failed look, connect or gate
 WRONG_MODEL_WAIT = 60.0    # `serve --address` of a machine the model gate refused: just wait
@@ -318,7 +323,7 @@ class MotionSession:
 def _what(sess: MotionSession) -> tuple[str, str]:
     """('job', 'send the job again') for a job, ('program', 'run the program again') else."""
     if sess.name == "job":
-        return "job", "send the job again"
+        return "job", N_("send the job again")
     return "program", "run the program again"
 
 
@@ -440,41 +445,84 @@ def _media_changed_step_error(sess: MotionSession) -> str:
     return MEDIA_CHANGED_STEP_PROGRAM
 
 
+# _status_stop_text's texts for a job, marked for the window (translate_text). A program's are
+# the same with "the program" and "run the program again" (_program_text); before a step, the
+# "_BEFORE" text says that nothing of that step was sent.
+STATUS_SHOWN = N_("status {status} = {term}")      # {shown} below
+STOP_PAUSED = N_("The machine was paused ({shown}). OpenCutter ended the job with the stop and "
+                 "sends nothing more: press Unload on the machine (or switch it off), check that "
+                 "the tool is up, then load the mat and send the job again.")
+STOP_PAUSED_BEFORE = N_("The machine was paused ({shown}) before this step; nothing of this step "
+                        "was sent. OpenCutter ended the job with the stop and sends nothing "
+                        "more: press Unload on the machine (or switch it off), check that the "
+                        "tool is up, then load the mat and send the job again.")
+STOP_CANCELLING = N_("The machine cancelled the job ({shown}). OpenCutter ended the job with the "
+                     "stop and sends nothing more. Press Unload on the machine, check that the "
+                     "tool is up, then load the mat and send the job again.")
+STOP_CANCELLING_BEFORE = N_("The machine cancelled the job ({shown}) before this step; nothing "
+                            "of this step was sent. OpenCutter ended the job with the stop and "
+                            "sends nothing more. Press Unload on the machine, check that the tool "
+                            "is up, then load the mat and send the job again.")
+STOP_REJECTED = N_("The machine rejected a command ({shown}): another connection, such as USB, "
+                   "may hold it. OpenCutter ended the job with the stop. Close the other "
+                   "connection, then press Unload on the machine (or switch it off), check that "
+                   "the tool is up, then load the mat and send the job again.")
+STOP_REJECTED_BEFORE = N_("The machine rejected a command ({shown}) before this step; nothing of "
+                          "this step was sent: another connection, such as USB, may hold it. "
+                          "OpenCutter ended the job with the stop. Close the other connection, "
+                          "then press Unload on the machine (or switch it off), check that the "
+                          "tool is up, then load the mat and send the job again.")
+STOP_STILL_BUSY = N_("The machine still reported Busy {seconds} s after the previous step "
+                     "({shown}). OpenCutter ended the job with the stop; if the machine keeps "
+                     "moving, press its power button. Then press Unload on the machine (or switch "
+                     "it off), check that the tool is up, then load the mat and send the job "
+                     "again.")
+STOP_STILL_BUSY_BEFORE = N_("The machine still reported Busy {seconds} s after the previous step "
+                            "({shown}) before this step; nothing of this step was sent. "
+                            "OpenCutter ended the job with the stop; if the machine keeps moving, "
+                            "press its power button. Then press Unload on the machine (or switch "
+                            "it off), check that the tool is up, then load the mat and send the "
+                            "job again.")
+STOP_UNEXPECTED_BEFORE = N_("unexpected status {status} = {term} before this step; nothing of "
+                            "this step was sent, and OpenCutter ended the job with the stop")
+STOP_UNEXPECTED = N_("unexpected status {status} = {term}")
+
+
+def _program_text(text: str) -> str:
+    """A job's text of _status_stop_text as a program's: "the program", "run the program
+    again"."""
+    return text.replace("send the job again", "run the program again").replace("the job",
+                                                                                 "the program")
+
+
 def _status_stop_text(status: object, sess: MotionSession, before_step: bool = False) -> str:
     """Why the session ends with the stop for an ESC 05 status (or a latched indication) that
     is neither ready nor busy, or still busy before a step; in plain words where the profile's
     term says what happened (Cancelling, Rejected, Busy; LEFT_PAUSE_MARK: LEFT_PAUSE).
     `before_step`: the step was refused before its first write. A digit without such a term
     keeps "unexpected status 'N' = term" (during a step). Never mentions the Pause key, except
-    LEFT_PAUSE, which says that the machine left Pause."""
+    LEFT_PAUSE, which says that the machine left Pause. A job's texts are the marked templates
+    above (the window translates them); a program's say "program" (_program_text)."""
     p = sess.profile
-    what, again = _what(sess)
     if status == LEFT_PAUSE_MARK:
         return LEFT_PAUSE if sess.name == "job" else LEFT_PAUSE_PROGRAM
     term = status_text(status, p, default="")
-    shown = f"status {status!r} = {status_text(status, p)}"
-    nothing = " before this step; nothing of this step was sent" if before_step else ""
-    unload = (f"press Unload on the machine (or switch it off), check that the tool is up, then "
-              f"load the mat and {again}.")
+    shown = STATUS_SHOWN.format(status=repr(status), term=status_text(status, p))
     if term == PAUSED:                     # a session waits instead; kept for safety
-        return (f"The machine was paused ({shown}){nothing}. OpenCutter ended the {what} with "
-                f"the stop and sends nothing more: {unload}")
-    if term == CANCELLING:
-        return (f"The machine cancelled the {what} ({shown}){nothing}. OpenCutter ended the "
-                f"{what} with the stop and sends nothing more. Press Unload on the machine, "
-                f"check that the tool is up, then load the mat and {again}.")
-    if term == REJECTED:
-        return (f"The machine rejected a command ({shown}){nothing}: another connection, such "
-                f"as USB, may hold it. OpenCutter ended the {what} with the stop. Close the "
-                f"other connection, then {unload}")
-    if status == p.status.busy:
-        return (f"The machine still reported Busy {PRE_STEP_WAIT:g} s after the previous step "
-                f"({shown}){nothing}. OpenCutter ended the {what} with the stop; if the machine "
-                f"keeps moving, press its power button. Then {unload}")
-    if before_step:
-        return (f"unexpected status {status!r} = {status_text(status, p)} before this step; "
-                f"nothing of this step was sent, and OpenCutter ended the {what} with the stop")
-    return f"unexpected status {status!r} = {status_text(status, p)}"
+        text = STOP_PAUSED_BEFORE if before_step else STOP_PAUSED
+    elif term == CANCELLING:
+        text = STOP_CANCELLING_BEFORE if before_step else STOP_CANCELLING
+    elif term == REJECTED:
+        text = STOP_REJECTED_BEFORE if before_step else STOP_REJECTED
+    elif status == p.status.busy:
+        text = STOP_STILL_BUSY_BEFORE if before_step else STOP_STILL_BUSY
+    elif before_step:
+        text = STOP_UNEXPECTED_BEFORE
+    else:
+        text = STOP_UNEXPECTED
+    text = text.format(shown=shown, seconds=f"{PRE_STEP_WAIT:g}", status=repr(status),
+                       term=status_text(status, p))
+    return text if sess.name == "job" else _program_text(text)
 
 
 def _check_session(c, sess: MotionSession, link: bool = True, media: bool = True) -> None:
@@ -1114,7 +1162,7 @@ def _refuse_before_first_write(c: Cameo4, sess: MotionSession, status: str,
     if tools is not None:
         problem = tool_problem(sess.plan.required_tools, sess.allow_unrecognized, tools, p)
         if problem:
-            raise StepRefused(f"{problem}; {NOTHING_SENT}")
+            raise StepRefused(NOTHING_SENT_AFTER.format(problem=problem))
 
 
 async def _write_chunk(c: Cameo4, lock: asyncio.Lock, sess: MotionSession, chunk: bytes,
@@ -1429,7 +1477,7 @@ def refused_message(model: object, reason: object = None) -> str:
     recognizes this CAMEO 3 but cannot drive it yet: ...") and RECOGNIZED_REFUSAL; for any other
     machine protocol.wrong_model_message(model), as before."""
     if isinstance(reason, str) and reason:
-        return f"{reason} {RECOGNIZED_REFUSAL}"
+        return REFUSED_WITH_REASON.format(reason=reason)
     return wrong_model_message(model)
 
 
@@ -1655,6 +1703,32 @@ async def _stop_op(req: dict, c: Cameo4, lock: asyncio.Lock, state: dict) -> dic
 
 
 # --- the user's Pause and Resume --------------------------------------------------------------
+# Why a Resume or Pause was not sent (the op's "error"), marked for the window: the job view
+# shows it in COMMAND_REFUSED (gui.runner), translated (translate_text).
+NO_JOB_RUNNING = N_("no job is running")
+COMMAND_NOT_CONNECTED = N_("the machine is not connected")
+LINK_DOWN = N_("the machine is not answering (the link is down)")
+STOP_ASKED = N_("a stop was asked for: the job is ending")
+JOB_ENDING = N_("the job is ending")
+UNTESTED_COMMAND = {"resume": N_("the {model} has not been tested with resume: press its Pause "
+                                 "key"),
+                    "pause": N_("the {model} has not been tested with pause: press its Pause "
+                                "key")}
+NOT_PAUSED = N_("the machine is not paused ({shown})")
+NOT_STARTED = N_("the job has not started yet")
+ALREADY_PAUSED = N_("the machine is already paused")
+NOT_READY_OR_BUSY = N_("the machine is neither ready nor busy ({shown})")
+NO_STATUS_WITHIN = N_("the machine is not answering (its status could not be read within "
+                      "{seconds} s)")
+NO_STATUS_REPLY = N_("the machine is not answering (no reply to ESC 05)")
+STATUS_UNSURE = N_("the machine's status could not be read for sure (an earlier reply is still "
+                   "due); try again")
+# ... and why it may not have arrived (a write error)
+COMMAND_WRITE_FAILED = {
+    "resume": N_("the resume write failed ({error}); whether it arrived is unknown, and it is "
+                 "not sent again"),
+    "pause": N_("the pause write failed ({error}); whether it arrived is unknown, and it is not "
+                "sent again")}
 def _command_refusal(c, state: dict, kind: str) -> str | None:
     """Why the user's `kind` ("resume" or "pause") would not be sent now, in plain words, or
     None. Resume: only while the open session waits on a paused machine. Pause: only while a
@@ -1664,30 +1738,30 @@ def _command_refusal(c, state: dict, kind: str) -> str | None:
     TESTED: the CAMEO 4 on firmware V5)."""
     sess = state.get("motion")
     if sess is None:
-        return "no job is running"
+        return NO_JOB_RUNNING
     if not _usable(c) or sess.link is not c:
-        return "the machine is not answering (the link is down)"
+        return LINK_DOWN
     if sess.stop.is_set():
-        return "a stop was asked for: the job is ending"
+        return STOP_ASKED
     if sess.interrupted is not None or sess.media_changed:
-        return "the job is ending"
+        return JOB_ENDING
     p = sess.profile
     command = p.resume if kind == "resume" else p.pause
     if command is None or p.support is not Support.TESTED \
             or state.get("support") != Support.TESTED.value:
-        return f"the {p.name} has not been tested with {kind}: press its Pause key"
+        return UNTESTED_COMMAND[kind].format(model=p.name)
     last = getattr(c, "last_status", None)
-    shown = f"status {last!r} = {status_text(last, p)}"
+    shown = STATUS_SHOWN.format(status=repr(last), term=status_text(last, p))
     if kind == "resume":
         if not _is_paused(sess):
-            return f"the machine is not paused ({shown})"
+            return NOT_PAUSED.format(shown=shown)
         return None
     if not sess.wrote:
-        return "the job has not started yet"
+        return NOT_STARTED
     if _is_paused(sess):
-        return "the machine is already paused"
+        return ALREADY_PAUSED
     if last not in (p.status.ready, p.status.busy):
-        return f"the machine is neither ready nor busy ({shown})"
+        return NOT_READY_OR_BUSY.format(shown=shown)
     return None
 
 
@@ -1722,24 +1796,22 @@ async def _command_op(kind: str, c: Cameo4, lock: asyncio.Lock, state: dict) -> 
     try:
         await asyncio.wait_for(lock.acquire(), RESUME_LOCK_WAIT)
     except TimeoutError:
-        return answer(False, False, "the machine is not answering (its status could not be read "
-                                    f"within {RESUME_LOCK_WAIT:g} s)")
+        return answer(False, False, NO_STATUS_WITHIN.format(seconds=f"{RESUME_LOCK_WAIT:g}"))
     try:
         try:
             before = await c.esc_query(0x05)
         except TimeoutError:
-            return answer(False, False, "the machine is not answering (no reply to ESC 05)")
+            return answer(False, False, NO_STATUS_REPLY)
         if _replies_pending(c):                # that reply may be an earlier query's
-            return answer(False, False, "the machine's status could not be read for sure (an "
-                                        "earlier reply is still due); try again")
+            return answer(False, False, STATUS_UNSURE)
         _note_status(sess, before)
         refused = _command_refusal(c, state, kind)
-        shown = f"status {before!r} = {status_text(before, p)}"
+        shown = STATUS_SHOWN.format(status=repr(before), term=status_text(before, p))
         if refused is None and kind == "resume" and status_text(before, p, default="") != PAUSED:
-            refused = f"the machine is not paused ({shown})"
+            refused = NOT_PAUSED.format(shown=shown)
         if refused is None and kind == "pause" and before not in (p.status.ready,
                                                                   p.status.busy):
-            refused = f"the machine is neither ready nor busy ({shown})"
+            refused = NOT_READY_OR_BUSY.format(shown=shown)
         if refused is not None:
             return answer(False, False, refused)
         field_name = "resume_sent_at" if kind == "resume" else "pause_sent_at"
@@ -1753,8 +1825,7 @@ async def _command_op(kind: str, c: Cameo4, lock: asyncio.Lock, state: dict) -> 
         except Exception as e:  # noqa: BLE001 - whether it arrived is unknown: never again
             error = f"{type(e).__name__}: {e}"
             _log(f"{sess.name}: {kind} asked: {esc} FAILED ({error}); it is not sent again")
-            return answer(False, True, f"the {kind} write failed ({error}); whether it arrived "
-                                       "is unknown, and it is not sent again", [error])
+            return answer(False, True, COMMAND_WRITE_FAILED[kind].format(error=error), [error])
         _log(f"{sess.name}: {kind} asked: {esc} sent (the machine read {before})")
         await asyncio.sleep(RESUME_QUIET)      # no query in its quiet window
     finally:
@@ -1854,7 +1925,7 @@ async def _one_shot(req: dict, c: Cameo4 | None, lock: asyncio.Lock, state: dict
             if sess.motion_possible and not sess.stop_sent:
                 _owe_stop(state, sess.link, "a stop was asked for while the link was down")
         if op in ("resume", "pause"):
-            return {"ok": False, "sent": False, "error": "the machine is not connected"}
+            return {"ok": False, "sent": False, "error": COMMAND_NOT_CONNECTED}
         return {"ok": False, "error": _no_link_error(state)}
     if op == "stop":                       # never waits for the query lock; always sends
         return await _stop_op(req, c, lock, state)

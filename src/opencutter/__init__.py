@@ -12,5 +12,5 @@ models, which get no job.
 Not affiliated with or endorsed by Silhouette America, Inc. Silhouette, CAMEO, Portrait and
 CURIO are trademarks of their respective owners.
 """
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 APP_ID = "io.github.mortyniners.OpenCutter"

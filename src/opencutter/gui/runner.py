@@ -52,6 +52,9 @@ Activity. ``activity(runner, verb)`` names what the current step does for the pi
 status bar: 'Preparing' (header, unit check, tool setup), 'Previewing outline', the verb only on
 the cut steps (the plan's steps titled with a group's action), 'Returning to origin' after the
 last one. A step whose ``tool_down`` (from the service) is False is never called cutting.
+
+The texts stay English here (runner.error, command_note, units_note, activity()); their templates
+are marked with N_(), and the window translates them where it shows them (i18n.translate_text).
 """
 from __future__ import annotations
 
@@ -63,6 +66,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from opencutter.device.protocol import PAUSED
+from opencutter.i18n import N_
 from opencutter.identity import same_build
 from opencutter.job.spec import DEFAULT_MACHINE
 from opencutter.machines import CAMEO4, MachineProfile, Mat, enabled_profile
@@ -72,32 +76,36 @@ from .machine import OTHER_VERSION_REFUSED, service_text, shown_model
 log = logging.getLogger(__name__)
 
 UNITS_KIND = "units"
-RELOAD_HINT = "Unload and load the mat on the machine, then send again."
-RELOAD_MAT_HINT = "Unload and load the {label} mat on the machine, then send again."
-UNITS_UNCHECKED = "The cut area could not be checked on this model."
+RELOAD_HINT = N_("Unload and load the mat on the machine, then send again.")
+RELOAD_MAT_HINT = N_("Unload and load the {label} mat on the machine, then send again.")
+UNITS_UNCHECKED = N_("The cut area could not be checked on this model.")
+UNITS_ANSWERED = N_("The cut area could not be checked on this model. The machine answered "
+                    "“{reply}”.")                       # UNITS_UNCHECKED with the reply
 # the service's text for every step that failed because the Bluetooth link went down
 # (device.daemon.LINK_LOST; the GUI does not import the service)
-LINK_LOST = "the Bluetooth link was lost"
-STOPPED_OUTSIDE = ("Stopped from outside the app (for example with the opencutter stop "
-                   "command). Nothing was cut.")
-PREPARING = "Preparing"
-PREVIEWING = "Previewing outline"
-RETURNING = "Returning to origin"
+LINK_LOST = N_("the Bluetooth link was lost")
+STOPPED_OUTSIDE = N_("Stopped from outside the app (for example with the opencutter stop "
+                     "command). Nothing was cut.")
+PREPARING = N_("Preparing")
+PREVIEWING = N_("Previewing outline")
+RETURNING = N_("Returning to origin")
 # Resume and Pause (the service's resume and pause ops): what came of a click
 RESUME_SECONDS = 5.0        # still paused this long after Resume: NOT_RESUMED (never sent again)
-NOT_RESUMED = "The machine is still paused. Press its Pause key to go on, or Cancel Job."
+NOT_RESUMED = N_("The machine is still paused. Press its Pause key to go on, or Cancel Job.")
 # The Pause went out, but the machine did not read Paused within the service's few seconds of
 # reads: it pauses only once it has run the moves it already planned (which can take longer),
 # so it may still pause. Never advise its Pause key here: a press after it paused would resume.
-NOT_PAUSED = ("The machine has not reported Paused yet. It pauses only after the few moves it "
-              "has already planned, so it may still pause. If it keeps cutting, press Pause "
-              "here again, or Cancel Job to end the job.")
-COMMAND_NAMES = {"resume": "Resume", "pause": "Pause"}
-COMMAND_REFUSED = "{what} was not sent: {reason}."
-COMMAND_UNKNOWN = ("{what} may not have reached the machine ({reason}). OpenCutter does not send "
-                   "it again.")
-COMMAND_WRITE_FAILED = "the write failed: {error}"    # COMMAND_UNKNOWN's reason for a write error
-COMMAND_BUSY = "a Resume or Pause is already being sent"
+NOT_PAUSED = N_("The machine has not reported Paused yet. It pauses only after the few moves "
+                "it has already planned, so it may still pause. If it keeps cutting, press Pause "
+                "here again, or Cancel Job to end the job.")
+COMMAND_NAMES = {"resume": N_("Resume"), "pause": N_("Pause")}
+COMMAND_REFUSED = N_("{what} was not sent: {reason}.")
+COMMAND_UNKNOWN = N_("{what} may not have reached the machine ({reason}). OpenCutter does not "
+                     "send it again.")
+COMMAND_WRITE_FAILED = N_("the write failed: {error}")  # COMMAND_UNKNOWN's reason for a write error
+COMMAND_BUSY = N_("a Resume or Pause is already being sent")
+NO_ANSWER = N_("no answer")
+NO_REASON = N_("no reason given")
 
 
 def _unknown_reason(reply: dict) -> str:
@@ -109,7 +117,7 @@ def _unknown_reason(reply: dict) -> str:
         error = service_text(errors[0])
         if error:
             return COMMAND_WRITE_FAILED.format(error=error.rstrip("."))
-    return (service_text(reply.get("error")) or "no answer").rstrip(".")
+    return (service_text(reply.get("error")) or NO_ANSWER).rstrip(".")
 
 
 def command_note(kind: str, reply: dict, still_paused: bool | None = None) -> str | None:
@@ -120,7 +128,7 @@ def command_note(kind: str, reply: dict, still_paused: bool | None = None) -> st
     what = COMMAND_NAMES.get(kind, kind)
     if not reply.get("ok"):
         if reply.get("sent") is False:
-            reason = service_text(reply.get("error")) or "no reason given"
+            reason = service_text(reply.get("error")) or NO_REASON
             return COMMAND_REFUSED.format(what=what, reason=reason.rstrip("."))
         return COMMAND_UNKNOWN.format(what=what, reason=_unknown_reason(reply))
     paused = reply.get("paused") is True if still_paused is None else still_paused
@@ -178,8 +186,9 @@ def summary_reload_hint(summary: dict) -> str:
 
 def units_error(result: dict, hint: str = RELOAD_HINT) -> str:
     """The message for a unit check (U) that did not confirm the unit."""
-    detail = result.get("message") or result.get("error") or "no answer"
-    return f"The machine did not confirm the unit ({detail}). {hint}"
+    detail = result.get("message") or result.get("error") or NO_ANSWER
+    return N_("The machine did not confirm the unit ({detail}). {hint}").format(detail=detail,
+                                                                               hint=hint)
 
 
 def units_note(result: dict) -> str:
@@ -187,7 +196,7 @@ def units_note(result: dict) -> str:
     the job view shows it for a unit check that is not enforced. The reply comes from the
     machine: short printable text, never markup unescaped."""
     reply = shown_model(result.get("reply"))
-    return f"{UNITS_UNCHECKED} The machine answered “{reply}”." if reply else UNITS_UNCHECKED
+    return UNITS_ANSWERED.format(reply=reply) if reply else UNITS_UNCHECKED
 
 
 def units_unchecked(result: dict, summary: dict, spec: dict | None = None) -> bool:
@@ -312,9 +321,9 @@ class JobRunner:
                 reply = await opener(session)
                 if not reply.get("ok"):
                     self.refused_before_start = True
-                    return self._finish(Outcome.FAILED, reply.get("error") or "The machine refused the job.")
+                    return self._finish(Outcome.FAILED, reply.get("error") or N_("The machine refused the job."))
                 self.summary = reply.get("summary") or {}
-                self.steps = [RunStep(title=s.get("title") or s.get("kind") or "Step",
+                self.steps = [RunStep(title=s.get("title") or s.get("kind") or N_("Step"),
                                       expect=s.get("expect") or "", confirm=bool(s.get("confirm")),
                                       writes=max(1, int(s.get("writes") or 1)),
                                       kind=str(s.get("kind") or ""),
@@ -339,7 +348,7 @@ class JobRunner:
                             self.stop_failed = True
                         if result.get("error") == LINK_LOST:
                             self.link_lost = True
-                        return self._finish(Outcome.FAILED, result.get("error") or "The step failed.")
+                        return self._finish(Outcome.FAILED, result.get("error") or N_("The step failed."))
                     if step.kind == UNITS_KIND and units_unchecked(result, self.summary, self.spec):
                         self.units_note = units_note(result)    # shown, not enforced
                     elif step.kind == UNITS_KIND and result.get("verdict") != "ok":
@@ -529,11 +538,11 @@ class JobRunner:
         try:
             if call is None:
                 reply = {"ok": False, "sent": False,
-                         "error": "this background service cannot do it"}
+                         "error": N_("this background service cannot do it")}
             else:
                 reply = await call()
             if not isinstance(reply, dict):
-                reply = {"ok": False, "sent": None, "error": "no answer"}
+                reply = {"ok": False, "sent": None, "error": NO_ANSWER}
             if kind == "resume" and reply.get("ok") and reply.get("paused") is True:
                 rest = RESUME_SECONDS - (self._clock() - asked)
                 if rest > 0:                       # still "Resuming…" until RESUME_SECONDS

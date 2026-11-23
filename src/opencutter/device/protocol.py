@@ -45,6 +45,7 @@ import os
 import re
 
 from .. import APP_ID
+from ..i18n import N_
 from ..machines import CAMEO4, MachineProfile, Mat, Queries, Support, UBasis, safety, tested
 from ..machines.detect import FG_PADDING, fg_text
 from ..machines.detect import detect as _detect
@@ -207,9 +208,11 @@ REJECTED = "Rejected"
 INTERRUPTED_TERMS = frozenset({CANCELLING})
 # The advice before a job, for a machine that is paused or ending a cancel when no job of
 # OpenCutter runs: a paused job that is not ours is never continued.
-UNLOAD_ADVICE = ("Do not press Pause to continue: press Unload on the machine (or switch it off "
-                 "and on), check that the tool is up, then load the Cutting Mat right before the "
-                 "job.")
+# The texts for people are made from templates marked with N_(): the window shows them in its
+# own language (i18n.translate_text); the service, its log and the command line keep English.
+UNLOAD_ADVICE = N_("Do not press Pause to continue: press Unload on the machine (or switch it "
+                   "off and on), check that the tool is up, then load the Cutting Mat right "
+                   "before the job.")
 
 
 def not_ready_text(status: object, profile: MachineProfile = CAMEO4) -> str:
@@ -220,21 +223,24 @@ def not_ready_text(status: object, profile: MachineProfile = CAMEO4) -> str:
     before the job." Never advises pressing Pause to continue."""
     states = profile.status
     term = status_text(status, profile, default="")
-    shown = f"status {status!r} = {status_text(status, profile)}"
+    shown = N_("status {status} = {term}").format(status=repr(status),
+                                                    term=status_text(status, profile))
     if status == states.busy:
-        return (f"The machine is busy ({shown}): it is still working, or another connection "
-                "such as USB holds it. Nothing was sent. Wait until it shows Ready, then try "
-                "again.")
-    if term == PAUSED:
-        return f"The machine is paused ({shown}). Nothing was sent. {UNLOAD_ADVICE}"
-    if term == CANCELLING:
-        return (f"The machine is still ending a cancel ({shown}). Nothing was sent. Wait until "
-                f"it shows Ready or Load Media. {UNLOAD_ADVICE}")
-    if term == REJECTED:
-        return (f"The machine rejected a command ({shown}): another connection, such as USB, "
-                "held it. Nothing was sent. Close the other connection, then try again.")
-    return (f"The machine is not ready ({shown}). Load the Cutting Mat on the machine right "
-            "before the job.")
+        text = N_("The machine is busy ({shown}): it is still working, or another connection "
+                  "such as USB holds it. Nothing was sent. Wait until it shows Ready, then try "
+                  "again.")
+    elif term == PAUSED:
+        text = N_("The machine is paused ({shown}). Nothing was sent. {advice}")
+    elif term == CANCELLING:
+        text = N_("The machine is still ending a cancel ({shown}). Nothing was sent. Wait until "
+                  "it shows Ready or Load Media. {advice}")
+    elif term == REJECTED:
+        text = N_("The machine rejected a command ({shown}): another connection, such as USB, "
+                  "held it. Nothing was sent. Close the other connection, then try again.")
+    else:
+        text = N_("The machine is not ready ({shown}). Load the Cutting Mat on the machine right "
+                  "before the job.")
+    return text.format(shown=shown, advice=UNLOAD_ADVICE)
 
 
 def parse_tools(reply: object, profile: MachineProfile = CAMEO4) -> tuple[int, ...] | None:
@@ -328,18 +334,18 @@ def wrong_model_message(model: object) -> str:
     ("CAMEO V1.10": a CAMEO 1, and a CAMEO Pro MK-II with some of its settings) gets
     SHARED_MODEL_MESSAGE: the reason is that the model cannot be told apart."""
     if reported_model(model) is None:
-        return ("This machine did not report its model. OpenCutter cannot drive it and will not "
-                "send anything to it.")
+        return N_("This machine did not report its model. OpenCutter cannot drive it and will "
+                  "not send anything to it.")
     if _detect(model).shared:
         return SHARED_MODEL_MESSAGE.format(model=model_text(model))
-    return (f'This machine reports itself as "{model_text(model)}". OpenCutter cannot drive it '
-            "and will not send anything to it.")
+    return N_('This machine reports itself as "{model}". OpenCutter cannot drive it and will not '
+              "send anything to it.").format(model=model_text(model))
 
 
 # a machine that reports a name several models report (wrong_model_message)
-SHARED_MODEL_MESSAGE = ('This machine reports itself as "{model}", a name that more than one '
-                        "model uses, so OpenCutter cannot tell which model it is and will not "
-                        "send anything to it.")
+SHARED_MODEL_MESSAGE = N_('This machine reports itself as "{model}", a name that more than one '
+                          "model uses, so OpenCutter cannot tell which model it is and will not "
+                          "send anything to it.")
 
 
 # --- motion writes ----------------------------------------------------------------------------
@@ -393,27 +399,33 @@ def evaluate_units(reply: object,
     shown = reply.strip()
     report = _report_hint(basis)
     m = _U_REPLY.fullmatch(reply)
+    reply_text = repr(shown)
     if m is None:
-        return "mismatch", (f"U = {shown!r} is not a unit reply (two numbers and a comma). "
-                            f"Stopping before anything is drawn.{report}")
+        return "mismatch", N_("U = {reply} is not a unit reply (two numbers and a comma). "
+                              "Stopping before anything is drawn.{report}").format(
+            reply=reply_text, report=report)
     got = (int(m[1]), int(m[2]))
     if not enforce:
-        return "unchecked", (f"U = {shown!r}: not checked. The reply the {label} gives on this "
-                             "model is not known yet, so the cut area could not be checked.")
+        return "unchecked", N_("U = {reply}: not checked. The reply the {mat} gives on this model "
+                               "is not known yet, so the cut area could not be checked.").format(
+            reply=reply_text, mat=label)
     if pair is None:
-        return "mismatch", (f"U = {shown!r}: no reply is known for the {label}, so the unit "
-                            "cannot be confirmed. Stopping before anything is drawn.")
+        return "mismatch", N_("U = {reply}: no reply is known for the {mat}, so the unit cannot "
+                              "be confirmed. Stopping before anything is drawn.").format(
+            reply=reply_text, mat=label)
     if got == pair:
-        return "ok", f"U = {shown!r}: 0.05 mm per unit, confirmed"
+        return "ok", N_("U = {reply}: 0.05 mm per unit, confirmed").format(reply=reply_text)
     ratios = {g / p for g, p in zip(got, pair)}
     size = _UNIT_SCALES.get(ratios.pop()) if len(ratios) == 1 else None
     if size:
-        return "mismatch", (f"U = {shown!r}: the unit looks like {size}, not 0.05 mm. "
-                            f"Stopping before anything is drawn.{report}")
+        return "mismatch", N_("U = {reply}: the unit looks like {size}, not 0.05 mm. Stopping "
+                              "before anything is drawn.{report}").format(
+            reply=reply_text, size=size, report=report)
     tg_text = f"TG{tg}" if tg is not None else "TG"
-    return "mismatch", (f"U = {shown!r}, not {pair[0]},{pair[1]}: the mat type ({tg_text}) "
-                        f"probably did not take effect because the {label} was not loaded right "
-                        f"before the job. Unload and Load it on the machine, then retry.{report}")
+    return "mismatch", N_("U = {reply}, not {a},{b}: the mat type ({tg}) probably did not take "
+                          "effect because the {mat} was not loaded right before the job. Unload "
+                          "and Load it on the machine, then retry.{report}").format(
+        reply=reply_text, a=pair[0], b=pair[1], tg=tg_text, mat=label, report=report)
 
 
 def _expectation(expected: object, enforced: object
@@ -428,12 +440,13 @@ def _expectation(expected: object, enforced: object
         pair = expected.expected_u if expected.enforce_u else None
         if expected.enforce_u and not _is_pair(pair):
             raise ValueError(f"the {expected.label} mat has no valid expected U: {pair!r}")
-        return pair, f"{expected.label} mat", expected.tg, expected.u_basis, enforce
+        return (pair, N_("{size} mat").format(size=expected.label), expected.tg,
+                expected.u_basis, enforce)
     enforce = enforced is not False
     if expected is None:
-        return None, "mat", None, UBasis.UNKNOWN, enforce
+        return None, N_("mat"), None, UBasis.UNKNOWN, enforce
     if _is_pair(expected):
-        return expected, "mat", None, UBasis.KNOWN, enforce   # type: ignore[return-value]
+        return expected, N_("mat"), None, UBasis.KNOWN, enforce   # type: ignore[return-value]
     raise ValueError(f"expected must be a Mat, an (a, b) pair or None, not {expected!r}")
 
 
@@ -443,10 +456,13 @@ def _is_pair(v: object) -> bool:
 
 def _report_hint(basis: UBasis) -> str:
     if basis is UBasis.INFERRED:
-        return (" The expected reply comes from the firmware analysis and was not measured on "
-                "this model yet: if the mat was loaded right before the job, please report this "
-                "reply.")
-    return " If this happens again with the mat loaded right before the job, please report it."
+        # Translators: added after a sentence: keep the space at the start.
+        return N_(" The expected reply comes from the firmware analysis and was not measured on "
+                  "this model yet: if the mat was loaded right before the job, please report "
+                  "this reply.")
+    # Translators: added after a sentence: keep the space at the start.
+    return N_(" If this happens again with the mat loaded right before the job, please report "
+              "it.")
 
 
 # --- runtime paths ------------------------------------------------------------------------------

@@ -81,6 +81,24 @@
     <category>Graphics</category>
   </categories>
   <releases>
+    <release version="0.2.0" type="stable" date="2026-11-23">
+      <description>
+        <p>
+          OpenCutter now speaks Romanian, German, French, Spanish, Italian, Portuguese and
+          Russian. The window follows the desktop's language, and Preferences has a Language
+          row to choose one yourself.
+        </p>
+        <ul>
+          <li>Every text of the window is translated, the safety messages about stopping and cancelling a job included</li>
+          <li>A text that has no translation yet is shown whole in English, never half translated</li>
+          <li>The command line and the background service's log stay in English</li>
+        </ul>
+        <p>
+          The translations have not all been checked by native speakers yet. If a text reads
+          oddly in your language, please open an issue or a pull request.
+        </p>
+      </description>
+    </release>
     <release version="0.1.1" type="stable" date="2026-11-23">
       <description>
         <p>

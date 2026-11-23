@@ -85,6 +85,11 @@ Link drops
   reason gets a softer text (held_after_drop()), since the system may have reconnected the
   machine by itself. Nothing joins or disconnects such a link.
 
+Translations
+  The texts here stay English (the logic and the tests compare them): every template is marked
+  with N_(), and the widgets translate a text where they show it (i18n.translate_text, or
+  MachineState.shown_tool_text for the Tool rows).
+
 Pure helpers for the widgets
   machine_choices()    the Page Setup machine dropdown before a machine is connected: every
                        profile jobs may use (TESTED and UNTESTED), by its plain name; never a
@@ -111,6 +116,7 @@ from opencutter.device.protocol import (INTERRUPTED_TERMS, PAUSED, REASON_HELD_E
                                         REASON_NO_BLUETOOTH, REASON_NOT_PAIRED, REASON_UNREACHABLE,
                                         REASON_WRONG_MODEL, STATUS_OVERDUE, model_text,
                                         parse_tools, tool_name)
+from opencutter.i18n import N_, _, pgettext, tool_label
 from opencutter.identity import BUILD, build_on_disk, same_build
 from opencutter.machines import (CAMEO4, Holder, MachineProfile, RecognizedModel, Support,
                                  ble_name_prefixes, by_id, detect, enabled, enabled_profile)
@@ -145,70 +151,77 @@ def another_program(name: str = MACHINE_NAME, power_cycle: bool = True) -> str:
     """Another program holds the machine's link; the running daemon joins it by itself once the
     other program let go."""
     if power_cycle:
-        return (f"Another program is using the {name} over Bluetooth. Close it, then switch the "
-                f"{name} off and on.")
-    return (f"Another program is using the {name} over Bluetooth. Close it: OpenCutter then "
-            "connects to it by itself.")
+        return N_("Another program is using the {name} over Bluetooth. Close it, then switch the "
+                  "{name} off and on.").format(name=name)
+    return N_("Another program is using the {name} over Bluetooth. Close it: OpenCutter then "
+              "connects to it by itself.").format(name=name)
 
 
 def another_program_at_start(name: str = MACHINE_NAME, power_cycle: bool = True) -> str:
     """The same for a daemon that refused to start: it is not running, nothing retries until
     Try again."""
     if power_cycle:
-        return (f"Another program is using the {name} over Bluetooth. Close it, switch the "
-                f"{name} off and on, then press Try again.")
-    return (f"Another program is using the {name} over Bluetooth. Close it, then press Try "
-            "again.")
+        return N_("Another program is using the {name} over Bluetooth. Close it, switch the "
+                  "{name} off and on, then press Try again.").format(name=name)
+    return N_("Another program is using the {name} over Bluetooth. Close it, then press Try "
+              "again.").format(name=name)
 
 
 def switch_off_on(name: str = MACHINE_NAME, power_cycle: bool = True) -> str:
     """The machine does not accept a connection."""
     if power_cycle:
-        return f"Switch the {name} off and on, then press Try again."
-    return f"Make sure the {name} is switched on, then press Try again."
+        return N_("Switch the {name} off and on, then press Try again.").format(name=name)
+    return N_("Make sure the {name} is switched on, then press Try again.").format(name=name)
 
 
 def not_paired(name: str = MACHINE_NAME) -> str:
     """No paired machine was found."""
-    return f"No paired {name} was found. Pair it in Settings → Bluetooth, then press Try again."
+    return N_("No paired {name} was found. Pair it in Settings → Bluetooth, then press Try "
+              "again.").format(name=name)
 
 
 def another_version(name: str = MACHINE_NAME) -> str:
     """Another OpenCutter version holds the machine and is not ours to replace."""
-    return f"Another OpenCutter version is using the {name}. Close it, then press Try again."
+    return N_("Another OpenCutter version is using the {name}. Close it, then press Try "
+              "again.").format(name=name)
 
 
 def released(name: str = MACHINE_NAME) -> str:
     """After Disconnect: nothing starts by itself until Connect."""
-    return f"The {name} is free for other apps. Press Connect to use it here again."
+    return N_("The {name} is free for other apps. Press Connect to use it here again.").format(
+        name=name)
 
 
 def disconnecting(name: str = MACHINE_NAME) -> str:
     """While Disconnect waits for the service to end: nothing may be sent."""
-    return f"Releasing the {name} for other apps…"
+    return N_("Releasing the {name} for other apps…").format(name=name)
 
 
 def not_disconnected_busy(name: str = MACHINE_NAME) -> str:
     """Why Disconnect did not happen: a job runs."""
-    return (f"Not disconnected: a job is running on the {name}. Press Disconnect again when it "
-            "has ended.")
+    return N_("Not disconnected: a job is running on the {name}. Press Disconnect again when it "
+              "has ended.").format(name=name)
 
 
 def link_dropped(name: str = MACHINE_NAME, power_cycle: bool = True) -> str:
     """The link to the machine dropped, and the service gave no reason yet."""
     if power_cycle:
-        return (f"The connection to the {name} was lost. Switch the {name} off and on; "
-                "OpenCutter reconnects by itself.")
-    return (f"The connection to the {name} was lost. Make sure the {name} is switched on; "
-            "OpenCutter reconnects by itself.")
+        return N_("The connection to the {name} was lost. Switch the {name} off and on; "
+                  "OpenCutter reconnects by itself.").format(name=name)
+    return N_("The connection to the {name} was lost. Make sure the {name} is switched on; "
+              "OpenCutter reconnects by itself.").format(name=name)
 
 
 def held_after_drop(name: str = MACHINE_NAME, power_cycle: bool = True) -> str:
     """Right after our own link dropped, the system reports the machine connected: it may have
     reconnected it by itself, or another program uses it."""
-    tail = f" Switch the {name} off and on." if power_cycle else " Close the other program."
-    return (f"The {name} is connected to this computer, but not to OpenCutter: the system may "
-            f"have reconnected it by itself, or another program uses it.{tail}")
+    if power_cycle:
+        return N_("The {name} is connected to this computer, but not to OpenCutter: the system "
+                  "may have reconnected it by itself, or another program uses it. Switch the "
+                  "{name} off and on.").format(name=name)
+    return N_("The {name} is connected to this computer, but not to OpenCutter: the system may "
+              "have reconnected it by itself, or another program uses it. Close the other "
+              "program.").format(name=name)
 
 
 def texts_for(profile: MachineProfile) -> dict:
@@ -229,92 +242,110 @@ ANOTHER_PROGRAM_AT_START = another_program_at_start()
 SWITCH_OFF_ON = switch_off_on()
 NOT_PAIRED = not_paired()
 # the service cannot reach the computer's Bluetooth at all (off, not running, or no permission)
-NO_BLUETOOTH = "Bluetooth is off or not available. Turn it on in Settings → Bluetooth, then press Try again."
-SERVICE_BUSY = ("OpenCutter’s background service is already running but does not answer. Wait a "
-                "moment, then press Try again.")
+NO_BLUETOOTH = N_("Bluetooth is off or not available. Turn it on in Settings → Bluetooth, then "
+                  "press Try again.")
+SERVICE_BUSY = N_("OpenCutter’s background service is already running but does not answer. Wait "
+                  "a moment, then press Try again.")
 # a start-up line we do not know, or none (the details are in its log, not in the banner)
-SERVICE_STOPPED = ("OpenCutter’s background service stopped unexpectedly. Press Try again; if it "
-                   "keeps stopping, see {log}.")
+SERVICE_STOPPED = N_("OpenCutter’s background service stopped unexpectedly. Press Try again; if "
+                     "it keeps stopping, see {log}.")
 # ensure_daemon itself failed (nothing was started); the details go to the app's log
-SERVICE_NOT_STARTED = ("OpenCutter could not start its background service. Press Try again; if "
-                       "it keeps failing, start OpenCutter from a terminal to see why.")
+SERVICE_NOT_STARTED = N_("OpenCutter could not start its background service. Press Try again; "
+                         "if it keeps failing, start OpenCutter from a terminal to see why.")
 # an older build's service holds the old lock and did not answer, so it could not be replaced
-OLDER_SERVICE = ("An older OpenCutter background service is still running. Press Try again; if "
-                 "it keeps failing, restart the computer.")
+OLDER_SERVICE = N_("An older OpenCutter background service is still running. Press Try again; "
+                   "if it keeps failing, restart the computer.")
 # the background service is of another build (started before an update, or another copy)
-UPDATING_SERVICE = "Updating OpenCutter’s background service…"
-OTHER_VERSION_BUSY = ("OpenCutter’s background service is from another version; it will be "
-                      "updated when its current job ends.")
+UPDATING_SERVICE = N_("Updating OpenCutter’s background service…")
+OTHER_VERSION_BUSY = N_("OpenCutter’s background service is from another version; it will be "
+                        "updated when its current job ends.")
 ANOTHER_VERSION = another_version()
-SERVICE_NOT_REPLACED = ("OpenCutter’s background service from another version did not stop. Wait "
-                        "a moment, then press Try again.")
+SERVICE_NOT_REPLACED = N_("OpenCutter’s background service from another version did not stop. "
+                          "Wait a moment, then press Try again.")
 # the guarded SIGTERM refused to signal it (not our process, not ours to see, ...)
-SERVICE_NOT_STOPPED = ("OpenCutter’s background service from another version could not be "
-                       "stopped. Restart the computer, then open OpenCutter again.")
+SERVICE_NOT_STOPPED = N_("OpenCutter’s background service from another version could not be "
+                         "stopped. Restart the computer, then open OpenCutter again.")
 # OpenCutter was updated (or edited) while the app was open: every service it starts now is of
 # another build than the app itself, so it replaces none. In the Flatpak the portal starts the
 # window's own version, which Flatpak keeps while it is in use; should it be gone all the same,
 # the start fails with Flatpak's "... (commit ...) not installed" (STARTUP_PROBLEMS)
-APP_OUTDATED = "OpenCutter was updated while it was open. Close it and open it again."
+APP_OUTDATED = N_("OpenCutter was updated while it was open. Close it and open it again.")
 # a service that was stopping when the app wanted to start one did not end in time
-SERVICE_ENDING = ("OpenCutter’s background service is still stopping. Wait a moment, then press "
-                  "Try again.")
-OTHER_VERSION_REFUSED = ("OpenCutter’s background service is from another version, so nothing was "
-                         "sent. Send again once it has been updated.")
+SERVICE_ENDING = N_("OpenCutter’s background service is still stopping. Wait a moment, then "
+                    "press Try again.")
+OTHER_VERSION_REFUSED = N_("OpenCutter’s background service is from another version, so nothing "
+                           "was sent. Send again once it has been updated.")
 # after Disconnect: nothing starts by itself until Connect
 RELEASED = released()
 # while Disconnect waits for the service to end: nothing may be sent (MachineState.blocker)
 DISCONNECTING = disconnecting()
 # why Disconnect did not happen (a toast; the details go to the app's log)
 NOT_DISCONNECTED_BUSY = not_disconnected_busy()
-NOT_DISCONNECTED = ("Not disconnected: OpenCutter’s background service did not stop. Try again "
-                    "in a moment.")
-NOT_DISCONNECTED_UPDATING = "Not disconnected: OpenCutter’s background service is being updated."
+NOT_DISCONNECTED = N_("Not disconnected: OpenCutter’s background service did not stop. Try "
+                      "again in a moment.")
+NOT_DISCONNECTED_UPDATING = N_("Not disconnected: OpenCutter’s background service is being "
+                               "updated.")
 # The service's model gate refused the machine (the ping's reason wrong-model): it reported a
 # model OpenCutter does not drive (the ping's "model"), its link was released and nothing is
 # sent to it. Try again cannot change that: the service skips it and connects by itself to
 # another paired machine once one is switched on, so these texts offer no Try again. They name
 # only the reported model (not the layout's machine) and say nothing about testing.
-WRONG_MODEL = ("This machine reports itself as “{model}”. OpenCutter cannot drive it and will "
-               "not send jobs to it.")
-WRONG_MODEL_UNKNOWN = ("This machine did not report its model. OpenCutter cannot drive it and "
-                       "will not send jobs to it.")   # no model
+WRONG_MODEL = N_("This machine reports itself as “{model}”. OpenCutter cannot drive it and "
+                 "will not send jobs to it.")
+WRONG_MODEL_UNKNOWN = N_("This machine did not report its model. OpenCutter cannot drive it and "
+                         "will not send jobs to it.")   # no model
 # A machine that reports a name more than one model reports ("CAMEO V1.10": a CAMEO 1, and a
 # CAMEO Pro MK-II with some of its settings): which model it is cannot be told, so the reason
 # is that (machines.detect: Detection.shared)
-SHARED_MODEL = ("This machine reports itself as “{model}”, a name that more than one model uses, "
-                "so OpenCutter cannot tell which model it is and will not send jobs to it.")
-UNSUPPORTED = "Unsupported Machine"      # the pill, the status bar and the headings
-NOT_SUPPORTED = "This machine is not supported."            # why Send and Test Cut are disabled
-CONNECT_HINT_TAIL = ("To use one, pair it in Settings → Bluetooth and switch it on: OpenCutter "
-                     "connects to it by itself.")
+SHARED_MODEL = N_("This machine reports itself as “{model}”, a name that more than one model "
+                  "uses, so OpenCutter cannot tell which model it is and will not send jobs to "
+                  "it.")
+UNSUPPORTED = N_("Unsupported Machine")  # the pill, the status bar and the headings
+NOT_SUPPORTED = N_("This machine is not supported.")        # why Send and Test Cut are disabled
+CONNECT_HINT_TAIL = N_("To use one, pair it in Settings → Bluetooth and switch it on: OpenCutter "
+                       "connects to it by itself.")
 # The job view's notes while the machine is paused during a job: Resume offered (the service
 # would send it: paused and resume_ok), or only the machine's own Pause key
-PAUSED_NOTE = ("The machine is paused. OpenCutter sends nothing more until it goes on. To go on "
-               "from where it stopped, press Resume here or the Pause key on the machine. To end "
-               "the job, press Cancel Job.")
-PAUSED_NOTE_KEY = ("The machine is paused. OpenCutter sends nothing more until it goes on. To go "
-                   "on from where it stopped, press the Pause key on the machine. To end the job, "
-                   "press Cancel Job.")
+PAUSED_NOTE = N_("The machine is paused. OpenCutter sends nothing more until it goes on. To go "
+                 "on from where it stopped, press Resume here or the Pause key on the machine. "
+                 "To end the job, press Cancel Job.")
+PAUSED_NOTE_KEY = N_("The machine is paused. OpenCutter sends nothing more until it goes on. To "
+                     "go on from where it stopped, press the Pause key on the machine. To end the "
+                     "job, press Cancel Job.")
 # ... and while the query the job waits for has no answer for STATUS_OVERDUE s or more
-CHECKING = "Checking connection"           # the pill
-CHECKING_NOTE = ("No answer from the machine for {n} s. OpenCutter keeps waiting and sends "
-                 "nothing new. If it moves when it should not, press Cancel Job or its power "
-                 "button.")
+CHECKING = N_("Checking connection")       # the pill
+CHECKING_NOTE = N_("No answer from the machine for {n} s. OpenCutter keeps waiting and sends "
+                   "nothing new. If it moves when it should not, press Cancel Job or its power "
+                   "button.")
 STILL_REPORTS = " It still reports its status ({term})."   # indications came in the last 7 s
+# CHECKING_NOTE + STILL_REPORTS, as one text for the translators
+CHECKING_NOTE_REPORTS = N_("No answer from the machine for {n} s. OpenCutter keeps waiting and "
+                           "sends nothing new. If it moves when it should not, press Cancel Job "
+                           "or its power button. It still reports its status ({term}).")
 
 
-def _join(items: list[str]) -> str:
-    """'A', 'A and B', 'A, B and C'."""
-    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} and {items[-1]}"
+def _join(items: list[str], shown: bool = False) -> str:
+    """'A', 'A and B', 'A, B and C'; with `shown`, in the window's language (join_shown)."""
+    if len(items) == 1:
+        return items[0]
+    if shown:
+        # Translators: the end of a list of machine names: "CAMEO 4, CAMEO 5 and Portrait 3".
+        return _("{items} and {last}").format(
+            items=pgettext("list separator", ", ").join(items[:-1]), last=items[-1])
+    return N_("{items} and {last}").format(items=", ".join(items[:-1]), last=items[-1])
 
 
-def drivable_models() -> list[str]:
+def join_shown(items: list[str]) -> str:
+    """'A', 'A and B', 'A, B and C' in the window's language."""
+    return _join(items, shown=True)
+
+
+def drivable_models(shown: bool = False) -> list[str]:
     """The models OpenCutter drives, from the registry, in registry order, by their names
     alone: the GUI does not tell them apart by their support level. A model whose firmware
     lines are driven at different levels is named with those lines, lowest first ("CAMEO 4
     (firmware V1.xx or V5.xx)"), so that a refused machine of that model on another line sees
-    which lines are driven."""
+    which lines are driven. With `shown`, those words are in the window's language."""
     names: list[str] = []
     for p in enabled():
         driven = sorted((line for line in p.identity.lines
@@ -323,17 +354,28 @@ def drivable_models() -> list[str]:
         if not driven:
             continue
         if len({p.support.narrower(line.support) for line in driven}) > 1:
-            lines = " or ".join(f"V{line.major}.xx" for line in driven)
-            names.append(f"{p.name} (firmware {lines})")
+            words = [f"V{line.major}.xx" for line in driven]
+            if shown:
+                # Translators: between two firmware lines: "V1.xx or V5.xx".
+                lines = pgettext("list separator", " or ").join(words)
+                names.append(_("{model} (firmware {lines})").format(model=p.name, lines=lines))
+            else:
+                names.append(N_("{model} (firmware {lines})").format(model=p.name,
+                                                                     lines=" or ".join(words)))
         else:
             names.append(p.name)
     return names
 
 
-def drivable_hint() -> str:
+def drivable_hint(shown: bool = False) -> str:
     """Which models OpenCutter drives and how to use one: the hint for a machine the service
-    refused that OpenCutter does not know (OTHER_MACHINE_HINT)."""
-    return f"OpenCutter drives these models: {_join(drivable_models())}. {CONNECT_HINT_TAIL}"
+    refused that OpenCutter does not know (OTHER_MACHINE_HINT). With `shown`, in the window's
+    language, made when it is shown (the connection popover, the first run)."""
+    if shown:
+        return _("OpenCutter drives these models: {models}. {hint}").format(
+            models=join_shown(drivable_models(shown=True)), hint=_(CONNECT_HINT_TAIL))
+    return N_("OpenCutter drives these models: {models}. {hint}").format(
+        models=_join(drivable_models()), hint=CONNECT_HINT_TAIL)
 
 
 # The hint under a machine the service refused for its model: which models OpenCutter drives
@@ -581,12 +623,11 @@ def checking_note(state: MachineState) -> str | None:
     machine reported it by itself in the last 7 s; None otherwise."""
     if not state.checking:
         return None
-    text = CHECKING_NOTE.format(n=int(state.no_reply_s))
     term = state.machine_profile.status.text(state.status)
     age = state.indication_age_s
     if term and age is not None and age < STATUS_OVERDUE:
-        text += STILL_REPORTS.format(term=term)
-    return text
+        return CHECKING_NOTE_REPORTS.format(n=int(state.no_reply_s), term=term)
+    return CHECKING_NOTE.format(n=int(state.no_reply_s))
 
 
 def _takes(function, name: str) -> bool:
@@ -709,12 +750,12 @@ class MachineState:
     def status_text(self) -> str:
         """The machine state in Studio terms."""
         if self.link is Link.NO_DAEMON:
-            return "Not Connected"
+            return N_("Not Connected")
         if self.link is Link.CONNECTING:
-            return "Connecting…"
+            return N_("Connecting…")
         if self.link is Link.FAILED:
-            return UNSUPPORTED if self.wrong_model else "Could not Connect"
-        return self.machine_profile.status.text(self.status) or "Connected"
+            return UNSUPPORTED if self.wrong_model else N_("Could not Connect")
+        return self.machine_profile.status.text(self.status) or N_("Connected")
 
     def tool_code(self, holder: int) -> int | None:
         """The tool code reported for ``holder`` (its number: 1 or 2 on the CAMEO 4), or None
@@ -737,7 +778,18 @@ class MachineState:
                 return unclear_reply(self.tools_reply)
             return None
         name = tool_name(holder, code, self.machine_profile)
-        return name if code == 0 else f"{name} (Detected)"
+        return name if code == 0 else N_("{tool} (Detected)").format(tool=name)
+
+    def shown_tool_text(self, holder: int) -> str | None:
+        """tool_text() in the window's language."""
+        code = self.tool_code(holder)
+        if code is None:
+            text = self.tool_text(holder)
+            if text is None:
+                return None
+            return _("Unclear reply “{reply}”").format(reply=self.tools_reply.strip())
+        name = tool_label(tool_name(holder, code, self.machine_profile))
+        return name if code == 0 else _("{tool} (Detected)").format(tool=name)
 
     @property
     def reports_paused(self) -> bool:
@@ -794,9 +846,9 @@ class MachineState:
 def pill(state: MachineState) -> tuple[str, str, bool]:
     """Status pill (text, tone, pulsing) for a machine state outside a job."""
     if state.link is Link.NO_DAEMON:
-        return "Not Connected", "neutral", False
+        return N_("Not Connected"), "neutral", False
     if state.link is Link.CONNECTING:
-        return "Connecting…", "info", True
+        return N_("Connecting…"), "info", True
     if state.link is Link.FAILED:
         return state.status_text, "negative", False
     return state.status_text, STATUS_TONE.get(state.status or "", "positive"), False
@@ -825,15 +877,19 @@ def _unclear_tools(value: object, profile: MachineProfile) -> str | None:
 
 def unclear_reply(reply: str) -> str:
     """'Unclear reply “0, 2”': a tool reply OpenCutter cannot read for the model."""
-    return f"Unclear reply “{reply.strip()}”"
+    return N_("Unclear reply “{reply}”").format(reply=reply.strip())
 
 
 def tools_unclear(name: str, reply: str, holders: int = 1) -> str:
     """Why Send and Test Cut wait when the machine reported its tools in a form OpenCutter
     cannot read for its model."""
-    what = "tool" if holders == 1 else "tools"
-    return (f"The {name} reported its {what} as “{reply.strip()}”, which OpenCutter cannot read "
-            "for this model, so nothing is sent. Please report this reply.")
+    if holders == 1:
+        return N_("The {name} reported its tool as “{reply}”, which OpenCutter cannot read for "
+                  "this model, so nothing is sent. Please report this reply.").format(
+            name=name, reply=reply.strip())
+    return N_("The {name} reported its tools as “{reply}”, which OpenCutter cannot read for this "
+              "model, so nothing is sent. Please report this reply.").format(
+        name=name, reply=reply.strip())
 
 
 class MachineMonitor:

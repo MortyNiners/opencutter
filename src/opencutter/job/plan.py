@@ -30,6 +30,7 @@ import math
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 
+from opencutter.i18n import N_
 from opencutter.machines import CAMEO4, MachineProfile, Mat
 
 from . import builder
@@ -145,42 +146,58 @@ def blade_depth_text(depth: int, mm: bool = False) -> str:
 
 
 # --- steps ------------------------------------------------------------------------------------
+# The step texts are made from templates marked with N_(): the window shows them in its own
+# language (i18n.translate_text); the service and its log keep them in English.
 def _header_step(key: str, mat: Mat, profile: MachineProfile) -> PlanStep:
-    feed = "" if mat.feed_mm is None else f" about {mat.feed_mm:g} mm"
+    if mat.feed_mm is None:
+        expect = N_("The mat may feed in and the carriage moves a little. The tool stays up.")
+    else:
+        expect = N_("The mat may feed in about {feed} mm and the carriage moves a little. The "
+                    "tool stays up.").format(feed=f"{mat.feed_mm:g}")
     return PlanStep("write", builder.chunk(builder.mat_commands(key, profile),
                                            limit=profile.max_write),
-                    f"Header: {key} cutting mat",
-                    f"The mat may feed in{feed} and the carriage moves a little. "
-                    "The tool stays up.")
+                    N_("Header: {mat} cutting mat").format(mat=key), expect)
 
 
 def _units_step(mat: Mat, profile: MachineProfile) -> PlanStep:
     if mat.enforce_u:
         a, b = mat.expected_u
-        expect = (f"The machine should reply {a},{b}: {profile.unit_mm:g} mm per unit, mat "
-                  "command accepted.")
+        expect = N_("The machine should reply {a},{b}: {unit} mm per unit, mat command "
+                    "accepted.").format(a=a, b=b, unit=f"{profile.unit_mm:g}")
     else:
-        expect = (f"The reply is logged and shown but not checked: the {profile.name}'s reply "
-                  f"with the {mat.label} mat is not known, so the cut area could not be checked "
-                  "on this model.")
-    return PlanStep("units", [UNITS_QUERY], "Check units (no motion)", expect)
+        expect = N_("The reply is logged and shown but not checked: the {machine}'s reply with "
+                    "the {mat} mat is not known, so the cut area could not be checked on this "
+                    "model.").format(machine=profile.name, mat=mat.label)
+    return PlanStep("units", [UNITS_QUERY], N_("Check units (no motion)"), expect)
 
 
 def _setup_step(key: str, s: ToolSettings, first: bool, profile: MachineProfile) -> PlanStep:
     cmds = builder.area_commands(key, profile) if first else []
     cmds += builder.condition_block(s, profile)
     holder = profile.holder(s.holder)
-    depth = [] if s.blade_depth is None else [blade_depth_text(s.blade_depth, mm=True)]
-    title = f"{holder.label}: " + ", ".join([tool_name(s, profile), *depth, f"Force {s.force}",
-                                             f"Speed {s.speed}"])
-    if len(profile.holders) > 1:
-        expect = f"{holder.label} is selected; the carriage may move. Nothing touches the media."
+    tool = tool_name(s, profile)
+    if s.blade_depth is None:
+        title = N_("{holder}: {tool}, Force {force}, Speed {speed}").format(
+            holder=holder.label, tool=tool, force=s.force, speed=s.speed)
     else:
-        expect = "The tool settings are sent; the carriage may move. Nothing touches the media."
-    if s.blade_depth is not None:
-        where = " on the left" if len(profile.holders) > 1 else ""   # holder 1 is the left one
-        expect += (f" Then the {tool_name(s, profile)} is set at its station{where} "
-                   "(about 10 s).")
+        title = N_("{holder}: {tool}, Blade Depth {depth} ({mm}), Force {force}, Speed "
+                   "{speed}").format(holder=holder.label, tool=tool, depth=s.blade_depth,
+                                     mm=blade_depth_mm(s.blade_depth), force=s.force,
+                                     speed=s.speed)
+    several = len(profile.holders) > 1
+    if s.blade_depth is None and several:
+        expect = N_("{holder} is selected; the carriage may move. Nothing touches the "
+                    "media.").format(holder=holder.label)
+    elif s.blade_depth is None:
+        expect = N_("The tool settings are sent; the carriage may move. Nothing touches the "
+                    "media.")
+    elif several:                                   # holder 1 is the left one
+        expect = N_("{holder} is selected; the carriage may move. Nothing touches the media. "
+                    "Then the {tool} is set at its station on the left (about 10 s).").format(
+            holder=holder.label, tool=tool)
+    else:
+        expect = N_("The tool settings are sent; the carriage may move. Nothing touches the "
+                    "media. Then the {tool} is set at its station (about 10 s).").format(tool=tool)
     return PlanStep("write", builder.chunk(cmds, limit=profile.max_write), title, expect)
 
 
@@ -188,32 +205,42 @@ def _preview_step(box: tuple[int, int, int, int], profile: MachineProfile) -> Pl
     a0, b0, a1, b1 = box
     corners = [(a0, b0), (a0, b1), (a1, b1), (a1, b0), (a0, b0)]
     return PlanStep("write", builder.chunk(builder.moves(corners), limit=profile.max_write),
-                    "Preview outline (tool up)",
-                    "The tool stays up and traces the outer box of the design. "
-                    "Check that it stays over the media.")
+                    N_("Preview outline (tool up)"),
+                    N_("The tool stays up and traces the outer box of the design. Check that it "
+                       "stays over the media."))
 
 
 def _cut_step(group: CutGroup, contours: list[list[CutterPoint]], confirm: bool,
               profile: MachineProfile) -> PlanStep:
     s = group.settings
-    detail = f"{_plural(len(contours), 'path')}, {_cut_length_mm(s, contours, profile):.0f} mm"
-    if s.passes > 1:
-        detail += f", {s.passes} passes"
-    if len(profile.holders) > 1:
-        title = (f"{action_name(s, profile)} with {profile.holder(s.holder).label} "
-                 f"({tool_name(s, profile)})")
+    paths = len(contours)
+    length = f"{_cut_length_mm(s, contours, profile):.0f}"
+    if paths == 1 and s.passes > 1:
+        expect = N_("The tool goes down: 1 path, {length} mm, {passes} passes.")
+    elif s.passes > 1:
+        expect = N_("The tool goes down: {paths} paths, {length} mm, {passes} passes.")
+    elif paths == 1:
+        expect = N_("The tool goes down: 1 path, {length} mm.")
     else:
-        title = f"{action_name(s, profile)} with the {tool_name(s, profile)}"
+        expect = N_("The tool goes down: {paths} paths, {length} mm.")
+    expect = expect.format(paths=paths, length=length, passes=s.passes)
+    if len(profile.holders) > 1:
+        title = N_("{action} with {holder} ({tool})").format(
+            action=action_name(s, profile), holder=profile.holder(s.holder).label,
+            tool=tool_name(s, profile))
+    else:
+        title = N_("{action} with the {tool}").format(action=action_name(s, profile),
+                                                      tool=tool_name(s, profile))
     return PlanStep("write", builder.chunk(builder.path(contours, s.passes),
                                            limit=profile.max_write),
-                    title, f"The tool goes down: {detail}.", confirm=confirm)
+                    title, expect, confirm=confirm)
 
 
 def _trailer_step(profile: MachineProfile) -> PlanStep:
     return PlanStep("write", builder.chunk(builder.trailer(profile), limit=profile.max_write),
-                    "Return to Origin",
-                    "The tool moves up to the origin. The mat stays loaded; unload it on the "
-                    "machine.")
+                    N_("Return to Origin"),
+                    N_("The tool moves up to the origin. The mat stays loaded; unload it on the "
+                       "machine."))
 
 
 # --- summary ----------------------------------------------------------------------------------
@@ -281,7 +308,3 @@ def _cut_length_mm(s: ToolSettings, contours: Sequence[Sequence[CutterPoint]],
     """Tool-down length of all passes, in mm."""
     su = sum(math.dist(p, q) for c in contours for p, q in zip(c, c[1:]))
     return su * s.passes / profile.su_per_mm
-
-
-def _plural(n: int, word: str) -> str:
-    return f"{n} {word}" if n == 1 else f"{n} {word}s"

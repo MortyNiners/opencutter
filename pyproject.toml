@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "opencutter"
-version = "0.1.1"
+version = "0.2.0"
 description = "Cutting software for Linux that drives Silhouette cutters over Bluetooth, tested on the CAMEO 4"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -22,8 +22,9 @@ opencutter = "opencutter.__main__:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-# the stylesheet and the app's own icons (gui/icons/hicolor/<size>/apps/*.svg), see gui/app.py
-opencutter = ["gui/*.css", "gui/icons/hicolor/*/apps/*.svg"]
+# the stylesheet and the app's own icons (gui/icons/hicolor/<size>/apps/*.svg), see gui/app.py;
+# the compiled translations (locale/<language>/LC_MESSAGES/opencutter.mo), see i18n.py
+opencutter = ["gui/*.css", "gui/icons/hicolor/*/apps/*.svg", "locale/*/LC_MESSAGES/*.mo"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

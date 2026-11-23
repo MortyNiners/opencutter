@@ -32,6 +32,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from opencutter.i18n import N_, NC_, _, pgettext
 from opencutter.job.validate import MEDIA_TOLERANCE_MM
 from opencutter.machines import CAMEO4, MachineProfile, Mat, Support, UBasis, enabled
 
@@ -44,10 +45,10 @@ MAT_SIZE_MM = 12 * MM_PER_IN       # the 12 x 12 in grid
 TEST_SPOT_INSET_MM = 0.25 * MM_PER_IN
 # a mat listed for the profile but not offered at the machine's level (its U reply is not known
 # on a tested machine): shown, but cannot be chosen
-NOT_MEASURED = "Not measured on this machine yet"
+NOT_MEASURED = N_("Not measured on this machine yet")
 # a mat offered on an untested machine although its U reply is not known: the reply is shown
 # but not checked
-UNCHECKED_MAT = "The cut area cannot be checked with this mat on this model yet."
+UNCHECKED_MAT = N_("The cut area cannot be checked with this mat on this model yet.")
 
 
 @dataclass(frozen=True)
@@ -60,7 +61,7 @@ class MediaSize:
 
 
 MEDIA_SIZES: tuple[MediaSize, ...] = (
-    MediaSize("letter", "Letter", 8.5 * MM_PER_IN, 11 * MM_PER_IN),
+    MediaSize("letter", NC_("paper size", "Letter"), 8.5 * MM_PER_IN, 11 * MM_PER_IN),
     MediaSize("a4", "A4", 210.0, 297.0),
     MediaSize("12x12", "12 × 12 in", MAT_SIZE_MM, MAT_SIZE_MM),
 )
@@ -246,9 +247,9 @@ def clamp(value: float, low: float, high: float) -> float:
 # window passes usable_area(media)) and the centres those of the page (the media), kept inside
 # that area, so an aligned design that fits always lies inside the cut area.
 ALIGNMENTS: tuple[tuple[str, str], ...] = (
-    ("center-page", "Center to Page"),
-    ("left", "Align Left"), ("center", "Align Center"), ("right", "Align Right"),
-    ("top", "Align Top"), ("middle", "Align Middle"), ("bottom", "Align Bottom"),
+    ("center-page", N_("Center to Page")),
+    ("left", N_("Align Left")), ("center", N_("Align Center")), ("right", N_("Align Right")),
+    ("top", N_("Align Top")), ("middle", N_("Align Middle")), ("bottom", N_("Align Bottom")),
 )
 
 
@@ -327,8 +328,16 @@ def format_duration(seconds: float) -> str:
     seconds = max(0, round(seconds))
     minutes, secs = divmod(seconds, 60)
     if not minutes:
-        return f"{secs} s"
-    return f"{minutes} min {secs} s" if secs else f"{minutes} min"
+        return _("{seconds} s").format(seconds=secs)
+    if secs:
+        return _("{minutes} min {seconds} s").format(minutes=minutes, seconds=secs)
+    return _("{minutes} min").format(minutes=minutes)
+
+
+def media_label(label: str) -> str:
+    """A Media Size's name in the window's language ('Letter'; a size such as '12 × 12 in' or
+    'A4' stays as it is)."""
+    return pgettext("paper size", label) if label else label
 
 
 def format_clock(seconds: float) -> str:
