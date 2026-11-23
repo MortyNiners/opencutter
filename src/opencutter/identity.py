@@ -23,7 +23,9 @@ from . import __version__
 
 # The client/daemon contract (ARCHITECTURE.md, "Socket protocol"). Raise it when a change means
 # that an older app or command line must not use the service, or the other way round.
-API_VERSION = 1
+# 2 (0.1.1): a step waits with no time limit while the machine is paused; the resume and pause
+# ops; more stop fields in the ping; info no longer sends FG.
+API_VERSION = 2
 BUILD_CHARS = 12
 
 

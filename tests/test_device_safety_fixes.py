@@ -233,9 +233,8 @@ def test_a_stop_between_steps_names_the_stop_request(log):
     assert any("'Cut' refused before its first write" in x for x in log)
 
 
-# --- (2) a Paused or Cancelling status since the first write ends the job ---------------------
-@pytest.mark.parametrize("digit, words", [("3", "paused"), ("4", "cancelled")])
-def test_a_pause_indication_then_ready_aborts_the_step_with_one_stop(log, digit, words):
+# --- (2) a Cancelling status since the first write ends the job; a Paused one waits ------------
+def test_a_cancel_indication_then_ready_aborts_the_step_with_one_stop(log):
     async def main():
         sess = make_session()
         t, lk = await make_link(sess=sess)
@@ -243,7 +242,7 @@ def test_a_pause_indication_then_ready_aborts_the_step_with_one_stop(log, digit,
 
         def on_esc05(tr):
             if sess.running and sess.interrupted is None:
-                tr.indicate(digit)                 # the panel's Pause, or a cancel on it
+                tr.indicate("4")                   # a cancel on the panel
         t.hooks[ESC05] = on_esc05
         cut = await daemon._run_step(lk, asyncio.Lock(), sess, write_step("Cut"))
         n = len(t.writes)
@@ -252,12 +251,30 @@ def test_a_pause_indication_then_ready_aborts_the_step_with_one_stop(log, digit,
         return t, cut, trailer, n
     t, cut, trailer, n = asyncio.run(main())
     assert cut["ok"] is False and cut["stopped"] is True and cut["stop_errors"] == []
-    assert f"The machine was {words}" in cut["error"] or f"machine {words}" in cut["error"]
-    assert "cannot resume" in cut["error"] and "Unload" in cut["error"]
+    assert cut["error"].startswith("The machine cancelled the job (status '4' = Cancelling).")
+    assert "Unload" in cut["error"] and "sends nothing more" in cut["error"]
     never_says_press_pause(cut["error"])
     assert t.writes.count(ESC09) == 2
     assert trailer["ok"] is False and t.writes[n:] == []      # refused before any query
     assert TRAILER not in t.writes
+
+
+def test_a_pause_mid_batch_then_ready_without_busy_ends_the_job_with_one_stop(log):
+    async def main():
+        sess = make_session()
+        t, lk = await make_link(sess=sess)
+        t.status = ["0", "0"]
+
+        def on_esc05(tr):
+            if sess.running and not sess.pauses:
+                tr.indicate("3")                   # the panel's Pause while the batch runs
+        t.hooks[ESC05] = on_esc05
+        cut = await daemon._run_step(lk, asyncio.Lock(), sess, write_step("Cut"))
+        return t, cut
+    t, cut = asyncio.run(main())
+    assert cut["ok"] is False and cut["stopped"] is True and cut["error"] == daemon.LEFT_PAUSE
+    assert t.writes.count(ESC09) == 2
+    assert any("left Pause without going on (3 -> 0" in x for x in log)
 
 
 def test_a_cancelling_after_our_own_stop_changes_nothing(log):
@@ -280,35 +297,34 @@ def test_rejected_and_busy_are_not_latched(log):
     assert asyncio.run(main()).interrupted is None
 
 
-def test_a_pause_at_the_gate_refuses_the_cut_and_sends_the_stop(log):
+def test_a_pause_at_the_gate_that_ended_lets_the_cut_run(log):
     async def main():
         sess = make_session(wrote=True)            # header and preview went out
         t, lk = await make_link(sess=sess)
         t.indicate("3")                            # Pause pressed while the app waits at the gate
-        t.indicate("0")
+        t.indicate("0")                            # pressed again: nothing was left to run
         n = len(t.writes)
         res = await daemon._run_step(lk, asyncio.Lock(), sess, write_step("Cut"))
         return t, n, res
     t, n, res = asyncio.run(main())
-    assert t.writes[n:] == [ESC09, ESC09]          # the stop, before any query
-    assert res["ok"] is False and res["stopped"] is True
-    assert "before this step; nothing of this step was sent" in res["error"]
-    never_says_press_pause(res["error"])
-    assert any("'Cut' refused before its first write" in x for x in log)
+    assert res["ok"] is True and ESC09 not in t.writes and MOVE in t.writes[n:]
+    assert any(x.startswith("job: the machine paused (3) between steps") for x in log)
 
 
-def test_a_paused_reply_before_a_later_step_sends_the_stop(log):
+def test_a_paused_reply_before_a_later_step_waits_until_it_goes_on(log, monkeypatch):
+    monkeypatch.setattr(daemon, "PAUSED_POLL", 0.1)
+
     async def main():
         sess = make_session(wrote=True)
         t, lk = await make_link(sess=sess)
-        t.status = ["3"]                           # read by the pre-step ESC 05, no indication
+        t.status = ["3", "3", "3", "0"]            # read by the pre-step ESC 05, no indication
         res = await daemon._run_step(lk, asyncio.Lock(), sess, write_step("Cut"))
         return t, res
     t, res = asyncio.run(main())
-    assert res["ok"] is False and res["stopped"] is True and MOVE not in t.writes
-    assert t.writes.count(ESC09) == 2
-    assert res["error"].startswith("The machine was paused (status '3' = Paused) before this "
-                                   "step; nothing of this step was sent.")
+    assert res["ok"] is True and ESC09 not in t.writes
+    first_move = t.writes.index(MOVE)
+    # nothing but ESC 05 while it was paused, then one more read before the first write
+    assert t.writes[:first_move] == [ESC05] * 5
 
 
 def test_a_paused_reply_before_the_header_sends_no_stop(log):
@@ -324,18 +340,41 @@ def test_a_paused_reply_before_the_header_sends_no_stop(log):
     assert "Nothing was sent" in res["error"]
 
 
-def test_a_u_timeout_after_a_pause_names_the_pause(log):
+def test_u_waits_until_a_paused_machine_goes_on(log, monkeypatch):
+    monkeypatch.setattr(daemon, "PAUSED_POLL", 0.1)
+
     async def main():
         sess = make_session(wrote=True)
         t, lk = await make_link(sess=sess)
-        t.u_reply = None                           # U is not answered (assumed while paused)
+        t.status = ["3", "0"]                      # still paused at the first read, then not
         t.indicate("3")
         res = await daemon._run_step(lk, asyncio.Lock(), sess, units_step())
         return t, res
     t, res = asyncio.run(main())
-    assert res["ok"] is False and res["error"] != daemon.UNITS_UNCONFIRMED
-    assert "The machine was paused" in res["error"] and res["stopped"] is True
-    assert t.writes.count(ESC09) == 2 and U not in t.writes   # refused before U
+    assert res["ok"] is True and res["verdict"] == "ok"
+    assert t.writes == [ESC05, ESC05, U]           # U only once it went on, never a stop
+
+
+def test_a_u_timeout_while_a_pause_came_asks_u_again(log, monkeypatch):
+    monkeypatch.setattr(daemon, "PAUSED_POLL", 0.1)
+
+    async def main():
+        sess = make_session(wrote=True)
+        t, lk = await make_link(sess=sess)
+        t.u_reply = None                           # the first U is not answered: it paused
+
+        def on_u(tr):
+            if not sess.pauses:
+                tr.indicate("3")
+                tr.status = ["3", "1"]             # still paused, then it goes on
+                tr.hooks[ESC05] = lambda tr2: setattr(tr2, "u_reply", "6100,6100")
+        t.hooks[U] = on_u
+        res = await daemon._run_step(lk, asyncio.Lock(), sess, units_step())
+        return t, res
+    t, res = asyncio.run(main())
+    assert res["ok"] is True and res["verdict"] == "ok" and ESC09 not in t.writes
+    assert t.writes.count(U) == 2 and t.writes[-1] == U
+    assert any("U was not answered while the machine paused" in x for x in log)
 
 
 def test_an_unload_during_a_step_has_the_plain_words(log):
@@ -393,7 +432,7 @@ def test_motion_possible_ends_only_after_two_ready_reads(log):
 
 
 # --- (5) every write has a time bound -----------------------------------------------------------
-def test_a_hung_query_write_cannot_block_the_ready_wait(log, monkeypatch):
+def test_a_hung_query_write_never_aborts_the_ready_wait_but_the_stop_ends_it(log, monkeypatch):
     monkeypatch.setattr(link, "QUERY_WRITE_TIMEOUT", 0.2)
 
     async def main():
@@ -401,12 +440,20 @@ def test_a_hung_query_write_cannot_block_the_ready_wait(log, monkeypatch):
         t, lk = await make_link(serialize=False, sess=sess)
         sess.running = True
         t.hang.add(ESC05)
-        loop = asyncio.get_running_loop()
-        t0 = loop.time()
-        with pytest.raises(daemon.MotionAborted, match="no longer answers ESC 05"):
-            await asyncio.wait_for(daemon.wait_ready(lk, asyncio.Lock(), sess, 60), 5)
-        return loop.time() - t0
-    assert asyncio.run(main()) < 2
+        wait = asyncio.ensure_future(daemon.wait_ready(lk, asyncio.Lock(), sess, 60))
+        await asyncio.sleep(1.5)
+        still = not wait.done()
+        n = t.writes.count(ESC05)
+        await daemon._stop_session(lk, sess, force=True)
+        with pytest.raises(daemon.MotionAborted) as e:
+            await asyncio.wait_for(wait, 2)
+        return still, n, str(e.value), t
+    still, n, text, t = asyncio.run(main())
+    assert still and n == 1                        # never written again while unacknowledged
+    assert text == daemon.STOPPED_IN_STEP and t.writes.count(ESC09) == 2
+    assert any(x.startswith("job: ESC 05 write not acknowledged after 0.2 s (Write Response "
+                            "missing; no status indication since); waiting for it")
+               for x in log)
 
 
 def test_a_timed_out_query_write_owes_its_reply():
@@ -744,7 +791,9 @@ def test_the_stop_fields_are_asked_for(harness):
         assert set(both) == set(machine) | set(daemon.PING_STOP_KEYS)
         assert {k: stop[k] for k in daemon.PING_STOP_KEYS} == {
             "stop_owed": False, "owed_stops_sent": 0, "motion_stopped": False,
-            "interrupted": None, "load_seen": 0}
+            "interrupted": None, "load_seen": 0, "paused": False, "resume_ok": False,
+            "pause_ok": False, "no_reply_s": None, "indication_age_s": None,
+            "stop_check": None}
         r, w = await _open(h)
         assert (await _step(r, w, 0))["ok"]
         indicate(f, "3")                           # paused on the panel after the header
@@ -757,11 +806,15 @@ def test_the_stop_fields_are_asked_for(harness):
         indicate(f, "0")
         return paused, stopped, await _ping(h, stop=True)
     paused, stopped, unloaded = harness.run(scenario)
-    assert paused["interrupted"] == "3" and paused["motion_stopped"] is False
-    assert stopped["motion_stopped"] is True
+    assert paused["paused"] is True and paused["interrupted"] is None
+    assert paused["resume_ok"] is True and paused["pause_ok"] is False
+    assert paused["motion_stopped"] is False
+    assert stopped["motion_stopped"] is True and stopped["paused"] is False
+    assert stopped["resume_ok"] is False
     assert unloaded["load_seen"] == 1
     assert daemon.PING_STOP_KEYS == ("stop_owed", "owed_stops_sent", "motion_stopped",
-                                     "interrupted", "load_seen")
+                                     "interrupted", "load_seen", "paused", "resume_ok",
+                                     "pause_ok", "no_reply_s", "indication_age_s", "stop_check")
 
 
 def test_the_client_asks_for_the_stop_fields(harness):
@@ -934,7 +987,7 @@ def test_a_refusal_at_start_up_is_dated_in_the_log(monkeypatch, capsys, tmp_path
 def test_wait_ready_ends_at_what_came_while_its_poll_was_out(log, event):
     async def main():
         sess = make_session(wrote=True)
-        sess.running = True
+        sess.running = sess.batch_open = True      # in the middle of a batch
         t, lk = await make_link(sess=sess)
 
         def on_esc05(tr):                          # while this poll is out; it reads '0'
@@ -949,17 +1002,17 @@ def test_wait_ready_ends_at_what_came_while_its_poll_was_out(log, event):
     text = asyncio.run(main())
     if event == "stop":
         assert text == daemon.STOPPED_IN_STEP
-    else:
-        assert text.startswith("The machine was paused (status '3' = Paused)")
+    else:                                          # paused, then ready with no Busy seen
+        assert text == daemon.LEFT_PAUSE
 
 
-@pytest.mark.parametrize("event", ["stop", "pause"])
+@pytest.mark.parametrize("event", ["stop", "cancel"])
 def test_a_step_never_reports_ok_once_its_last_ready_wait_saw_a_stop(log, monkeypatch, event):
     async def ready_but(c, lock, sess, timeout=0.0):
         if event == "stop":
             sess.stop.set()                        # asked for, not sent yet
         else:
-            daemon._note_status(sess, "3")
+            daemon._note_status(sess, "4")
         return "0"
     monkeypatch.setattr(daemon, "wait_ready", ready_but)
 
@@ -972,30 +1025,33 @@ def test_a_step_never_reports_ok_once_its_last_ready_wait_saw_a_stop(log, monkey
     assert t.writes.count(ESC09) == 2
 
 
-def test_a_pause_the_session_did_not_hear_is_taken_from_the_link(log):
+def test_a_pause_the_session_did_not_hear_is_taken_from_the_link(log, monkeypatch):
+    monkeypatch.setattr(daemon, "PAUSED_POLL", 0.1)
+
     async def main():
         sess = make_session(wrote=True)
         t, lk = await make_link(sess=None)        # indications do not reach this session
         t.indicate("3")
+        t.status = ["3", "0"]
         n = len(t.writes)
         res = await daemon._run_step(lk, asyncio.Lock(), sess, write_step("Return to Origin",
                                                                            [TRAILER]))
         return t, n, res
     t, n, res = asyncio.run(main())
-    assert t.writes[n:] == [ESC09, ESC09]          # the stop, before any query
-    assert res["ok"] is False and res["stopped"] is True and TRAILER not in t.writes
-    assert res["error"].startswith("The machine was paused")
+    assert t.writes[n:n + 2] == [ESC05, ESC05]     # it waited: nothing but ESC 05
+    assert res["ok"] is True and TRAILER in t.writes and ESC09 not in t.writes
+    assert any(x.startswith("job: the machine paused (3)") for x in log)
 
 
-def test_a_pause_during_u_the_session_did_not_hear_refuses_the_units_step(log):
+def test_a_pause_during_u_the_session_did_not_hear_makes_the_next_step_wait(log):
     async def main():
         sess = make_session(wrote=True)
         t, lk = await make_link(sess=None)
         t.hooks[U] = lambda tr: tr.indicate("3")
-        return t, await daemon._run_step(lk, asyncio.Lock(), sess, units_step())
-    t, res = asyncio.run(main())
-    assert res["ok"] is False and res["stopped"] is True
-    assert res["error"].startswith("The machine was paused") and t.writes.count(ESC09) == 2
+        return t, sess, await daemon._run_step(lk, asyncio.Lock(), sess, units_step())
+    t, sess, res = asyncio.run(main())
+    assert res["ok"] is True and ESC09 not in t.writes   # the unit was confirmed
+    assert sess.paused == "3"                      # the next step waits until it goes on
 
 
 @pytest.mark.parametrize("case", ["busy", "paused", "stopped"])
@@ -1147,18 +1203,20 @@ def test_a_pause_mid_batch_sends_no_further_chunk(log):
     assert res["ok"] is False and res["stopped"] is True and t.writes.count(ESC09) == 2
 
 
-def test_a_latched_pause_does_not_wait_out_a_busy_machine(log):
+def test_a_pause_does_not_use_up_the_pre_step_busy_time(log, monkeypatch):
+    monkeypatch.setattr(daemon, "PRE_STEP_WAIT", 1.0)
+    monkeypatch.setattr(daemon, "PAUSED_POLL", 0.2)
+
     async def main():
         sess = make_session(wrote=True)
         t, lk = await make_link(sess=sess)
-        t.status = ["1"]                           # Busy: the pre-step wait would last 10 s
-        t.hooks[ESC05] = lambda tr: sess.interrupted or tr.indicate("3")   # paused meanwhile
+        t.status = ["1", "3", "3", "3", "3", "3", "3", "0"]   # Busy, paused for > 1 s, ready
         loop = asyncio.get_running_loop()
         t0 = loop.time()
         res = await daemon._run_step(lk, asyncio.Lock(), sess, write_step("Cut"))
-        return res, loop.time() - t0
-    res, took = asyncio.run(main())
-    assert took < 3 and res["ok"] is False and res["stopped"] is True
+        return t, res, loop.time() - t0
+    t, res, took = asyncio.run(main())
+    assert took > 1.0 and res["ok"] is True and ESC09 not in t.writes and MOVE in t.writes
 
 
 def test_a_stop_request_whose_pair_failed_is_sent_again_before_the_next_step(log, monkeypatch):
@@ -1241,12 +1299,13 @@ def test_a_late_reply_to_a_timed_out_query_write_never_answers_the_next_query():
         assert asyncio.run(main()) == "6100,6100"
 
 
-def test_the_stop_check_reads_on_while_the_machine_reports_cancelling(log):
+@pytest.mark.parametrize("shown", [["4", "4", "0"], ["3", "3", "4", "0"], ["3", "3", "3", "0"]])
+def test_the_stop_check_reads_on_while_the_machine_reports_cancelling(log, shown):
     async def main():
         t, lk = await make_link()
-        t.status = ["4", "4", "0"]                 # what a stop shows: Cancelling, then Ready
+        t.status = list(shown)                     # what a stop shows: (Paused,) Cancelling, Ready
         n = len(t.writes)
         status = await daemon._status_after_stop(lk, asyncio.Lock())
         return status, t.writes[n:]
     status, writes = asyncio.run(main())
-    assert status == "0" and writes == [ESC05, ESC05, ESC05]
+    assert status == "0" and writes == [ESC05] * len(shown)

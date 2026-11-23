@@ -41,10 +41,27 @@ Safety measures (each one exists because of a real problem, see ARCHITECTURE.md)
   * once a session's first write went out, a '2' (Load Media) status, as an indication or as
     an ESC 05 reply, means the mat was unloaded: TG1 is not repeated, so the origin no longer
     matches, and every later step is refused without sending anything;
-  * once the session's first write went out, a Paused or Cancelling status (an indication or an
-    ESC 05 reply; '3' and '4' on every model today) ends the job for good, even when a later
-    ESC 05 reads ready: OpenCutter never resumes a paused machine (it never sends ESC 08), so
-    the step in progress, or the next one before anything of it is sent, ends with the stop;
+  * once the session's first write went out, a Paused status (an indication or an ESC 05 reply;
+    '3' on every model today) makes the session wait, as Silhouette Studio does: nothing more is
+    written but ESC 05 (every PAUSED_POLL s, and at once on every status indication), with no
+    time limit, until the machine goes on ('1'; or '0' when the pause came between batches, or
+    within RESUME_WINDOW s of the user's Resume), the user stops the job, or the link is lost.
+    The machine's own Pause key, or the user's Resume (one ESC 08, _command_op), goes on;
+    nothing is ever sent by itself to make it go on. A '0' after a pause that came in the middle
+    of a batch, with no '1' or Cancelling seen, may be a cancel on the panel whose Cancelling
+    was missed: the job ends with the stop (LEFT_PAUSE). A Cancelling status (not after our
+    own stop) ends the job for good, with the stop, even when a later ESC 05 reads ready;
+  * the user's Pause (one ESC 07, _command_op) only while a session of ours runs and the machine
+    reads Ready or Busy, and Resume (one ESC 08) only while that session waits on a paused
+    machine; both only on a TESTED profile and firmware line that has them (the CAMEO 4),
+    never repeated, never sent by OpenCutter on its own;
+  * no abort on silence: inside a session ESC 05 and ESC 15 are asked patiently
+    (link.SafeLink.patient_esc: one query at a time, overdue after STATUS_OVERDUE s, then asked
+    once more and logged, the ping's no_reply_s); a step ends only on ready, a status that ends
+    it, the stop, a lost link or READY_TIMEOUT counted over Busy replies only. A ready reply
+    ends a wait only when it answers the one query outstanding, and only once no earlier query
+    is still unanswered (a late reply must never end the wait for the next batch): the earlier
+    replies are waited for first, sending nothing, and the reply to the last query decides;
   * long steps go out in batches of at most the profile's batch size (1024 bytes on the
     CAMEO 4) with a ready wait after each batch, and the stop flag is checked between every
     chunk, in every wait (the ready waits, the waits before a step, the U check), and before a
@@ -58,7 +75,14 @@ Safety measures (each one exists because of a real problem, see ARCHITECTURE.md)
     writes failed) is owed to that machine: when the service links to the SAME address again
     and the model gate passed, it sends the stop once, before anything else may use the link;
   * the profile's stop, ESC 09 twice, on: client EOF or any byte mid-step, the stop op, SIGTERM,
-    SIGHUP, SIGINT; further signals are ignored while that stop goes out.
+    SIGHUP, SIGINT; further signals are ignored while that stop goes out. No query is written
+    from the stop's first byte until 0.3 s after its last (link.STOP_QUIET); after the stop op
+    ESC 05 is read back (STOP_CHECK s while Busy or Cancelling, STOP_CHECK_PAUSED s while
+    Paused: a paused job ends about 5 s after the stop), and nothing else is sent: no second
+    pair by itself, no FG, no U, no ESC 15;
+  * the info op answers the FG reply read at the model gate (it never sends FG), and text
+    queries (and ESC 10/15/16) are refused while the machine reads Paused or Cancelling;
+    text queries also for QUERY_HOLD_AFTER_STOP s after a stop.
 """
 from __future__ import annotations
 
@@ -78,24 +102,34 @@ from typing import Any
 
 from .. import __version__
 from ..identity import API_VERSION, BUILD, identity, started_by
-from ..machines import CAMEO4, Detection, MachineProfile, Mat, Verdict, detect, registry
+from ..machines import (CAMEO4, Detection, MachineProfile, Mat, Support, Verdict, detect,
+                        registry)
 from .ble import Cameo4, PlotterUnreachable, bluetooth_off_error, find_bonded_cameo
-from .link import MIN_SESSION_WRITE_LIMIT
+from .link import MIN_SESSION_WRITE_LIMIT, REPLY_LOST_AFTER, RESUME_QUIET, QueryAbandoned
 from .portal import announce_background, background_status
 from .programs import build_program
 from .protocol import (CANCELLING, ETX, INTERRUPTED_TERMS, LEGACY_LOCK_NAME, LOCK_NAME, PAUSED,
                        REASON_HELD_ELSEWHERE, REASON_NO_BLUETOOTH, REASON_NOT_PAIRED,
-                       REASON_UNREACHABLE, REASON_WRONG_MODEL, REJECTED, SOCKET_NAME,
-                       TESTED_MACHINE, UnsafeCommand, evaluate_units, in_flatpak, is_status,
-                       lowers_tool, model_text, not_ready_text, reported_model, runtime_path,
-                       service_path, status_text, tool_name, wrong_model_message)
+                       REASON_UNREACHABLE, REASON_WRONG_MODEL, REJECTED, REPLY_TIMEOUT,
+                       SOCKET_NAME, STOP_CHECK_PAUSED, TESTED_MACHINE, UnsafeCommand,
+                       evaluate_units, in_flatpak, is_status, lowers_tool, model_text,
+                       not_ready_text, reported_model, runtime_path, service_path, status_text,
+                       tool_name, wrong_model_message)
 
 SOCKET_PATH = service_path(SOCKET_NAME)   # $XDG_RUNTIME_DIR/app/<app id>/opencutter.sock
 LOCK_PATH = service_path(LOCK_NAME)
 OLD_LOCK_PATH = runtime_path(LOCK_NAME)   # where builds before 0.1.0 locked: held as well
 
-READY_TIMEOUT = 120.0      # base wait for ready after a write (Graphtec's safe_write uses 120 s)
-PRE_STEP_WAIT = 10.0       # a previous step may still report '1' for a moment
+# base wait for ready after a write (Graphtec's safe_write uses 120 s), counted over Busy
+# replies only: neither a pause nor a reply that is late counts
+READY_TIMEOUT = 120.0
+PRE_STEP_WAIT = 10.0       # a previous step may still report '1' for a moment (Busy time only)
+FIRST_POLL = 0.5           # the first ESC 05 read after a batch: never a stale '0'
+BUSY_POLL = 0.4            # between ESC 05 reads while the machine reads Busy
+PAUSED_POLL = 2.5          # between ESC 05 reads while it is paused (Studio's Bluetooth rate)
+# The most one Busy reply adds to the Busy time: a poll cycle with a normal reply time, so that
+# a reply that comes late (or a pause) does not use up READY_TIMEOUT or PRE_STEP_WAIT
+BUSY_CREDIT_MAX = BUSY_POLL + 1.0
 # The CAMEO 4's pacing; a session uses its machine profile's (MachineProfile.batch_bytes and
 # slowest_su_per_s), the same values on the CAMEO 4.
 BATCH_BYTES = CAMEO4.batch_bytes            # 1024: at most this much is queued before a ready wait
@@ -116,6 +150,19 @@ MEDIA_CHANGED_STEP_PROGRAM = ("The mat was unloaded during the program, so OpenC
                               "program again.")
 UNITS_UNCONFIRMED = ("The machine did not confirm the unit (U). Unload and load the mat, "
                      "then send again.")
+# The machine left Pause with '0' although the pause came in the middle of a batch, and neither
+# '1' (it went on) nor Cancelling was seen: maybe a cancel on its panel whose Cancelling status
+# was missed (it is shown only for a moment). The job ends with the stop.
+LEFT_PAUSE = ("The machine left Pause without going on with the cut, so it may have been "
+              "cancelled on its panel. OpenCutter ended the job with the stop and sends nothing "
+              "more. Press Unload on the machine, check that the tool is up, then load the mat "
+              "and send the job again.")
+LEFT_PAUSE_PROGRAM = ("The machine left Pause without going on with the program, so it may have "
+                      "been cancelled on its panel. OpenCutter ended the program with the stop "
+                      "and sends nothing more. Press Unload on the machine, check that the tool "
+                      "is up, then load the mat and run the program again.")
+# what MotionSession.interrupted (and the ping's "interrupted") holds for that case
+LEFT_PAUSE_MARK = "left-pause"
 LINK_LOST = "the Bluetooth link was lost"
 # a stop request (the stop op, a signal, the client going away) during a step
 STOPPED_IN_STEP = ("stopped on request (Cancel in the app, or `opencutter stop`); nothing more "
@@ -142,12 +189,30 @@ PING_MACHINE_KEYS = ("profile", "support", "refused_reason")
 #                    user when it goes up)
 #   motion_stopped   the open session got a stop request (Cancel, `opencutter stop`, a signal):
 #                    its next step is refused
-#   interrupted      the Paused or Cancelling status the open session saw after its first
-#                    write (a status digit), or None: the session ends with the stop
+#   interrupted      why the open session ends with the stop although nobody asked for one: the
+#                    Cancelling status digit it saw after its first write (a cancel on the
+#                    panel), or LEFT_PAUSE_MARK ("left-pause": the machine left Pause without
+#                    going on); None otherwise
 #   load_seen        how often the machine's status changed to the load digit ('2', Load Media,
 #                    on every model today) since the service started: an unload on the panel
 #                    shows as a change of this count, even between two pings
-PING_STOP_KEYS = ("stop_owed", "owed_stops_sent", "motion_stopped", "interrupted", "load_seen")
+#   paused           the open session waits on a paused machine (Paused seen after its first
+#                    write, and it has not gone on yet): nothing more is sent until it goes on
+#   resume_ok        a resume op would be sent now: paused, no stop asked for, and a machine
+#                    whose Resume was tested (the CAMEO 4 on firmware V5)
+#   pause_ok         a pause op would be sent now: a session of ours wrote, it is not paused or
+#                    ending, the machine last read Ready or Busy, and its Pause was tested
+#   no_reply_s       how long the query the open session waits for has been unanswered, once
+#                    that is STATUS_OVERDUE (7) s or more ("Checking connection"); else None
+#   indication_age_s seconds since the machine's last status indication, or None: indications
+#                    that still come while replies do not tell a stalled reply from a dead link
+#   stop_check       the read-back after the last stop op that asked for it, or None: {"running"
+#                    (still reading), "status" (the last ESC 05 digit read, or None), "seconds"
+#                    (how long it read), "still_busy", "still_paused" (None when nothing was
+#                    read), "reason" (why nothing could be read, or None)}
+PING_STOP_KEYS = ("stop_owed", "owed_stops_sent", "motion_stopped", "interrupted", "load_seen",
+                  "paused", "resume_ok", "pause_ok", "no_reply_s", "indication_age_s",
+                  "stop_check")
 LEGACY_DAEMON = "the legacy prototype daemon holds cameo4.lock; stop it first"
 OLDER_DAEMON = ("an older OpenCutter background service is running; stop it with "
                 "`opencutter service stop`")
@@ -161,8 +226,15 @@ RETRY_WAIT = 3.0           # seconds before the next look after a failed look, c
 WRONG_MODEL_WAIT = 60.0    # `serve --address` of a machine the model gate refused: just wait
 LINK_RELEASE_WAIT = 5.0    # how long a clean exit waits for BlueZ to drop the link
 STOP_CHECK = 3.0           # after the stop op's pair (when asked): how long ESC 05 is read back
+                           # while it reads Busy or Cancelling
+# ... and STOP_CHECK_PAUSED (protocol) once it read Paused (a paused job ends about 5 s after it)
 STOP_CHECK_POLL = 0.4      # between those reads
-STOP_LOCK_WAIT = 2.0       # how long each of those reads waits for the query lock
+STOP_LOCK_WAIT = 4.0       # how long each of those reads waits for the query lock (more than
+                           # one reply time-out)
+QUERY_HOLD_AFTER_STOP = 10.0  # text queries are refused this long after a stop
+RESUME_LOCK_WAIT = 3.0     # the resume and pause ops: how long they wait for the query lock
+RESUME_CHECK = 5.0         # ... how long they watch for the machine to leave (or reach) Paused
+RESUME_WINDOW = 5.0        # a '0' this soon after our Resume means it went on with nothing left
 STOP_WATCH = 30.0          # after a stop, Ready and Busy changes are logged too, this long
 FG_TIMEOUT_OWED = 10.0     # FG's reply time-out on a new link that is owed a stop (see serve)
 STILL_WAITING_EVERY = 600.0  # while no link comes up: a 'still waiting' line this often
@@ -215,8 +287,9 @@ class MotionSession:
     running: bool = False        # a motion write is in flight or being waited on
     wrote: bool = False          # the session's first motion write (the header) went out
     media_changed: bool = False  # '2' (Load Media) seen after that: nothing more may be sent
-    # A Paused or Cancelling status (its digit) seen after the first write, without a stop of
-    # ours before it: the machine was paused or cancelled on its panel. The job ends for good.
+    # A Cancelling status (its digit) seen after the first write, without a stop of ours before
+    # it (the machine was cancelled on its panel), or LEFT_PAUSE_MARK (it left Pause without
+    # going on). The job ends for good, with the stop.
     interrupted: str | None = None
     # From each motion write until the machine read ready at the end of a step and again right
     # before the next one: the machine may still be moving (the loss, exit and refusal stops).
@@ -224,6 +297,22 @@ class MotionSession:
     link: Any = None             # the link the session runs on
     # called with (link, errors) after each stop sequence the session sent or joined
     on_stop: Any = None
+    # The pause (_note_status): the Paused digit while the machine is paused after the first
+    # write (None otherwise), since when (time.monotonic()), whether it came while a batch was
+    # open, every status seen since, and how many pauses there were in this session
+    paused: str | None = None
+    paused_at: float | None = None
+    paused_total: float = 0.0    # seconds paused so far
+    paused_mid_batch: bool = False
+    seen_since_pause: set = field(default_factory=set)
+    pauses: int = 0
+    resume_sent_at: float | None = None   # time.monotonic() of the user's last Resume (ESC 08)
+    pause_sent_at: float | None = None    # ... and of the user's last Pause (ESC 07)
+    # from a batch's first write until the ready read after it: a pause now leaves bytes of
+    # ours in the machine
+    batch_open: bool = False
+    step_title: str | None = None   # the step that runs, for the log
+    batch: tuple[int, int] = (0, 0)   # (this batch, batches) of that step, for the log
 
 
 def _what(sess: MotionSession) -> tuple[str, str]:
@@ -231,6 +320,10 @@ def _what(sess: MotionSession) -> tuple[str, str]:
     if sess.name == "job":
         return "job", "send the job again"
     return "program", "run the program again"
+
+
+def _now() -> float:
+    return time.monotonic()
 
 
 def _note_status(sess: MotionSession | None, status: str | None) -> None:
@@ -243,25 +336,94 @@ def _note_status(sess: MotionSession | None, status: str | None) -> None:
     every later step is refused. A '2' before the header is harmless: the header's TG1 then
     follows a fresh load.
 
-    A Paused or Cancelling status (the profile's terms; '3' and '4' on every model today)
-    after the header, while no stop of ours was asked for, is latched in sess.interrupted:
-    OpenCutter cannot resume a job, so the step in progress, or the next one, ends with the
-    stop even when a later ESC 05 reads ready. A Cancelling after our own stop changes nothing.
-    'Rejected' and other digits are not latched (the ready waits judge them)."""
+    A Paused status (the profile's term; '3' on every model today) after the header, while no
+    stop of ours was asked for, starts a pause (sess.paused): the session sends nothing more
+    but ESC 05 until it ends. Every status seen meanwhile is kept; the pause ends with the
+    first of them that says how it went on:
+      Busy               it goes on (the Pause key again, or our Resume);
+      Ready              it went on with nothing left when the pause came between batches (no
+                         batch was open) or within RESUME_WINDOW s of our Resume; otherwise,
+                         with no Busy and no Cancelling seen, it may be a cancel on the panel
+                         whose Cancelling was missed: latched as LEFT_PAUSE_MARK (the job ends
+                         with the stop);
+      Cancelling, load   as below.
+    A Cancelling status (the profile's INTERRUPTED_TERMS; '4' on every model today) after the
+    header, while no stop of ours was asked for, is latched in sess.interrupted: the machine was
+    cancelled on its panel, so the step in progress, or the next one, ends with the stop even
+    when a later ESC 05 reads ready. A Cancelling or Paused after our own stop changes nothing.
+    'Rejected' and other digits are not latched (the waits judge them)."""
     if sess is None or not sess.wrote or sess.media_changed:
         return
     states = sess.profile.status
     if status == states.load and states.unloaded_after_header:
         sess.media_changed = True
+        _clear_pause(sess)
         _log(f"{sess.name}: the mat was unloaded (status {status}) during the session; "
              "nothing more will be sent")
         return
+    if sess.stop.is_set():
+        return
     term = status_text(status, sess.profile, default="")
-    if term in INTERRUPTED_TERMS and sess.interrupted is None and not sess.stop.is_set():
+    if term == PAUSED:
+        if sess.paused is None and sess.interrupted is None:
+            _begin_pause(sess, status)
+        return
+    if sess.paused is not None:
+        _leave_pause(sess, status, term)
+    if term in INTERRUPTED_TERMS and sess.interrupted is None:
         sess.interrupted = status
         what, _ = _what(sess)
-        _log(f"{sess.name}: the machine reported {status} = {term} during the session; "
-             f"OpenCutter cannot resume a {what}: it ends with the stop")
+        _log(f"{sess.name}: the machine reported {status} = {term} during the session: it was "
+             f"cancelled on its panel, and the {what} ends with the stop")
+
+
+def _begin_pause(sess: MotionSession, status: str) -> None:
+    """The machine paused during the session: from now on nothing but ESC 05 is sent."""
+    sess.paused = status
+    sess.paused_at = _now()
+    sess.paused_mid_batch = sess.batch_open
+    sess.seen_since_pause = set()
+    sess.pauses += 1
+    where = f" during {sess.step_title!r}" if sess.step_title else " between steps"
+    b, n = sess.batch
+    if n and sess.batch_open:
+        where += f", batch {b}/{n}"
+    elif n:
+        where += f", after batch {b}/{n}"
+    _log(f"{sess.name}: the machine paused ({status}){where}; waiting: nothing more is sent "
+         "until it goes on")
+
+
+def _clear_pause(sess: MotionSession) -> None:
+    if sess.paused is not None and sess.paused_at is not None:
+        sess.paused_total += max(0.0, _now() - sess.paused_at)
+    sess.paused = None
+    sess.paused_at = None
+
+
+def _leave_pause(sess: MotionSession, status: str | None, term: str) -> None:
+    """A status other than Paused while the session is paused (see _note_status)."""
+    states = sess.profile.status
+    sess.seen_since_pause.add(status)
+    waited = _now() - (sess.paused_at or _now())
+    if term in INTERRUPTED_TERMS:
+        _clear_pause(sess)                 # latched by the caller
+    elif status == states.busy:
+        _log(f"{sess.name}: the machine goes on ({status}) after {waited:.0f} s")
+        _clear_pause(sess)
+    elif status == states.ready:
+        ours = (sess.resume_sent_at is not None and sess.paused_at is not None
+                and sess.resume_sent_at >= sess.paused_at
+                and _now() - sess.resume_sent_at <= RESUME_WINDOW)
+        if not sess.paused_mid_batch or ours:
+            _log(f"{sess.name}: the machine goes on ({status}: nothing was left to run) after "
+                 f"{waited:.0f} s")
+            _clear_pause(sess)
+        else:
+            _log(f"{sess.name}: the machine left Pause without going on ({sess.paused} -> "
+                 f"{status}, no {states.busy} and no Cancelling seen): ended")
+            _clear_pause(sess)
+            sess.interrupted = LEFT_PAUSE_MARK
 
 
 def _media_changed_error(sess: MotionSession) -> str:
@@ -281,24 +443,26 @@ def _media_changed_step_error(sess: MotionSession) -> str:
 def _status_stop_text(status: object, sess: MotionSession, before_step: bool = False) -> str:
     """Why the session ends with the stop for an ESC 05 status (or a latched indication) that
     is neither ready nor busy, or still busy before a step; in plain words where the profile's
-    term says what happened (Paused, Cancelling, Rejected, Busy). `before_step`: the step was
-    refused before its first write. A digit without such a term keeps "unexpected status 'N' =
-    term" (during a step). Never advises pressing Pause to continue."""
+    term says what happened (Cancelling, Rejected, Busy; LEFT_PAUSE_MARK: LEFT_PAUSE).
+    `before_step`: the step was refused before its first write. A digit without such a term
+    keeps "unexpected status 'N' = term" (during a step). Never mentions the Pause key, except
+    LEFT_PAUSE, which says that the machine left Pause."""
     p = sess.profile
     what, again = _what(sess)
+    if status == LEFT_PAUSE_MARK:
+        return LEFT_PAUSE if sess.name == "job" else LEFT_PAUSE_PROGRAM
     term = status_text(status, p, default="")
     shown = f"status {status!r} = {status_text(status, p)}"
     nothing = " before this step; nothing of this step was sent" if before_step else ""
     unload = (f"press Unload on the machine (or switch it off), check that the tool is up, then "
               f"load the mat and {again}.")
-    if term == PAUSED:
-        return (f"The machine was paused ({shown}){nothing}. OpenCutter cannot resume a {what}, "
-                f"so it ended the {what} with the stop. Do not press Pause to continue: "
-                f"{unload}")
+    if term == PAUSED:                     # a session waits instead; kept for safety
+        return (f"The machine was paused ({shown}){nothing}. OpenCutter ended the {what} with "
+                f"the stop and sends nothing more: {unload}")
     if term == CANCELLING:
-        return (f"The machine cancelled the {what} ({shown}){nothing}. OpenCutter cannot resume "
-                f"a {what}, so it ended the {what} with the stop. Do not press Pause to "
-                f"continue: {unload}")
+        return (f"The machine cancelled the {what} ({shown}){nothing}. OpenCutter ended the "
+                f"{what} with the stop and sends nothing more. Press Unload on the machine, "
+                f"check that the tool is up, then load the mat and {again}.")
     if term == REJECTED:
         return (f"The machine rejected a command ({shown}){nothing}: another connection, such "
                 f"as USB, may hold it. OpenCutter ended the {what} with the stop. Close the "
@@ -315,9 +479,10 @@ def _status_stop_text(status: object, sess: MotionSession, before_step: bool = F
 
 def _check_session(c, sess: MotionSession, link: bool = True, media: bool = True) -> None:
     """Raise MotionAborted when the step in progress must end: a stop request, (with `media`)
-    an unloaded mat, a Paused or Cancelling status seen since the first write, or (with `link`)
-    a lost link. The ready waits leave an unloaded mat to the status they read (a mat unloaded
-    and loaded again during a step's last batch refuses the next step, without a stop)."""
+    an unloaded mat, a Cancelling status (or LEFT_PAUSE_MARK) seen since the first write, or
+    (with `link`) a lost link. A pause is not a reason: the session waits. The ready waits leave
+    an unloaded mat to the status they read (a mat unloaded and loaded again during a step's
+    last batch refuses the next step, without a stop)."""
     if sess.stop.is_set():
         raise MotionAborted(STOPPED_IN_STEP)
     if media and sess.media_changed:
@@ -334,10 +499,12 @@ def _link_up(c) -> bool:
 
 
 def _latch_from_link(c, sess: MotionSession) -> None:
-    """Take a Paused or Cancelling status the link saw last (an indication the session's own
-    callback may have missed) into the session's latch (_note_status)."""
+    """Take a Cancelling status the link saw last (an indication the session's own callback
+    may have missed) into the session's latch, and a Paused one into its pause
+    (_note_status)."""
     last = getattr(c, "last_status", None)
-    if status_text(last, sess.profile, default="") in INTERRUPTED_TERMS:
+    term = status_text(last, sess.profile, default="")
+    if term in INTERRUPTED_TERMS or (term == PAUSED and sess.paused is None):
         _note_status(sess, last)
 
 
@@ -511,58 +678,267 @@ async def _sleep_or_stop(stop: asyncio.Event, seconds: float) -> None:
         await asyncio.wait_for(stop.wait(), seconds)
 
 
+async def _nap(c, sess: MotionSession, seconds: float) -> None:
+    """Wait `seconds`, or less: until the session's stop or the link's next status indication
+    (a test double without next_indication: the stop only)."""
+    if seconds <= 0:
+        return
+    nxt = getattr(c, "next_indication", None)
+    if nxt is None:
+        await _sleep_or_stop(sess.stop, seconds)
+        return
+    indication = nxt()
+    stop = asyncio.ensure_future(sess.stop.wait())
+    try:
+        await asyncio.wait({indication, stop}, timeout=seconds,
+                           return_when=asyncio.FIRST_COMPLETED)
+    finally:
+        indication.cancel()
+        stop.cancel()
+
+
+def _reporter(sess: MotionSession):
+    """The log lines of a patient query (link.SafeLink.patient_esc), with the session's name."""
+    return lambda text: _log(f"{sess.name}: {text}")
+
+
+async def _session_query(c, lock: asyncio.Lock, sess: MotionSession, code: int,
+                         hold=None) -> tuple[str | None, bool]:
+    """An ESC query inside a session, asked patiently (link.SafeLink.patient_esc: never given
+    up while the link is up, one query at a time under the query lock). Returns (reply, fresh).
+    With `hold`: (None, False) without writing anything when hold() is true once the lock is
+    held. A query that stops waiting for the session's stop or a lost link raises MotionAborted
+    (_check_session). Once the stop was asked for (and for a test double without patient_esc)
+    it is the one-shot read (_esc_retry)."""
+    patient = getattr(c, "patient_esc", None)
+    if sess.stop.is_set() and code != 0x05:        # after a stop: nothing but ESC 05
+        raise MotionAborted(STOPPED_IN_STEP)
+    if patient is None or sess.stop.is_set():     # after a stop request: one plain read
+        if hold is not None and hold():
+            return None, False
+        return await _esc_retry(c, lock, code, sess.profile), True
+    try:
+        async with lock:
+            if hold is not None and hold():
+                return None, False
+            if sess.stop.is_set() and code != 0x05:    # the stop came while the lock was busy
+                raise MotionAborted(STOPPED_IN_STEP)
+            return await patient(code, stop=sess.stop, report=_reporter(sess))
+    except QueryAbandoned:
+        _check_session(c, sess, media=False)
+        raise MotionAborted(LINK_LOST) from None
+
+
+async def _session_status(c, lock: asyncio.Lock, sess: MotionSession) -> tuple[str, bool]:
+    """ESC 05 inside a session (_session_query) once the session wrote, the one-shot read with
+    one retry (_esc_retry) before that (nothing has moved yet). A reply that is not a status is
+    read once more (it is then not fresh). Returns (reply, fresh)."""
+    if not sess.wrote:
+        return await _esc_retry(c, lock, 0x05, sess.profile), True
+    s, fresh = await _session_query(c, lock, sess, 0x05)
+    if not is_status(s, sess.profile):
+        s, _ = await _session_query(c, lock, sess, 0x05)
+        fresh = False
+    return s, fresh
+
+
+def _replies_pending(c) -> int:
+    """How many queries on the link still wait for their reply (SafeLink.replies_pending; 0
+    for a test double without it)."""
+    pending = getattr(c, "replies_pending", None)
+    n = pending() if callable(pending) else 0
+    return n if type(n) is int else 0
+
+
+async def _ready_status(c, lock: asyncio.Lock, sess: MotionSession) -> tuple[str, bool]:
+    """_session_status for the reads that can end at ready (wait_ready, _pre_step_status): the
+    next motion write follows a ready reply. A ready reply that came while an earlier query was
+    still unanswered may be the late answer to that one (replies carry no id), so it does not
+    count yet: the replies still due are waited for under the query lock, sending nothing
+    (link.SafeLink.drain_replies), and then the reply to the last query is the status, fresh.
+    When they do not come (taken as lost after link.REPLY_LOST_AFTER s) the ready reply is not
+    fresh, and the caller reads again. MotionAborted for a stop request or a lost link meanwhile
+    (_check_session)."""
+    s, fresh = await _session_status(c, lock, sess)
+    pending = _replies_pending(c)
+    if s != sess.profile.status.ready or not pending:
+        return s, fresh
+    _log(f"{sess.name}: a ready reply came while {pending} earlier "
+         f"quer{'y was' if pending == 1 else 'ies were'} still unanswered; waiting for "
+         f"{'its reply' if pending == 1 else 'their replies'} before it counts (nothing is sent)")
+    try:
+        async with lock:
+            answered = await c.drain_replies(sess.stop)
+    except QueryAbandoned:
+        _check_session(c, sess, media=False)
+        raise MotionAborted(LINK_LOST) from None
+    latest = getattr(c, "last_reply_text", None)
+    if answered and is_status(latest, sess.profile):
+        _log(f"{sess.name}: the replies came; the last one reads {latest}")
+        return latest, True
+    _log(f"{sess.name}: no reply for {REPLY_LOST_AFTER:g} s: taken as lost; ESC 05 is read again")
+    return s, False
+
+
+async def _tool_check(c, lock: asyncio.Lock, sess: MotionSession) -> str | None:
+    """ESC 15 right before a write that can lower a tool: patient once the session wrote, the
+    one-shot read before that. None when the machine is paused (nothing was asked: ESC 15 is
+    never written while it is paused)."""
+    if not sess.wrote:
+        return await _esc_retry(c, lock, 0x15, sess.profile)
+    reply, _ = await _session_query(c, lock, sess, 0x15, hold=lambda: _is_paused(sess))
+    return reply
+
+
+def _pause_over(sess: MotionSession) -> bool:
+    """True when the session's wait on a paused machine is over, whatever the reason."""
+    return (sess.paused is None or sess.stop.is_set() or sess.interrupted is not None
+            or sess.media_changed)
+
+
+def _is_paused(sess: MotionSession) -> bool:
+    """The session waits on a paused machine (and nothing has ended that wait yet)."""
+    return not _pause_over(sess)
+
+
+async def _wait_while_paused(c, lock: asyncio.Lock, sess: MotionSession) -> str | None:
+    """While the machine is paused (sess.paused): no time limit, nothing but ESC 05, every
+    PAUSED_POLL s (every BUSY_POLL s for RESUME_WINDOW s after the user's Pause or Resume), and
+    at once on every status indication (_note_status ends the pause). Returns once the pause is
+    over (it went on, it was cancelled or unloaded, it left Pause, the stop was asked for) with
+    the last status read (None when none was read). A reply that is neither a status nor one
+    _note_status judges (Rejected, an unknown digit) ends the pause too: it is returned, and
+    the caller refuses it. Raises MotionAborted for a lost link (and for a stop that came while
+    a query was out)."""
+    states = sess.profile.status
+    last = None
+    while not _pause_over(sess):
+        if not _link_up(c):
+            raise MotionAborted(LINK_LOST)
+        sent = [t for t in (sess.resume_sent_at, sess.pause_sent_at) if t is not None]
+        soon = bool(sent) and _now() - max(sent) < RESUME_WINDOW
+        await _nap(c, sess, BUSY_POLL if soon else PAUSED_POLL)
+        if _pause_over(sess):
+            break
+        s, _ = await _session_status(c, lock, sess)
+        last = s
+        _note_status(sess, s)
+        term = status_text(s, sess.profile, default="")
+        if not _pause_over(sess) and term not in (PAUSED, CANCELLING) and s not in (
+                states.ready, states.busy, states.load):
+            _log(f"{sess.name}: while paused the machine reported {s!r}; the pause ends there")
+            _clear_pause(sess)
+    return last
+
+
 async def wait_ready(c: Cameo4, lock: asyncio.Lock, sess: MotionSession,
                      timeout: float = READY_TIMEOUT) -> str:
-    """Poll ESC 05 until the profile's ready digit ('0'). Raise MotionAborted for anything but
-    ready or busy ('1') (the load digit with the plain words of an unloaded mat), and for a stop
-    request or a Paused or Cancelling status (_note_status) seen before a poll or while it was
-    out, even when its reply is ready; also for a lost link, three silent polls in a row or the
-    timeout."""
-    loop = asyncio.get_running_loop()
-    deadline = loop.time() + timeout
-    misses = 0
-    stop = sess.stop
+    """Poll ESC 05 until the profile's ready digit ('0'), patiently (_session_status: a query
+    that is late is never given up while the link is up). The first read comes FIRST_POLL s
+    after the batch, then one every BUSY_POLL s while it reads Busy, woken by every status
+    indication. A ready reply ends the wait only when it is fresh (it answers the one query
+    outstanding) and no earlier query is still unanswered (_ready_status waits for those
+    replies first); otherwise ESC 05 is read once more. While the machine is paused the wait goes
+    on with no limit (_wait_while_paused). `timeout` is counted over Busy replies only (each one
+    adds at most BUSY_CREDIT_MAX s): neither a pause nor silence uses it up.
+
+    Raise MotionAborted for anything but ready, busy or paused (the load digit with the plain
+    words of an unloaded mat), for a stop request, a Cancelling status or LEFT_PAUSE_MARK
+    (_note_status) seen before a poll or while it was out, even when its reply is ready; also
+    for a lost link and for the timeout."""
     states = sess.profile.status
-    await _sleep_or_stop(stop, 0.5)          # do not read a stale '0' before motion starts
+    busy_s = 0.0
+    await _sleep_or_stop(sess.stop, FIRST_POLL)    # do not read a stale '0' before motion starts
+    mark = _now()
     while True:
         _check_session(c, sess, media=False)
-        try:
-            async with lock:
-                s = await c.esc_query(0x05)       # exact: only ready and busy are accepted below
-            misses = 0
-        except TimeoutError:
-            misses += 1
-            if misses >= 3:
-                raise MotionAborted("the machine no longer answers ESC 05") from None
-            continue
+        if sess.paused is not None:
+            last = await _wait_while_paused(c, lock, sess)
+            _check_session(c, sess, media=False)
+            if sess.media_changed:
+                raise MotionAborted(_media_changed_step_error(sess))
+            if last is not None and sess.paused is None and last not in (
+                    states.ready, states.busy) and status_text(
+                    last, sess.profile, default="") != PAUSED:
+                raise MotionAborted(_status_stop_text(last, sess))
+            mark = _now()
+            continue                       # a fresh read after the pause
+        s, fresh = await _ready_status(c, lock, sess)
         _note_status(sess, s)
         _check_session(c, sess, link=False, media=False)   # what came while the poll was out
+        if sess.paused is not None:
+            continue
         if s == states.ready:
-            return s
+            if fresh:
+                sess.batch_open = False
+                return s
+            continue                       # read once more: this reply may be a late one
         if s != states.busy:
             if sess.media_changed:
                 raise MotionAborted(_media_changed_step_error(sess))
             raise MotionAborted(_status_stop_text(s, sess))
-        if loop.time() > deadline:
+        now = _now()
+        busy_s += min(now - mark, BUSY_CREDIT_MAX)
+        mark = now
+        if busy_s > timeout:
             raise MotionAborted(f"still Busy after {timeout:.0f} s")
-        await _sleep_or_stop(stop, 0.4)
+        await _nap(c, sess, BUSY_POLL)
 
 
 async def _pre_step_status(c: Cameo4, lock: asyncio.Lock, sess: MotionSession) -> str:
     """Status right before a step; a brief busy ('1') left over from the previous step is
-    waited out (not after a stop request, an unload or a pause). A ready reply here is the
-    second one since the previous step's motion (its last ready wait was the first): motion is
-    no longer possible until the next write (sess.motion_possible)."""
-    loop = asyncio.get_running_loop()
-    s = await _esc_retry(c, lock, 0x05, sess.profile)
-    _note_status(sess, s)
-    settle = loop.time() + PRE_STEP_WAIT
-    while (s == sess.profile.status.busy and loop.time() < settle and not sess.stop.is_set()
-           and sess.interrupted is None and not sess.media_changed):
-        await _sleep_or_stop(sess.stop, 0.4)
-        s = await _esc_retry(c, lock, 0x05, sess.profile)
+    waited out for up to PRE_STEP_WAIT s of Busy replies (not after a stop request, an unload
+    or a cancel), and a paused machine is waited for with no limit (_wait_while_paused),
+    then read again. A ready reply must be fresh, with no earlier query unanswered
+    (_ready_status). A ready reply here is the second one since the previous step's motion
+    (its last ready wait was the first): motion is no longer possible until the next write
+    (sess.motion_possible), unless a pause came meanwhile.
+    A stop request ends the wait (the caller refuses the step); a lost link raises
+    MotionAborted."""
+    states = sess.profile.status
+    pauses = sess.pauses if sess.paused is None else -1     # a pause before or during it
+    s = getattr(c, "last_status", None)
+
+    def over() -> bool:
+        return sess.stop.is_set() or sess.interrupted is not None or sess.media_changed
+
+    try:
+        s, fresh = await _ready_status(c, lock, sess)
         _note_status(sess, s)
-    if s == sess.profile.status.ready and sess.interrupted is None and not sess.stop.is_set():
+        busy_s, mark = 0.0, _now()
+        while not over():
+            if sess.paused is not None:
+                last = await _wait_while_paused(c, lock, sess)
+                if over():
+                    break
+                if sess.paused is None and last is not None and last not in (
+                        states.ready, states.busy) and status_text(
+                        last, sess.profile, default="") != PAUSED:
+                    s = last                   # refused by the caller
+                    break
+                s, fresh = await _ready_status(c, lock, sess)   # a fresh read after it
+                _note_status(sess, s)
+                mark = _now()
+                continue
+            if s == states.ready and not fresh:
+                s, fresh = await _ready_status(c, lock, sess)
+                _note_status(sess, s)
+                continue
+            if s != states.busy or busy_s >= PRE_STEP_WAIT:
+                break
+            await _nap(c, sess, BUSY_POLL)
+            s, fresh = await _ready_status(c, lock, sess)
+            _note_status(sess, s)
+            if s == states.busy:
+                now = _now()
+                busy_s += min(now - mark, BUSY_CREDIT_MAX)
+                mark = now
+    except MotionAborted:
+        if sess.stop.is_set() and _link_up(c):
+            return s                       # the step is refused for the stop request
+        raise
+    if (s == states.ready and sess.interrupted is None and not sess.stop.is_set()
+            and sess.paused is None and sess.pauses == pauses):
         sess.motion_possible = False
     return s
 
@@ -573,6 +949,17 @@ def _stop_pairs(c) -> int:
     return n if type(n) is int else 0
 
 
+def _stop_line(c, errors: list[str]) -> str:
+    """The log line of a stop sequence this link just sent: 'STOP (ESC 09 x2) sent, pair 1 on
+    this link', or for a failed one what each write did ('STOP (ESC 09 x2) FAILED, pair 1 on
+    this link: write 1 acknowledged after 0.03 s; write 2 no Write Response within 2 s')."""
+    if not errors:
+        return f"STOP (ESC 09 x2) sent, pair {_stop_pairs(c)} on this link"
+    report = getattr(c, "last_stop_report", "")
+    detail = report if isinstance(report, str) and report else f"{errors}"
+    return f"STOP (ESC 09 x2) FAILED, pair {_stop_pairs(c)} on this link: {detail}"
+
+
 async def _stop_session(c: Cameo4, sess: MotionSession, force: bool = False) -> list[str]:
     """Stop the session's motion. Automatic paths skip it if a stop already went out
     successfully; an explicit stop (force) always sends (or joins one in flight). The log says
@@ -580,6 +967,7 @@ async def _stop_session(c: Cameo4, sess: MotionSession, force: bool = False) -> 
     because one already got through. sess.on_stop hears the result of every pair sent or
     joined."""
     sess.stop.set()
+    _clear_pause(sess)                   # the job ends: it no longer waits on the machine
     if sess.stop_sent and not force:
         _log(f"{sess.name}: STOP already sent (pair {_stop_pairs(c)} on this link); not sent "
              "again")
@@ -588,12 +976,12 @@ async def _stop_session(c: Cameo4, sess: MotionSession, force: bool = False) -> 
     errors = await c.emergency_stop()
     if not errors:
         sess.stop_sent = True            # a failed sequence stays retryable
-    result = f"FAILED: {errors}" if errors else "sent"
     if joined:
+        result = f"FAILED: {errors}" if errors else "sent"
         _log(f"{sess.name}: joined the STOP in flight (pair {_stop_pairs(c)} on this link): "
              f"{result}")
     else:
-        _log(f"{sess.name}: STOP (ESC 09 x2) {result}, pair {_stop_pairs(c)} on this link")
+        _log(f"{sess.name}: {_stop_line(c, errors)}")
     if sess.on_stop is not None:
         with contextlib.suppress(Exception):
             sess.on_stop(c, errors)
@@ -632,26 +1020,59 @@ async def _units_step(c: Cameo4, lock: asyncio.Lock, sess: MotionSession) -> dic
     'unchecked' for any U-shaped reply: logged, returned with the message that the cut area could
     not be checked on this model, and never a refusal.
 
-    Nothing but U is sent here. A Paused or Cancelling status seen before or during it, or a
-    stop request during it, refuses the step with StepRefused(stop=True) (the caller sends the
-    stop, which an idle machine takes harmlessly); a lost link raises MotionAborted. Neither is
-    named a mat problem."""
+    Nothing but U is sent here (and ESC 05 while the machine is paused). U is never written
+    while the machine is paused (it would not be answered): the step waits until it goes on
+    (_wait_while_paused); a U that times out while a pause came is asked once more after it.
+    A Cancelling status (or LEFT_PAUSE_MARK) seen before or during it, or a stop request,
+    refuses the step with StepRefused(stop=True) (the caller sends the stop, which an idle
+    machine takes harmlessly); a lost link raises MotionAborted. Neither is named a mat
+    problem."""
     expected, enforced = _units_expectation(sess.plan, sess.profile)
-    try:
-        async with lock:
-            reply = await c.query("U")
-    except TimeoutError:
-        verdict, reply, msg = "unknown", None, "no reply to U; the unit is not confirmed"
-    else:
-        verdict, msg = evaluate_units(reply, expected, enforced)
+
+    def refusal() -> dict | None:
+        if not _link_up(c):
+            raise MotionAborted(LINK_LOST)
+        if sess.stop.is_set():
+            raise StepRefused(STOPPED_IN_UNITS.format(again=_what(sess)[1]), stop=True)
+        _latch_from_link(c, sess)
+        if sess.interrupted is not None:
+            raise StepRefused(_status_stop_text(sess.interrupted, sess), stop=True)
+        return None
+
+    reply = None
+    verdict, msg = "unknown", "no reply to U; the unit is not confirmed"
+    asked = 0
+    while True:
+        try:
+            while _is_paused(sess):
+                await _wait_while_paused(c, lock, sess)
+        except MotionAborted:
+            if not sess.stop.is_set():
+                raise
+        refusal()
+        if sess.media_changed:
+            break
+        pauses = sess.pauses
+        try:
+            async with lock:
+                refusal()                      # a stop or a cancel while the lock was busy
+                if sess.media_changed:
+                    break
+                if _is_paused(sess):
+                    continue                   # paused meanwhile: wait first, U not written
+                asked += 1
+                reply = await c.query("U")
+        except TimeoutError:
+            verdict, reply, msg = "unknown", None, "no reply to U; the unit is not confirmed"
+            if asked == 1 and (sess.pauses != pauses or _is_paused(sess)):
+                _log(f"{sess.name}: U was not answered while the machine paused; asked again "
+                     "once it goes on")
+                continue
+        else:
+            verdict, msg = evaluate_units(reply, expected, enforced)
+        break
     _log(f"{sess.name}: U -> {reply!r} ({verdict})")
-    if not _link_up(c):
-        raise MotionAborted(LINK_LOST)
-    if sess.stop.is_set():
-        raise StepRefused(STOPPED_IN_UNITS.format(again=_what(sess)[1]), stop=True)
-    _latch_from_link(c, sess)
-    if sess.interrupted is not None:
-        raise StepRefused(_status_stop_text(sess.interrupted, sess), stop=True)
+    refusal()
     if sess.media_changed:
         return {"ok": False, "verdict": verdict, "reply": reply,
                 "error": _media_changed_error(sess)}
@@ -697,35 +1118,64 @@ def _refuse_before_first_write(c: Cameo4, sess: MotionSession, status: str,
 
 
 async def _write_chunk(c: Cameo4, lock: asyncio.Lock, sess: MotionSession, chunk: bytes,
-                       status: str) -> None:
-    """Write one chunk of the current step.
+                       status: str) -> str:
+    """Write one chunk of the current step; returns the status it went out on (`status`, or a
+    newer one read after a pause).
 
     Before the step's first write, a refusal raises StepRefused (nothing of the step was sent).
-    After it, problems raise MotionAborted so that the caller sends the stop. Every motion write
-    sets sess.motion_possible."""
+    After it, problems raise MotionAborted so that the caller sends the stop. Nothing is written
+    while the machine is paused (sess.paused, checked again under the query lock right before
+    the write): the chunk waits until it goes on (_wait_while_paused); before the step's first
+    write the pre-step reads run again, and after a pause between batches a fresh ready is read
+    first. Every motion write sets sess.motion_possible."""
     p = sess.profile
-    tools = await _esc_retry(c, lock, 0x15, p) if lowers_tool(chunk, p) else None
-    async with lock:
+    while True:
+        if _is_paused(sess):
+            if not sess.running:
+                status = await _pre_step_status(c, lock, sess)
+            else:
+                last = await _wait_while_paused(c, lock, sess)
+                _check_session(c, sess)
+                if sess.paused is None and last is not None and last not in (
+                        p.status.ready, p.status.busy) and status_text(
+                        last, p, default="") != PAUSED:
+                    raise MotionAborted(_status_stop_text(last, sess))
+                if not sess.batch_open:        # it paused between batches: ready again first
+                    status = await wait_ready(c, lock, sess)
+        # what can be refused without a query is refused first: no ESC 15 after a stop request
         if not sess.running:
-            _refuse_before_first_write(c, sess, status, tools)
+            _refuse_before_first_write(c, sess, status, None)
         else:
             _check_session(c, sess)
-            if getattr(c, "profile", p) is not p:
-                raise MotionAborted("the machine on the link is not the one the session was "
-                                    "opened for")
-            problem = (tool_problem(sess.plan.required_tools, sess.allow_unrecognized, tools, p)
-                       if tools is not None else None)
-            if problem:
-                raise MotionAborted(problem)
-        was_running, sess.running = sess.running, True
-        was_possible, sess.motion_possible = sess.motion_possible, True
-        sess.wrote = True                  # from here on a '2' status means the mat was unloaded
-        try:
-            await c.write_validated(chunk, sess.plan.validator)
-        except ValueError:                 # refused by a check: this chunk never went out
-            sess.running = was_running
-            sess.motion_possible = was_possible
-            raise
+        tools = await _tool_check(c, lock, sess) if lowers_tool(chunk, p) else None
+        if tools is None and lowers_tool(chunk, p):
+            continue                           # paused before the tool check: wait first
+        async with lock:
+            if _is_paused(sess):
+                continue                       # paused meanwhile: nothing is written
+            if not sess.running:
+                _refuse_before_first_write(c, sess, status, tools)
+            else:
+                _check_session(c, sess)
+                if getattr(c, "profile", p) is not p:
+                    raise MotionAborted("the machine on the link is not the one the session "
+                                        "was opened for")
+                problem = (tool_problem(sess.plan.required_tools, sess.allow_unrecognized, tools,
+                                        p) if tools is not None else None)
+                if problem:
+                    raise MotionAborted(problem)
+            was_running, sess.running = sess.running, True
+            was_possible, sess.motion_possible = sess.motion_possible, True
+            was_open, sess.batch_open = sess.batch_open, True
+            sess.wrote = True              # from here on a '2' status means the mat was unloaded
+            try:
+                await c.write_validated(chunk, sess.plan.validator)
+            except ValueError:                 # refused by a check: this chunk never went out
+                sess.running = was_running
+                sess.motion_possible = was_possible
+                sess.batch_open = was_open
+                raise
+        break
     if sess.stop.is_set():
         # A stop arrived while this write was in flight. On BlueZ it cannot have overtaken the
         # write: nothing yields between the stop check above and bleak queueing the WriteValue
@@ -736,6 +1186,7 @@ async def _write_chunk(c: Cameo4, lock: asyncio.Lock, sess: MotionSession, chunk
         # that one failed or with a transport that lets a write overtake another.
         await _stop_session(c, sess, force=True)
         raise MotionAborted(STOPPED_IN_STEP)
+    return status
 
 
 async def _run_step(c: Cameo4, lock: asyncio.Lock, sess: MotionSession, step) -> dict:
@@ -756,19 +1207,22 @@ async def _run_step(c: Cameo4, lock: asyncio.Lock, sess: MotionSession, step) ->
         if sess.interrupted is not None:   # paused or cancelled since: before any query
             raise StepRefused(_status_stop_text(sess.interrupted, sess, before_step=True),
                               stop=True)
+        sess.step_title, sess.batch = step.title, (0, 0)
         if step.kind == "units":
             return {**await _units_step(c, lock, sess), "seconds": round(loop.time() - t0, 1)}
         _log(f"{sess.name}: {step.title!r}: {len(step.writes)} write(s), "
              f"{sum(map(len, step.writes))} B")
         s = await _pre_step_status(c, lock, sess)
         pos = (0, 0)
-        for batch in _batches(step.writes, sess.profile.batch_bytes):
+        batches = _batches(step.writes, sess.profile.batch_bytes)
+        for number, batch in enumerate(batches, 1):
+            sess.batch = (number, len(batches))
             for chunk in batch:
-                await _write_chunk(c, lock, sess, chunk, s)
+                s = await _write_chunk(c, lock, sess, chunk, s)
             travel, pos = _travel(batch, pos)
             s = await wait_ready(c, lock, sess,
                                  READY_TIMEOUT + travel / sess.profile.slowest_su_per_s)
-        _check_session(c, sess, link=False, media=False)   # a stop or pause since: not ok
+        _check_session(c, sess, link=False, media=False)   # a stop or cancel since: not ok
         return {"ok": True, "status": s, "seconds": round(loop.time() - t0, 1)}
     except asyncio.CancelledError:
         if sess.running or sess.motion_possible:
@@ -799,6 +1253,8 @@ async def _run_step(c: Cameo4, lock: asyncio.Lock, sess: MotionSession, step) ->
         return {"ok": False, "error": msg, "stopped": stopped, "stop_errors": errors}
     finally:
         sess.running = False
+        sess.batch_open = False
+        sess.step_title, sess.batch = None, (0, 0)
 
 
 async def _session(reader: asyncio.StreamReader, writer: asyncio.StreamWriter, req: dict,
@@ -935,6 +1391,31 @@ def _touch(state: dict) -> None:
     state["last_request"] = time.monotonic()
 
 
+LOGGED_OPS = ("info", "esc", "query", "resume", "pause")
+
+
+def _note_op(state: dict, op: object, resp: dict | None, failed: bool = False) -> None:
+    """Log the failures of the one-shot ops in LOGGED_OPS, rate-limited: the first failure of
+    an op, then nothing more until it works again (one line with how many failed). A failure is
+    an error on the way to the machine (`failed`: the op raised, e.g. a reply time-out) or a
+    resume or pause write that failed; a refusal (no link, a job runs, a query held back) is
+    not one: its reply says why."""
+    if op not in LOGGED_OPS or not isinstance(resp, dict):
+        return
+    failing = state.setdefault("op_failures", {})
+    if resp.get("ok"):
+        n = failing.pop(op, 0)
+        if n:
+            _log(f"the {op} op works again (after {n} failure{'s' if n != 1 else ''})")
+        return
+    if not failed and not (op in ("resume", "pause") and resp.get("sent")):
+        return
+    n = failing.get(op, 0)
+    failing[op] = n + 1
+    if n == 0:
+        _log(f"the {op} op failed: {str(resp.get('error'))[:200]}")
+
+
 def _usable(c: Cameo4 | None) -> bool:
     """True for a link that is up and passed the model gate (Cameo4.machine is set, and so is
     its machine profile). Nothing is ever written to a machine through any other link."""
@@ -1015,55 +1496,118 @@ def _stop_result(state: dict, c, errors: list[str]) -> None:
 def _stop_fields(state: dict) -> dict:
     """The ping's PING_STOP_KEYS (see there)."""
     sess = state.get("motion")
+    c = state.get("c")
+    no_reply = age = None
+    if c is not None and callable(getattr(c, "no_reply_seconds", None)):
+        no_reply = c.no_reply_seconds()
+    if c is not None and callable(getattr(c, "indication_age", None)):
+        age = c.indication_age()
     return {"stop_owed": bool(state.get("stop_owed")),
             "owed_stops_sent": int(state.get("owed_stops_sent") or 0),
             "motion_stopped": bool(sess is not None and sess.stop.is_set()),
             "interrupted": sess.interrupted if sess is not None else None,
-            "load_seen": int(state.get("load_seen") or 0)}
+            "load_seen": int(state.get("load_seen") or 0),
+            "paused": bool(sess is not None and _is_paused(sess)),
+            "resume_ok": _command_refusal(c, state, "resume") is None,
+            "pause_ok": _command_refusal(c, state, "pause") is None,
+            "no_reply_s": round(no_reply, 1) if no_reply is not None else None,
+            "indication_age_s": round(age, 1) if age is not None else None,
+            "stop_check": dict(state["stop_check"]) if state.get("stop_check") else None}
 
 
-async def _status_after_stop(c: Cameo4, lock: asyncio.Lock) -> str | None:
-    """What ESC 05 reads after a stop: polled every STOP_CHECK_POLL s for up to STOP_CHECK s
-    while it reads Busy or Cancelling (each read waits at most STOP_LOCK_WAIT s for the query
-    lock). Returns the last exact status read, or None. Nothing but ESC 05 is sent. A ready
-    reply does not prove that the machine stopped for good (motion still queued might resume),
-    only that it reports Ready now. Never raises for a read that fails (a lost link, a busy
-    write): the stop already got through, so the reading just ends there."""
+async def _nap_link(c, seconds: float) -> None:
+    """Wait `seconds`, or until the link's next status indication."""
+    nxt = getattr(c, "next_indication", None)
+    if nxt is None:
+        await asyncio.sleep(seconds)
+        return
+    indication = nxt()
+    try:
+        await asyncio.wait({indication}, timeout=seconds)
+    finally:
+        indication.cancel()
+
+
+async def _status_after_stop(c: Cameo4, lock: asyncio.Lock,
+                             info: dict | None = None) -> str | None:
+    """What ESC 05 reads after a stop: polled every STOP_CHECK_POLL s (sooner on a status
+    indication), once the stop's quiet window is over (the link holds the first read until
+    then), for up to STOP_CHECK s while it reads Busy or Cancelling, and up to
+    STOP_CHECK_PAUSED s once it read Paused (a paused machine ends the job about 5 s after the
+    stop, and Cancelling may not be shown at all). Done at any other status (Ready, Load Media).
+    Each read waits at most STOP_LOCK_WAIT s for the query lock. Returns the last exact status
+    read, or None. Nothing but ESC 05 is sent. A ready reply does not prove that the machine
+    stopped for good (motion still queued might resume), only that it reports Ready now. Never
+    raises for a read that fails (a lost link, a busy write): the stop already got through, so
+    the reading just ends there. `info` gets "seconds" (how long it read), "seen" (each
+    different status read, with the seconds since the start) and "reason" (why the last read
+    gave no status, or None)."""
     profile = c.profile
     loop = asyncio.get_running_loop()
-    deadline = loop.time() + STOP_CHECK
+    start = loop.time()
     last = None
+    reason = None
+    paused_seen = False
+    seen: list[tuple[str, float]] = []
     while True:
         if not _link_up(c):
-            return last
+            reason = "the link was lost"
+            break
         try:
             await asyncio.wait_for(lock.acquire(), STOP_LOCK_WAIT)
         except TimeoutError:
-            return last
+            reason = f"the query lock was busy for {STOP_LOCK_WAIT:g} s"
+            break
         try:
             reply = await c.esc_query(0x05)
         except TimeoutError:
             reply = None
+            reason = f"no reply to ESC 05 within {REPLY_TIMEOUT:g} s"
         except Exception as e:  # noqa: BLE001 - the stop's reply must still say it got through
             _log(f"after the stop: ESC 05 failed ({type(e).__name__}: {e})")
-            return last
+            reason = f"ESC 05 failed ({type(e).__name__}: {e})"
+            break
         finally:
             lock.release()
         if is_status(reply, profile):
+            reason = None
+            if reply != last:
+                seen.append((reply, loop.time() - start))
             last = reply
-        busy = last is None or last == profile.status.busy or status_text(
-            last, profile, default="") == CANCELLING
-        if not busy or loop.time() + STOP_CHECK_POLL > deadline:
-            return last
-        await asyncio.sleep(STOP_CHECK_POLL)
+        elif reply is not None:
+            reason = f"the reply {reply!r} is not a status"
+        term = status_text(last, profile, default="")
+        paused_seen = paused_seen or term == PAUSED
+        waiting = last is None or last == profile.status.busy or term in (CANCELLING, PAUSED)
+        limit = STOP_CHECK_PAUSED if paused_seen else STOP_CHECK
+        if not waiting or loop.time() + STOP_CHECK_POLL > start + limit:
+            break
+        await _nap_link(c, STOP_CHECK_POLL)
+    if info is not None:
+        info.update(seconds=round(loop.time() - start, 1), seen=seen,
+                    reason=reason if last is None else None)
+    return last
+
+
+def _seen_words(seen: list[tuple[str, float]], paused: str) -> str:
+    """'3 for 5.3 s, then 4, then 0' from _status_after_stop's "seen"."""
+    parts = []
+    for i, (status, at) in enumerate(seen):
+        if status == paused and i + 1 < len(seen):
+            parts.append(f"{status} for {seen[i + 1][1] - at:.1f} s")
+        else:
+            parts.append(status)
+    return ", then ".join(parts)
 
 
 async def _stop_op(req: dict, c: Cameo4, lock: asyncio.Lock, state: dict) -> dict:
     """The stop op through a usable link: with a session open its stop (forced: always sent, or
     joined while one is in flight), else the profile's stop on its own (a machine after a job,
     or one owed a stop). {"ok", "errors"}; with "check": true and a stop that got through also
-    "status_after" (_status_after_stop: the last ESC 05 reply, or None) and "still_busy" (it
-    still reads the busy digit; None when nothing was read)."""
+    "status_after" (_status_after_stop: the last ESC 05 reply, or None; the paused digit means
+    it still reported Paused STOP_CHECK_PAUSED s after the stop) and "still_busy" (it still
+    reads the busy digit; None when nothing was read). The read-back is also the ping's
+    "stop_check"."""
     sess = state["motion"]
     if sess is not None:
         errors = await _stop_session(c, sess, force=True)
@@ -1072,21 +1616,168 @@ async def _stop_op(req: dict, c: Cameo4, lock: asyncio.Lock, state: dict) -> dic
         errors = await c.emergency_stop()
         result = f"FAILED: {errors}" if errors else "sent"
         _log(f"joined the STOP in flight (pair {_stop_pairs(c)} on this link): {result}"
-             if joined else
-             f"STOP (ESC 09 x2) {result}, pair {_stop_pairs(c)} on this link")
+             if joined else _stop_line(c, errors))
         _stop_result(state, c, errors)
     reply = {"ok": not errors, "errors": errors}
     if req.get("check") is True:
-        status = None if errors else await _status_after_stop(c, lock)
-        busy = None if status is None else status == c.profile.status.busy
-        reply.update(status_after=status, still_busy=busy)
-        if status is None:
-            _log("after the stop: the status could not be read")
+        profile = c.profile
+        info: dict = {}
+        if not errors:
+            state["stop_check"] = {"running": True, "status": None, "seconds": 0.0,
+                                   "still_busy": None, "still_paused": None, "reason": None}
+            status = await _status_after_stop(c, lock, info)
         else:
-            _log(f"after the stop the machine reports {status} = {status_text(status, c.profile)}"
+            status = None
+            info["reason"] = "the stop did not get through"
+        busy = None if status is None else status == profile.status.busy
+        paused = None if status is None else status_text(status, profile, default="") == PAUSED
+        reply.update(status_after=status, still_busy=busy)
+        state["stop_check"] = {"running": False, "status": status,
+                               "seconds": info.get("seconds", 0.0), "still_busy": busy,
+                               "still_paused": paused, "reason": info.get("reason")}
+        seen = info.get("seen") or []
+        who = f"{sess.name}: " if sess is not None else ""
+        paused_digit = next((st for st, _ in seen
+                             if status_text(st, profile, default="") == PAUSED), None)
+        if paused_digit is not None:
+            _log(f"{who}cancel while paused: the machine read {_seen_words(seen, paused_digit)}")
+        if status is None:
+            _log(f"after the stop: the status could not be read ({info.get('reason')})")
+        elif paused:
+            _log(f"after the stop the machine still reports {status} = Paused "
+                 f"{info.get('seconds', 0.0):.0f} s later: press Unload on the machine; if "
+                 "anything moves, press its power button")
+        else:
+            _log(f"after the stop the machine reports {status} = {status_text(status, profile)}"
                  + (f" {STOP_CHECK:g} s later: if it moves, press its power button"
                     if busy else ""))
     return reply
+
+
+# --- the user's Pause and Resume --------------------------------------------------------------
+def _command_refusal(c, state: dict, kind: str) -> str | None:
+    """Why the user's `kind` ("resume" or "pause") would not be sent now, in plain words, or
+    None. Resume: only while the open session waits on a paused machine. Pause: only while a
+    session of ours has written and is neither paused nor ending, and the machine last read
+    Ready or Busy. Both: no stop asked for, the session's machine on a usable link, and only a
+    machine whose command was tested (its profile has it, and the profile and firmware line are
+    TESTED: the CAMEO 4 on firmware V5)."""
+    sess = state.get("motion")
+    if sess is None:
+        return "no job is running"
+    if not _usable(c) or sess.link is not c:
+        return "the machine is not answering (the link is down)"
+    if sess.stop.is_set():
+        return "a stop was asked for: the job is ending"
+    if sess.interrupted is not None or sess.media_changed:
+        return "the job is ending"
+    p = sess.profile
+    command = p.resume if kind == "resume" else p.pause
+    if command is None or p.support is not Support.TESTED \
+            or state.get("support") != Support.TESTED.value:
+        return f"the {p.name} has not been tested with {kind}: press its Pause key"
+    last = getattr(c, "last_status", None)
+    shown = f"status {last!r} = {status_text(last, p)}"
+    if kind == "resume":
+        if not _is_paused(sess):
+            return f"the machine is not paused ({shown})"
+        return None
+    if not sess.wrote:
+        return "the job has not started yet"
+    if _is_paused(sess):
+        return "the machine is already paused"
+    if last not in (p.status.ready, p.status.busy):
+        return f"the machine is neither ready nor busy ({shown})"
+    return None
+
+
+async def _command_op(kind: str, c: Cameo4, lock: asyncio.Lock, state: dict) -> dict:
+    """The resume op (one ESC 08) or the pause op (one ESC 07), for the user's explicit click or
+    command; never sent by OpenCutter on its own, never repeated. Refused (nothing sent) as
+    _command_refusal says, and also when the query lock is not free within RESUME_LOCK_WAIT s
+    or a fresh ESC 05, read under that lock, does not read Paused (resume) or Ready or Busy
+    (pause). After the write the lock is held for its quiet window (link.RESUME_QUIET), then
+    ESC 05 is read (every STOP_CHECK_POLL s, at most RESUME_CHECK s) until the machine left
+    Paused (resume) or reached it (pause). The session then goes on, or waits, as for the
+    machine's own Pause key.
+
+    {"ok", "sent" (the write went out, or may have: a write error), "status_before",
+    "status_after" (the last status read or indicated), "paused" (the session waits on a paused
+    machine now), "errors" (the write's), "error" (why it was refused or failed)}."""
+    def answer(ok: bool, sent: bool, error: str | None = None, errors=()) -> dict:
+        reply = {"ok": ok, "sent": sent, "status_before": before,
+                 "status_after": getattr(c, "last_status", None),
+                 "paused": sess is not None and _is_paused(sess), "errors": list(errors)}
+        if error is not None:
+            reply["error"] = error
+        return reply
+
+    sess = state.get("motion")
+    before = None
+    refused = _command_refusal(c, state, kind)
+    if refused is not None:
+        return answer(False, False, refused)
+    p = sess.profile
+    esc = "ESC 08" if kind == "resume" else "ESC 07"
+    try:
+        await asyncio.wait_for(lock.acquire(), RESUME_LOCK_WAIT)
+    except TimeoutError:
+        return answer(False, False, "the machine is not answering (its status could not be read "
+                                    f"within {RESUME_LOCK_WAIT:g} s)")
+    try:
+        try:
+            before = await c.esc_query(0x05)
+        except TimeoutError:
+            return answer(False, False, "the machine is not answering (no reply to ESC 05)")
+        if _replies_pending(c):                # that reply may be an earlier query's
+            return answer(False, False, "the machine's status could not be read for sure (an "
+                                        "earlier reply is still due); try again")
+        _note_status(sess, before)
+        refused = _command_refusal(c, state, kind)
+        shown = f"status {before!r} = {status_text(before, p)}"
+        if refused is None and kind == "resume" and status_text(before, p, default="") != PAUSED:
+            refused = f"the machine is not paused ({shown})"
+        if refused is None and kind == "pause" and before not in (p.status.ready,
+                                                                  p.status.busy):
+            refused = f"the machine is neither ready nor busy ({shown})"
+        if refused is not None:
+            return answer(False, False, refused)
+        field_name = "resume_sent_at" if kind == "resume" else "pause_sent_at"
+        earlier = getattr(sess, field_name)
+        setattr(sess, field_name, _now())     # before the write: a '0' right after it counts
+        try:
+            await (c.resume() if kind == "resume" else c.pause())
+        except UnsafeCommand as e:            # nothing was written
+            setattr(sess, field_name, earlier)
+            return answer(False, False, f"refused: {e}")
+        except Exception as e:  # noqa: BLE001 - whether it arrived is unknown: never again
+            error = f"{type(e).__name__}: {e}"
+            _log(f"{sess.name}: {kind} asked: {esc} FAILED ({error}); it is not sent again")
+            return answer(False, True, f"the {kind} write failed ({error}); whether it arrived "
+                                       "is unknown, and it is not sent again", [error])
+        _log(f"{sess.name}: {kind} asked: {esc} sent (the machine read {before})")
+        await asyncio.sleep(RESUME_QUIET)      # no query in its quiet window
+    finally:
+        lock.release()
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + RESUME_CHECK
+    while state.get("motion") is sess and not sess.stop.is_set() and loop.time() < deadline:
+        if (kind == "resume") != _is_paused(sess):
+            break                              # resumed / paused: the job's state says so
+        try:
+            await asyncio.wait_for(lock.acquire(), RESUME_LOCK_WAIT)
+        except TimeoutError:
+            break
+        try:
+            _note_status(sess, await c.esc_query(0x05))
+        except TimeoutError:
+            pass
+        finally:
+            lock.release()
+        if (kind == "resume") != _is_paused(sess):
+            break
+        await _nap_link(c, STOP_CHECK_POLL)
+    return answer(True, True)
 
 
 def _no_link_error(state: dict) -> str:
@@ -1111,8 +1802,25 @@ def _client_build_problem(req: dict) -> str | None:
 
 
 # --- one-shot ops -----------------------------------------------------------------------------
+def _query_hold(c: Cameo4, state: dict, text: bool) -> str | None:
+    """Why a query other than ESC 05 is not sent now, or None: while the machine last read
+    Paused or Cancelling (a paused machine answers no command; one that arrives during a cancel
+    makes the cancel wait longer), and for a text query (`text`) also for
+    QUERY_HOLD_AFTER_STOP s after a stop."""
+    last = getattr(c, "last_status", None)
+    term = status_text(last, c.profile, default="")
+    if term in (PAUSED, CANCELLING):
+        return (f"the machine reports {last!r} = {term}: nothing but ESC 05 is sent to it until "
+                "it shows Ready or Load Media")
+    stopped = state.get("last_stop")
+    if text and stopped is not None and time.monotonic() - stopped < QUERY_HOLD_AFTER_STOP:
+        return (f"a stop went out less than {QUERY_HOLD_AFTER_STOP:g} s ago: nothing but ESC 05 "
+                "is sent to the machine until then")
+    return None
+
+
 async def _one_shot(req: dict, c: Cameo4 | None, lock: asyncio.Lock, state: dict) -> dict:
-    """Answer ping, stop, esc, query and info."""
+    """Answer ping, stop, resume, pause, esc, query and info."""
     op = req.get("op")
     sess = state["motion"]
     if op == "ping":
@@ -1142,24 +1850,38 @@ async def _one_shot(req: dict, c: Cameo4 | None, lock: asyncio.Lock, state: dict
             # nothing can be sent now: the session takes no more steps, and while motion was
             # possible its machine is owed the stop (sent when it is linked again)
             sess.stop.set()
+            _clear_pause(sess)
             if sess.motion_possible and not sess.stop_sent:
                 _owe_stop(state, sess.link, "a stop was asked for while the link was down")
+        if op in ("resume", "pause"):
+            return {"ok": False, "sent": False, "error": "the machine is not connected"}
         return {"ok": False, "error": _no_link_error(state)}
     if op == "stop":                       # never waits for the query lock; always sends
         return await _stop_op(req, c, lock, state)
+    if op in ("resume", "pause"):          # the user's click or command; never automatic
+        return await _command_op(op, c, lock, state)
     if sess is not None:
         return {"ok": False, "error": "a program or job is running (use stop to stop it)"}
     if op == "esc":
+        code = int(req["code"])
+        hold = _query_hold(c, state, text=False) if code != 0x05 else None
+        if hold:
+            return {"ok": False, "error": f"refused: {hold}"}
         async with lock:
-            return {"ok": True, "reply": await c.esc_query(int(req["code"]))}
+            return {"ok": True, "reply": await c.esc_query(code)}
     if op == "query":
+        hold = _query_hold(c, state, text=True)
+        if hold:
+            return {"ok": False, "error": f"refused: {hold}"}
         async with lock:
             return {"ok": True, "reply": await c.query(str(req["cmd"]))}
     if op == "info":
+        # FG is never sent here: its reply from the model gate (FG claims the machine's session,
+        # and a paused machine answers no command); no ESC 15 while it is paused or cancelling
         async with lock:
             status = await c.esc_query(0x05)
-            tools = await c.esc_query(0x15)
-            firmware = await c.query("FG")
+            tools = None if _query_hold(c, state, text=False) else await c.esc_query(0x15)
+        firmware = getattr(c, "fg_reply", None) or getattr(c, "machine", None) or ""
         return {"ok": True, "status": status, "tools": tools, "firmware": firmware.strip()}
     return {"ok": False, "error": f"unknown op {op!r}"}
 
@@ -1284,6 +2006,12 @@ async def _refuse_if_held_elsewhere(address: str | None, force: bool) -> None:
 
 
 # --- daemon -----------------------------------------------------------------------------------
+def _log_slow_write(data: bytes, seconds: float) -> None:
+    """A write whose Write Response took link.SLOW_WRITE_LOG s or more."""
+    shown = data.hex(" ") if data[:1] == b"\x1b" else f"a {len(data)}-byte motion write"
+    _log(f"slow Write Response: {shown} after {seconds:.1f} s")
+
+
 def _duration(seconds: float) -> str:
     """'15 minutes' for 900, '1 minute' for 60, '0.5 s' for 0.5."""
     if seconds >= 60 and seconds % 60 == 0:
@@ -1402,12 +2130,14 @@ async def serve(address: str | None, verbose: bool, force: bool = False,
     # stop_owed: the addresses (upper case) of the machines owed a stop (_owe_stop);
     # owed_stops_sent: how many of those went out on a new link; load_seen: how often the
     # status changed to the load digit; last_stop: when the last stop sequence went out
-    # (monotonic), for the status log (STOP_WATCH)
+    # (monotonic), for the status log (STOP_WATCH) and the query hold; stop_check: the last
+    # stop read-back (the ping's); op_failures: the one-shot ops failing now (_note_op)
     state: dict = {"c": None, "motion": None, "reason": None, "refused_model": None,
                    "support": None, "refused_profile": None, "refused_support": None,
                    "refused_reason": None, "sessions": 0, "stopping": False, "exit": None,
                    "last_request": time.monotonic(), "started_by": started_by(),
-                   "stop_owed": set(), "owed_stops_sent": 0, "load_seen": 0, "last_stop": None}
+                   "stop_owed": set(), "owed_stops_sent": 0, "load_seen": 0, "last_stop": None,
+                   "stop_check": None, "op_failures": {}}
     me = asyncio.current_task()
 
     def finish(why: str) -> None:
@@ -1450,6 +2180,7 @@ async def serve(address: str | None, verbose: bool, force: bool = False,
         link = Cameo4(dev, verbose=verbose, on_status=on_status)
         link.on_status_change = (lambda old, new, source:
                                  on_status_change(link, old, new, source))
+        link.on_slow_write = _log_slow_write
         return link
 
     async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
@@ -1483,10 +2214,13 @@ async def serve(address: str | None, verbose: bool, force: bool = False,
                     resp, shutdown = {"ok": True}, True
             else:
                 resp = await _one_shot(req, state["c"], lock, state)
+                _note_op(state, req.get("op"), resp)
         except UnsafeCommand as e:
             resp = {"ok": False, "error": f"refused: {e}"}
         except Exception as e:  # report to the client, keep serving
             resp = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+            if isinstance(req, dict):
+                _note_op(state, req.get("op"), resp, failed=True)
         finally:
             with contextlib.suppress(Exception):
                 if resp is not None:

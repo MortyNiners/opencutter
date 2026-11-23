@@ -49,6 +49,10 @@ MachineProfile: one model OpenCutter may drive (TESTED or UNTESTED)
                        only right after power-on; the safe advice for every model where that
                        was not observed. False only for a model seen to take a link at any time.
   programs             names of the pinned test programs this profile has.
+  pause, resume        the single write an explicit Pause (ESC 07) or Resume (ESC 08) asked for
+                       by the user sends, or None (the default: never sent). Only the exact
+                       write is allowed (machines.safety), and only a TESTED profile on a TESTED
+                       firmware line ever sends it (device.link); today the CAMEO 4 only.
 Derived helpers (pure): holder(), tool(), tool_name(), tool_names(), blade_codes(),
 unsupported_codes(), mat(), offered_mats(), speed_text(), speed_mm_s(), su_per_mm,
 slowest_su_per_s, mat_texts(), area_texts(), condition_texts(), trailer_texts(),
@@ -397,6 +401,9 @@ class MachineProfile:
     fg_claims_session: bool = False
     power_cycle_to_connect: bool = False
     programs: frozenset[str] = frozenset()
+    # The user's explicit Pause and Resume (one ESC 07, one ESC 08), or None: never sent.
+    pause: bytes | None = None
+    resume: bytes | None = None
 
     # --- holders and tools ------------------------------------------------------------------
     def holder(self, number: object) -> Holder | None:

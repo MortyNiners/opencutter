@@ -8,7 +8,10 @@ emitted commands, the worked example, every machine profile of the registry), an
 and the metadata must state the test status of each model and the Basic set honestly and
 document the presets file the app reads. Every list of the bases a profile value may have names
 all four, and every basis in the registry is one of them. The README's Install section names the
-newest stable release and its known limitations.
+newest stable release and its known limitations. Since 0.1.1 the docs say what the machine's
+Pause key, the user's Pause and Resume and a stop of a paused machine do, as the code and the
+analysis of the CAMEO 4's firmware say, without claiming a hardware test, and never advise
+pressing Pause after a stop.
 """
 import xml.etree.ElementTree as ET
 import json
@@ -169,6 +172,10 @@ def test_protocol_describes_every_status_and_tool_code():
 
 
 def test_protocol_never_send_list_names_every_refused_command():
+    """Section 6 names every refused command. ESC 07 and ESC 08 left the firmware's never-send
+    codes in 0.1.1 (the user's Pause and Resume on the CAMEO 4): their row says that they go out
+    only as those, never on their own."""
+    from opencutter.machines import safety
     doc = section(text(PROTOCOL), "6")
     for cmd in validate._NEVER_SEND:
         assert f"`{cmd.decode()}`" in doc, cmd
@@ -177,6 +184,13 @@ def test_protocol_never_send_list_names_every_refused_command():
     rows = [r for r in doc.splitlines() if r.startswith("| ") and not r.startswith("| Never")
             and not r.startswith("|---")]
     assert len(rows) >= 20 and all(r.count("|") == 3 and r.split("|")[2].strip() for r in rows)
+    assert {0x07, 0x08}.isdisjoint(safety.NEVER_ESC)
+    assert (safety.PAUSE_WRITE, safety.RESUME_WRITE) == (b"\x1b\x07", b"\x1b\x08")
+    (row,) = [r for r in rows if r.startswith("| ESC 07 and ESC 08 ")]
+    for words in ("user's own Pause and Resume", "never sent by OpenCutter on its own",
+                  "never part of the stop", "CAMEO 4 on firmware V5"):
+        assert words in row, words
+    assert "OpenCutter never pauses" not in doc
 
 
 def test_protocol_stop_sequence_matches_the_code():
@@ -703,15 +717,36 @@ def readme_section(title: str) -> str:
     return flat(m[1])
 
 
-def test_readme_safety_says_not_to_resume_with_pause():
-    """The machine's Pause key ends the job: the README says so, and says to press Unload (or
-    switch the machine off), never Pause again, without claiming it was tried."""
+def readme_bullet(title: str) -> str:
+    """The README Safety bullet that starts with the bold `title`, up to the next bullet."""
     safety = readme_section("Safety")
-    assert "**Do not press the machine's Pause key during a job.**" in safety
-    bullet = safety.split("**Do not press the machine's Pause key during a job.**")[1]
-    bullet = bullet.split(" - **")[0]                  # up to the next bullet
-    assert "Do not press Pause again to continue" in bullet and "**Unload**" in bullet
-    assert "has not been tried on a real machine yet" in bullet
+    assert title in safety, title
+    return safety.split(title)[1].split(" - **")[0]
+
+
+def test_readme_safety_says_what_the_pause_key_does():
+    """Since 0.1.1 the machine's Pause key pauses an OpenCutter job, which waits: the README
+    says so in plain words (sends nothing while paused, Pause again or Resume goes on where it
+    stopped, Cancel Job ends it about 5 s after the stop, a long press or Unload also ends it),
+    names the analysis it comes from and says that none of it was tried on a real machine. A
+    paused machine without a job of OpenCutter's is still never continued."""
+    readme = flat(text(README))
+    assert "Do not press the machine's Pause key during a job" not in readme
+    bullet = readme_bullet("**The machine's Pause key pauses the job.**")
+    for words in ("From an analysis of the CAMEO 4's firmware", "nothing but status queries",
+                  "press the Pause key again, or **Resume**", "CAMEO 4 with firmware V5",
+                  "the tool may come down at once", "**Cancel Job**",
+                  "about 5 seconds after the stop", "A long press of the Pause key, or **Unload**",
+                  "leaves Pause without going on", "None of this has been tried on a real "
+                  "machine yet"):
+        assert words in bullet, words
+    other = readme_bullet("**A paused machine without an OpenCutter job is not continued.**")
+    assert "Do not press Pause to continue" in other and "**Unload**" in other
+    # the Load sheet, which says so in the app, keeps its words (read, not imported: no GTK)
+    sheets = without_comment_marks(text(REPO / "src" / "opencutter" / "gui" / "sheets.py"))
+    assert "Do not press Pause to continue." in sheets
+    assert "pausing and resuming a job (new in 0.1.1)" in flat(
+        re.search(r"> \*\*Status:.*?(?=\n\n)", text(README), re.S)[0].replace("> ", ""))
 
 
 def test_readme_safety_names_stop_machine_the_owed_stop_and_the_crash_limit():
@@ -730,31 +765,159 @@ def test_readme_safety_names_stop_machine_the_owed_stop_and_the_crash_limit():
 
 
 def test_the_docs_say_what_is_not_known_about_esc_09():
-    """ESC 09: the firmware analysis shows that it clears the motion queue; whether commands
-    already sent survive a stop is not known, and no doc may state the opposite."""
+    """ESC 09: what it does comes from the analysis of the CAMEO 4's firmware only (the planned
+    moves run out, then the tool lifts, the machine stops and drops what it has not run; a
+    paused job ends at least 5 s after it), and was never seen during a cut. Section 9 no longer
+    asks what the analysis answered (whether queued motion survives a stop, whether Pause after
+    a stop resumes), and asks what it could not: the printed keys, the long press, how often
+    a pause ends in a bare 0."""
     readme, protocol_doc = flat(text(README)), flat(text(PROTOCOL))
     for doc in (readme, protocol_doc, flat(text(ARCHITECTURE))):
         assert "discards the queued motion" not in doc
         assert "leaves at most one batch queued" not in doc
-    assert "What the stop command does is only partly known." in readme_section("Safety")
+    stop_bullet = readme_bullet("**What the stop command does is only partly known.**")
+    for words in ("From an analysis of the CAMEO 4's firmware", "(at most eight)",
+                  "drops the commands it was sent but has not run",
+                  "about 5 seconds after the stop",
+                  "Stopping a running cut has not been tried on a real machine yet"):
+        assert words in stop_bullet, words
     stop = flat(section(text(PROTOCOL), "8"))
     assert "**What ESC 09 does is only partly known.**" in stop and "is not known" in stop
     assert "When the stop ended a paused state" in stop
+    for words in ("(at most eight)", "never `4`", "at least 5 s",
+                  "would run as a new job", "no second stop"):
+        assert words in stop, words
     unknown = flat(section(text(PROTOCOL), "9"))
-    assert "so whether queued motion survives a stop" in unknown
-    assert "whether pressing Pause again after a stop would resume" in unknown
+    assert "so whether queued motion survives a stop" not in unknown
+    assert "whether pressing Pause again after a stop would resume" not in unknown
+    for words in ("Which printed keys", "How long a press of the Pause key",
+                  "How often a pause in the middle of a batch ends in `0`",
+                  "How long a paused machine reports Paused after the stop"):
+        assert words in unknown, words
+
+
+GO_ON = re.compile(r"continue|resum|\bgo(?:es)? on\b|\bgoing on\b|\bwent on\b", re.I)
+NEGATION = re.compile(r"\b(not|never|cannot|no|without|whether)\b", re.I)
+
+
+def doc_sentences(path: Path) -> list[str]:
+    return re.split(r"(?<=[.!?])\s+", flat(text(path)))
+
+
+STOP_OR_CANCEL = re.compile(r"\bafter (?:a|the|any|its|our) (?:stop|cancel)\b|"
+                            r"\bonce (?:a|the) cancel has ended\b", re.I)
+PAUSE_ADVICE = re.compile(r"press(?:ing)? (?:the |its )?Pause key (?:again|to go on)", re.I)
+OWN_JOB = re.compile(r"\bjob\b|\bstep\b|program|opencutter resume")
+
+
+def pause_after_a_stop(sentences: list[str]) -> list[str]:
+    """The sentences that name Pause or Resume together with going on and with the time after a
+    stop or a cancel, and are no negation or open question."""
+    return [s for s in sentences
+            if re.search(r"\b[Pp]ause\b|\bResume\b", s) and GO_ON.search(s)
+            and STOP_OR_CANCEL.search(s) and not NEGATION.search(s)]
+
+
+def pause_advice(sentences: list[str]) -> tuple[list[str], list[str]]:
+    """(every sentence that tells the user to press the Pause key to go on, those of them that
+    are not about OpenCutter's own job)."""
+    advice = [s for s in sentences if PAUSE_ADVICE.search(s) and not NEGATION.search(s)]
+    return advice, [s for s in advice if not OWN_JOB.search(s)]
+
+
+def test_the_pause_advice_checks_really_match():
+    bad = ["After the stop, press Pause again to continue.",
+           "After a cancel, Resume goes on with what is left."]
+    fine = ["After the stop, do not press Pause to continue.",
+            "Press the Pause key again, and the job goes on.",
+            "Once a cancel has ended, the Pause key does not bring the job back."]
+    assert pause_after_a_stop(bad + fine) == bad
+    advice, outside = pause_advice(["Press the Pause key again to go on.",
+                                    "Press the Pause key again, and the job goes on.",
+                                    "Do not press the Pause key again to go on."])
+    assert len(advice) == 2 and outside == ["Press the Pause key again to go on."]
 
 
 def test_no_doc_advises_pause_to_go_on():
-    """No sentence of the docs tells the user to press Pause to continue or resume: every
-    sentence that names Pause together with continuing or resuming is a negation, or an open
-    question ("whether pressing Pause again ... would resume", section 9)."""
+    """Since 0.1.1 pressing Pause again goes on with a job that OpenCutter runs and waits for,
+    and the docs say so. They never advise it after a stop or a cancel: every sentence that
+    names Pause or Resume together with going on and with the time after a stop or a cancel is
+    a negation or an open question. And every place that tells the user to press the Pause key
+    to go on is about OpenCutter's own job (a job, a step, a test program, `opencutter
+    resume`)."""
     for path in DOCS:
-        for sentence in re.split(r"(?<=[.!?])\s+", flat(text(path))):
-            if re.search(r"\b[Pp]ause\b", sentence) and re.search(r"continue|resum", sentence,
-                                                                    re.I):
-                assert re.search(r"\b(not|never|cannot|no|whether)\b", sentence, re.I), \
-                    (path.name, sentence)
+        assert not pause_after_a_stop(doc_sentences(path)), path.name
+    found = 0
+    for path in (README, CONTRIBUTING):
+        advice, outside = pause_advice(doc_sentences(path))
+        assert not outside, (path.name, outside)
+        found += len(advice)
+    assert found >= 3
+
+
+def test_the_pause_promises_match_the_code():
+    """What the docs say about the wait while paused and the patience of the queries is what the
+    code does: the poll every 2.5 s, 7 s to "overdue", 15 s of read-back once Paused, 0.3 s
+    quiet windows, 5 s for a Resume's '0', and the CAMEO 4 alone with Pause and Resume."""
+    from opencutter.device import daemon, link
+    from opencutter.machines import Support
+    assert (daemon.PAUSED_POLL, protocol.STATUS_OVERDUE, protocol.STOP_CHECK_PAUSED) == \
+        (2.5, 7.0, 15.0)
+    assert (link.STOP_QUIET, link.RESUME_QUIET, daemon.RESUME_WINDOW) == (0.3, 0.3, 5.0)
+    assert protocol.INTERRUPTED_TERMS == frozenset({protocol.CANCELLING})
+    commands = [p.name for p in registry.profiles() if p.pause or p.resume]
+    assert commands == ["CAMEO 4"] and registry.by_id("cameo4").support is Support.TESTED
+    status = flat(section(text(PROTOCOL), "3"))
+    for words in ("every 2.5 s", "with no time limit", "within 5 s of the user's Resume",
+                  "no `1` and no `4` seen", "not after OpenCutter's own stop"):
+        assert words in status, words
+    shared = flat(text(PROTOCOL))
+    for words in ("within **7 s** is overdue", "for up to 15 s once it read `3`",
+                  "until 0.3 s after its last, and for 0.3 s after ESC 07 or ESC 08"):
+        assert words in shared, words
+
+
+def test_protocol_names_every_stop_ping_key():
+    """Section 10 and ARCHITECTURE.md name every key the stop ping adds (daemon.PING_STOP_KEYS),
+    and the API version the docs give is the code's."""
+    from opencutter.device import daemon
+    from opencutter.identity import API_VERSION
+    service = flat(section(text(PROTOCOL), "10"))
+    arch = flat(text(ARCHITECTURE))
+    for key in daemon.PING_STOP_KEYS:
+        assert f"`{key}`" in service and f"`{key}`" in arch, key
+    assert API_VERSION == 2
+    assert f"client/daemon contract, **{API_VERSION}**" in arch
+    assert "raised the service's API from 1 to 2" in service
+    assert "from 1 to 2" in readme_section("Troubleshooting")
+
+
+def test_readme_lists_every_command_of_the_command_line():
+    """The README's command list has every subcommand of `opencutter --help`, pause and resume
+    (0.1.1) included."""
+    import argparse
+
+    from opencutter.__main__ import _parser
+    (sub,) = [a for a in _parser()._actions if isinstance(a, argparse._SubParsersAction)]
+    block = re.search(r"^## Command line$.*?```text\n(.*?)```", text(README), re.M | re.S)[1]
+    assert {"pause", "resume"} <= set(sub.choices)
+    for name in sub.choices:
+        assert re.search(rf"^opencutter {re.escape(name)}\b", block, re.M), name
+
+
+def test_the_0_1_1_release_notes_claim_no_hardware_test():
+    """The metainfo's notes for 0.1.1 say what changed for the Pause key in plain words, and that
+    none of it was tried on a real machine (no claim of a test that did not happen)."""
+    root = ET.parse(METAINFO).getroot()
+    (release,) = [r for r in root.findall("releases/release") if r.get("version") == "0.1.1"]
+    notes = flat(" ".join(release.find("description").itertext()))
+    for words in ("Pause key now pauses the job", "goes on from where it stopped",
+                  "Resume and Pause buttons", "opencutter resume", "opencutter pause",
+                  "Cancel Job while the machine is paused", "Checking connection",
+                  "analysis of the CAMEO 4's firmware",
+                  "None of these changes has been tried on a real machine yet"):
+        assert words in notes, words
+    assert claimed_models(notes) == set()
 
 
 def test_the_stop_promises_match_the_code():

@@ -16,7 +16,9 @@ Sections 11 to 17 describe each model: its values, and where each value comes fr
 complete test cut with exactly the writes of section 7.3, sent by the project's earlier reference
 prototype; since then OpenCutter itself has cut SVG designs on it, end to end (see the README's
 "Status"). The stop sequence (section 8) was seen to end a paused state, but has not yet
-interrupted a running cut. Every other model OpenCutter drives was ported from the machine data of
+interrupted a running cut. How a job pauses, goes on and is cancelled while paused (sections
+3.1 and 8) comes from the firmware analysis and has not been tried with OpenCutter. Every other
+model OpenCutter drives was ported from the machine data of
 Silhouette Studio 5.0.556 and from an analysis of the firmware Studio ships for it, with a few
 values from public captures and reports (section 11), and none has been run with OpenCutter: those
 facts are not tested on a machine. OpenCutter's tests check that it produces these bytes, against a
@@ -31,9 +33,9 @@ Where this lives in the code:
 | The `FG` parse and the support level of a machine | `src/opencutter/machines/detect.py` |
 | The never-send list, the `FM` rule, the profile self-check | `src/opencutter/machines/safety.py` |
 | UUIDs, reply grammar, query allowlists, stop sequence, unit check | `src/opencutter/device/protocol.py` |
-| Writes, write size, the busy retry, the write time-outs, the stop | `src/opencutter/device/link.py` |
+| Writes, write size, the busy retry, the write time-outs, the patient status query, the quiet windows, the stop, Pause and Resume | `src/opencutter/device/link.py` |
 | BlueZ: finding the paired machine, the MTU, GATT writes | `src/opencutter/device/ble.py` |
-| Model gate, steps, ready waits, tool re-checks | `src/opencutter/device/daemon.py` |
+| Model gate, steps, ready waits, the wait while paused, tool re-checks | `src/opencutter/device/daemon.py` |
 | Command bytes | `src/opencutter/job/builder.py` |
 | Allowed commands and ranges, never-send names | `src/opencutter/job/validate.py` |
 | Job structure | `src/opencutter/job/plan.py` |
@@ -103,7 +105,10 @@ that they were executed. Completion is learned by polling the status (section 3.
   - the read-only queries ESC 05 (status), ESC 15 (tools), ESC 16 (sensor mask, ASCII) and
     ESC 10 (sensor mask, binary), each only where the model's profile lists it (sections 12 to
     16; every model OpenCutter drives lists all four today, and ESC 05 and ESC 15 are required);
-  - ESC 09 (cancel), only as the stop sequence (section 8).
+  - ESC 09 (cancel), only as the stop sequence (section 8);
+  - ESC 07 (pause) and ESC 08 (resume), only on the CAMEO 4 with firmware V5, each once, for the
+    user's own Pause or Resume (section 8). Never as a query, never in a data write, never as
+    part of the stop, and never sent by OpenCutter on its own.
 - Before the model gate (section 3.4) only ESC 05 and the text query `FG` may be sent.
 
 ### 2.3 Write size
@@ -128,6 +133,10 @@ that they were executed. Completion is learned by polling the status (section 3.
 - Keep at most one query outstanding. Replies carry no id, so they are matched by order; a late
   reply to a query that already timed out is dropped. After two timeouts in a row the count of
   late replies is reset (a reply was probably lost).
+- On the CAMEO 4 the machine's Bluetooth part answers ESC 05 by itself, from the status it
+  keeps: a job that is busy or paused does not delay that reply (firmware analysis). It has
+  room for one reply only, so a second ESC 05 written before the first was answered can leave
+  one reply for the two.
 - Buffer reply bytes until ETX. Keep the reply and status streams separate.
 - **Never strip replies.** Some replies are padded with leading spaces, and the padding matters:
   only an exact `0` from ESC 05 means ready. A padded `    0` is a different reply.
@@ -147,18 +156,57 @@ machine is then unknown.
 
 ### 2.6 A write without a Write Response
 
-Every write has a time bound, so that a write the machine never acknowledges cannot hold a step
-for good. The bounds are generous guesses, not measured values.
+Motion writes, stop writes and the query writes outside a job have a time bound, so that a
+write the machine never acknowledges cannot hold a step for good; inside a job a query write is
+waited for instead (section 2.8), until its Write Response, a stop request or a lost link. The
+bounds are generous guesses, not measured values.
 
-- A **query write**: 5 s. Then the query fails as after a reply time-out, and one late reply is
-  expected for every copy written (the query may still have reached the machine).
+- A **query write**: 5 s. Outside a job (and when a job opens) the query then fails as after a
+  reply time-out, and one late reply is expected for every copy written (the query may still
+  have reached the machine). Inside a job the wait is logged and goes on (section 2.8).
 - A **motion write**: 10 s. Whether it arrived is then unknown, so the step ends and the daemon
   sends the stop sequence ("the machine did not acknowledge a write within 10 s; whether it
   arrived is unknown").
-- A **stop write**: 2 s each; a time-out is reported ("no Write Response within 2 s").
+- A **stop write**: 2 s each; a time-out is reported ("no Write Response within 2 s"), and the
+  log says what each of the two writes did.
+- A **Pause or Resume write** (ESC 07, ESC 08): 2 s; whether it arrived is then unknown, and it
+  is not written again.
 
-Giving up on a write in OpenCutter does not withdraw it from BlueZ, which runs one write per
+Every Write Response is timed: a write acknowledged only after 1 s or more is logged. Giving up
+on a write in OpenCutter does not withdraw it from BlueZ, which runs one write per
 characteristic at a time, so a stop sent after such a write may still wait behind it there.
+
+### 2.7 Quiet windows
+
+On the CAMEO 4, a status, sensor or tool query (ESC 05, 10, 15 or 16) that comes right after a
+data write can keep that data waiting in the machine's Bluetooth part while the machine is busy
+or paused, until the next data write; ESC 07, ESC 08 and ESC 09 count as data here (firmware
+analysis). So OpenCutter writes no query from the stop's first ESC 09 until 0.3 s after its
+last, and for 0.3 s after ESC 07 or ESC 08. These windows only delay reads, never a stop.
+
+### 2.8 Patience inside a job
+
+Once a job's first write went out, a late reply never ends it. OpenCutter asks ESC 05 (and
+ESC 15 before a write that can lower a tool) like this:
+
+- One query at a time. A query whose reply has not come within **7 s** is overdue: OpenCutter
+  logs it, the app says "Checking connection", and the query is asked once more (over Bluetooth
+  LE a reply can be lost); that repeats every 7 s. The wait ends only on a reply, a stop request
+  or a lost link, never on silence alone.
+- A query write without its Write Response is logged after 5 s and then waited for; it is not
+  written again meanwhile (a new write would only queue behind it in BlueZ).
+- Only a fresh `0` ends a wait for ready: one that answers the only query outstanding. After a
+  query was asked again, the `0` may be the late reply of an earlier one, so ESC 05 is read once
+  more.
+- The time a ready wait allows (section 7.2) counts Busy replies only, each one at most 1.4 s:
+  silence and a pause do not use it up.
+- The status indications are no answer to any query and never decide ready, but they show
+  whether the link is still up: the log and the app say whether they still come while replies
+  do not.
+
+Before a job's first write (the checks when it opens: one more try after a time-out) and for
+the one-shot requests outside a job, a query keeps its plain time-outs: 3 s for the reply and
+5 s for the write.
 
 ## 3. Replies the driver reads
 
@@ -172,27 +220,68 @@ digits when the state changes.
 | `0` | Ready | Idle, with media (the mat) loaded. The only state in which OpenCutter starts a step. |
 | `1` | Busy | Moving or working. Also reported while another interface (for example USB) holds the machine. |
 | `2` | Load Media | No mat loaded. Load it on the machine's panel. |
-| `3` | Paused | Paused. |
-| `4` | Cancelling | A cancel is in progress (shown once). |
+| `3` | Paused | Paused, by the machine's Pause key or ESC 07. Nothing runs until it goes on. |
+| `4` | Cancelling | A cancel taken while paused is ending (shown once, for a moment). |
 | `5` | Rejected | An earlier write was rejected because another interface held the machine. Cleared when read. |
 
-Before a step, anything but `0` refuses the step (a brief `1` left over from the previous step
-is waited out, for up to 10 s); once the job has written anything, that refusal sends the stop
-sequence too, except for `2` (an unloaded mat, section 7.2). During a step, any status other
-than `0` or `1` ends the step and sends the stop sequence. Before a job starts, the refusal
-says in plain words what the status means (busy, paused, cancelling, rejected) and what to do;
-nothing is sent.
+Before a step, anything but `0` refuses the step, except that a brief `1` left over from the
+previous step is waited out (for up to 10 s of Busy replies) and, once the job has written
+anything, a `3` is waited for with no limit (below). After that first write, the refusal sends
+the stop sequence too, except for `2` (an unloaded mat, section 7.2). During a step, a `3` makes
+the step wait, and any status other than `0`, `1` or `3` ends the step and sends the stop
+sequence. Before a job starts, the refusal says in plain words what the status means (busy,
+paused, cancelling, rejected) and what to do; nothing is sent. A paused machine that no job of
+OpenCutter waits for is never continued: the user is told to press Unload, and not to press
+Pause to continue.
 
-**Paused and Cancelling end a job for good.** Once the job's first write went out, a `3`
-(Paused) or `4` (Cancelling) that the machine reports while OpenCutter has not asked for a stop,
-as an indication or as an ESC 05 reply, is kept for the rest of the job, even when a later
-ESC 05 reads `0`. OpenCutter never resumes a paused machine (it never sends ESC 08, section 6):
-the step under way ends with the stop sequence, or the next step is refused before any query
-and the stop sequence is sent. The user is told to press Unload, or switch the machine off and
-on, and not to press Pause to continue: what the machine still holds could then run with
-nothing watching it. A `4` after OpenCutter's own stop changes nothing; `5` and other digits are
-not kept (the ready waits judge them). How the machine's own Pause key behaves during a job has
-not been tried on a real machine.
+**What the CAMEO 4 does when paused** (firmware analysis):
+
+- A short press of the Pause key while the machine is busy, or ESC 07 while it is busy or idle,
+  pauses it between two commands: it first finishes the moves it has already planned (at most
+  eight), then lifts the tool and reports `3` (with the tool already up, `3` comes at once while
+  those moves finish). Nothing is dropped. ESC 07 while paused does nothing.
+- While paused it keeps taking in what it is sent, but runs none of it and answers none of it
+  (not `FG`, not `U`). ESC 05 is still answered (section 2.4).
+- A second short press of the Pause key, or ESC 08, goes on from the next command: the status
+  returns to `1`, or to `0` when nothing was left to run. ESC 08 does nothing in any other
+  state, and once a cancel has ended, the Pause key does not bring the cancelled job back.
+- A long press of the Pause key while paused cancels the job, like ESC 09 (section 8). How long
+  the press must be is not known.
+- Unload while paused drops what the machine holds, cancels and unloads the mat in one press:
+  `4`, `0`, then `2`.
+- `4` comes only from a cancel taken while paused, and only once, for a moment: it can be
+  missed. A cancel while busy shows `1`, then `0`, never `4`.
+
+**Paused: a job waits.** Once the job's first write went out, a `3` that the machine reports
+while OpenCutter has not asked for a stop, as an indication or as an exact ESC 05 reply, starts
+a pause. From then on OpenCutter writes nothing but ESC 05, and what the user asks for (Resume,
+or the stop): no data, no `U`, no ESC 15 and no `FG`; each data write, `U` and ESC 15 is checked
+again right before it goes out. ESC 05 is read every 2.5 s, and at once on every status
+indication, with no time limit, until the pause ends:
+
+| Seen after the `3` | What OpenCutter does |
+|---|---|
+| `1` | The machine goes on, and so does the job. |
+| `0`, when the pause came between two batches or steps, or within 5 s of the user's Resume | The machine went on with nothing left to run: the job goes on. After a pause between batches, ESC 05 must read `0` again before the next batch. |
+| `0` after a pause in the middle of a batch, with no `1` and no `4` seen | Either the machine went on and finished the batch, or a cancel on its panel ended the pause, its `4` was missed and the rest of the batch was dropped. OpenCutter cannot tell the two apart, so it ends the job with the stop sequence (which does nothing on an idle machine) and tells the user to press Unload, check that the tool is up and send the job again. |
+| `4`, not after OpenCutter's own stop | The job was cancelled on the machine (a long press of Pause, or Unload): it ends for good, and OpenCutter sends the stop sequence as well, in case data it wrote reached the machine after the cancel. |
+| `2` | The mat was unloaded: the job ends as in section 7.2. |
+| A stop request | The job ends with the stop sequence (section 8). |
+
+A `U` whose reply did not come because the machine paused is asked once more after it goes on.
+A reply that is none of these (`5`, an unknown digit) ends the pause, and the step then refuses
+it with the stop sequence.
+
+**Cancelling ends a job for good.** A `4` that the machine reports after the job's first write
+while OpenCutter has not asked for a stop is kept for the rest of the job, even when a later
+ESC 05 reads `0`: the step under way ends with the stop sequence, or the next step is refused
+before any query and the stop sequence is sent. The user is told to press Unload, check that the
+tool is up, then load the mat and send the job again. A `3` or `4` after OpenCutter's own stop
+changes nothing; `5` and other digits are not kept (the ready waits judge them).
+
+Only the CAMEO 4 on firmware V5 gets the user's Pause and Resume from OpenCutter (ESC 07 and
+ESC 08, section 8). On every other model a job waits on a `3` in the same way, and only the
+machine's own Pause key goes on. None of this has been tried on a real machine yet.
 
 Every model OpenCutter drives answers with these six digits (firmware analysis: the reply is
 built by the CAMEO 4's code on each of them), so every profile has this table, with `0` ready,
@@ -439,9 +528,8 @@ command as well: `FX10,TB72` and `FN0FP` are refused like `TB72` and `FP`.
 | ESC 13 | Ends a firmware download and installs the image. |
 | Any other ESC code from 0x0A up (including ESC 0B and ESC 0F) | Unknown codes leave the machine's ESC parser waiting, so the bytes that follow are swallowed or misread. |
 | ESC 00 plus a byte | Nudge: the carriage or rollers keep moving until a second nudge stops them. |
-| ESC 07 | Pause: does not stop motion by itself, and can leave the machine paused. |
+| ESC 07 and ESC 08 in any other place than the user's own Pause and Resume | Pause and resume. Never a query, never in a data write, never part of the stop, never sent by OpenCutter on its own and never to a model but the CAMEO 4 on firmware V5: each goes out alone and once, for an explicit Pause or Resume (section 8). ESC 07 does not stop motion by itself. |
 | ESC 01, ESC 03, ESC 04 | Change internal state flags at once; not needed. |
-| ESC 08 | Resume after a pause; OpenCutter never pauses. |
 | S-record lines (`S0`, `S1`, `S2`, `S3`, `S7`, `S8`, `S9`) and anything starting with `PW` | Firmware image data. |
 | `FP` | Unlocks a diagnostic command set with access to stored settings, including a command that hangs the parser. The prefix also covers `FPG`, the same kind of unlock on the CAMEO 5 generation. |
 | Lowercase commands | Belong to that diagnostic set or are undefined, on every model. |
@@ -510,13 +598,17 @@ step, and sends the stop sequence if anything goes wrong while the machine may b
 - Long steps are packed into writes of at most 182 bytes (section 2.3) and sent in batches of
   at most 1024 bytes (the profile's batch size; 1024 on every model today). After each batch the
   daemon waits for ready, so when a stop comes, at most one batch (1024 bytes) has been sent and
-  not yet run; whether the stop discards it is not known yet (sections 8 and 9).
+  not yet run; from the firmware analysis the stop drops it (section 8), which has not been
+  seen on a machine.
 - The ready wait starts 0.5 s after a write (so it does not read a stale `0`), then polls ESC 05
-  every 0.4 s. `1` keeps waiting; any other status, three silent polls in a row or a time-out
-  (120 s plus the batch's travel at the model's lowest speed) ends the step with a stop. A lost
-  link ends it too, but then no stop can reach the machine: the stop is owed (section 8).
+  every 0.4 s, and at once on every status indication. `1` keeps waiting, and `3` waits for as
+  long as the machine stays paused (section 3.1). Any other status, or more than 120 s plus the
+  batch's travel at the model's lowest speed counted over Busy replies, ends the step with a
+  stop; a reply that is late never does (section 2.8), and only a fresh `0` ends the wait. A
+  lost link ends it too, but then no stop can reach the machine: the stop is owed (section 8).
 - Before every write that contains `D` or `TF` (the writes that can lower a tool), ESC 15 is read
-  again and must report the required tool in each used holder.
+  again and must report the required tool in each used holder. While the machine is paused, no
+  data write, `U` or ESC 15 goes out (section 3.1).
 - A stop request is checked between every write, in every wait (the ready waits, the wait before
   a step, the unit check) and once more before a step reports success: a step never reports
   success after a stop request.
@@ -531,8 +623,9 @@ step, and sends the stop sequence if anything goes wrong while the machine may b
   repeated, so after a reload the origin would no longer match the outline the user checked: a
   step under way ends with the stop sequence, every later step is refused and nothing more is
   sent, not even the trailer.
-- A Paused or Cancelling status the machine reports by itself ends the job for good (section
-  3.1).
+- A Paused status the machine reports by itself makes the job wait; a Cancelling status ends it
+  for good, and so does a machine that leaves Pause without going on after a pause in the middle
+  of a batch (section 3.1).
 
 ### 7.3 Example
 
@@ -554,18 +647,40 @@ M1016,2814.D1016,2794.D1524,2794.D1524,3302.D1016,3302.D1016,2794.D1036,2794.
   two-byte write, and nothing else. It is the same on every model OpenCutter drives: the latch
   that makes a lone ESC 09 only clear itself is in each of their firmwares (firmware analysis).
   It has only been seen working on the CAMEO 4.
-- **What ESC 09 does is only partly known.** From the analysis of the CAMEO 4's firmware,
-  ESC 09 while the machine is busy or has commands queued lifts the tool, stops the motors and
-  clears the queue of moves the machine has already taken in. Whether it also drops the
-  commands still waiting in the machine's input buffer, so whether motion already sent to the
-  machine can still run after a stop, has not been seen on a machine and is not known
-  (section 9). When the stop ended a
-  paused state on the CAMEO 4, the status showed `4`, then `0`. A `0` after a stop says what the
-  machine reports, not that nothing is left to run.
+- **What ESC 09 does is only partly known.** From the analysis of the CAMEO 4's firmware:
+  - While the machine cuts with the tool down, ESC 09 first lets it finish the moves it has
+    already planned (at most eight), tool still down; then the machine lifts the tool, stops
+    and drops the commands it was sent but has not run. The status shows `1`, then `0`, never
+    `4`.
+  - On a paused machine with commands still waiting, ESC 09 drops them and then waits until no
+    new command has come for 5 s: the status stays `3` for at least 5 s, longer while commands
+    still arrive (every one restarts the wait), then shows `4` for a moment, then `0` or `2`.
+    With nothing waiting, `4` comes almost at once.
+  - Command text that arrives during that wait makes it longer, and command text that reaches
+    the machine after it would run as a new job. After a stop OpenCutter sends no command text
+    by itself: no data, no `U`, no `FG` (text queries are refused for 10 s after a stop and while
+    the machine reads `3` or `4`), and no second stop.
+  - On an idle machine with nothing waiting, ESC 09 does nothing.
+
+  None of this was seen on a machine during a cut: how a stop behaves in the middle of a long
+  blade cut, and how long a paused machine takes to end a job after it, is not known from a
+  real machine (section 9). When the stop ended a paused state on the CAMEO 4, the status
+  showed `4`, then `0`. A `0` after a stop says what the machine reports, not that nothing is
+  left to run.
 - The second ESC 09 is needed because in some states (for example after a panel load) the first
   one only clears an internal latch instead of cancelling (firmware analysis).
-- ESC 07 (pause) is not used: it does not stop motion by itself. ESC 08 (resume) is never sent,
-  so OpenCutter never resumes a machine that was paused or stopped (section 3.1).
+- ESC 07 (pause) is not used as a stop: it does not stop motion by itself. It is sent only as
+  the user's Pause, and ESC 08 (resume) only as the user's Resume:
+  - only on the CAMEO 4 with firmware V5 (a tested model on a tested firmware line), only while
+    a job of OpenCutter runs, and only for an explicit request: Pause or Resume in the app,
+    `opencutter pause` or `opencutter resume`;
+  - only after a fresh ESC 05, read under the query lock, reads `3` (Resume) or `0` or `1`
+    after the job's first write (Pause), and never while a stop is asked for or being sent;
+  - once, alone in its own two-byte write, never repeated, never sent by OpenCutter on its own;
+    no query follows for 0.3 s (section 2.7);
+  - the job then goes on, or waits, exactly as after the machine's own Pause key (section 3.1).
+    Resume never goes to a machine that was stopped: once a cancel has ended, it would do
+    nothing anyway (section 3.1).
 - Before the model gate a link sends no stop: only ESC 05 and `FG` go out before it, so a machine
   the gate refused never moved through OpenCutter.
 - BlueZ allows one write per characteristic at a time. A stop therefore cannot overtake a command
@@ -573,18 +688,24 @@ M1016,2814.D1016,2794.D1524,2794.D1524,3302.D1016,3302.D1016,2794.D1036,2794.
   acknowledged.
 - The daemon sends the stop sequence on an explicit stop request (`opencutter stop`, Cancel Job,
   Stop Machine), when a client disconnects or sends anything during a step, when a step fails
-  while the machine may be moving (section 7.2), when the machine reports Paused or Cancelling
-  by itself during a job (section 3.1), when the next step is refused for the machine's status
-  after the job wrote, and on SIGTERM, SIGHUP or SIGINT while the machine may be moving. Further
-  signals are ignored while the stop goes out. A client that disconnects between steps gets no
-  stop: the machine read `0` at the end of the step (for example at the outline check). An
-  automatic stop is not sent a second time once one got through; an explicit request always
-  sends one, or joins the one in flight.
+  while the machine may be moving (section 7.2), when the machine reports Cancelling by itself
+  during a job or leaves Pause without going on after a pause in the middle of a batch (section
+  3.1), when the next step is refused for the machine's status after the job wrote, and on
+  SIGTERM, SIGHUP or SIGINT while the machine may be moving. A paused machine alone never gets
+  the stop: the job waits. Further signals are ignored while the stop goes out. A client that
+  disconnects between steps gets no stop: the machine read `0` at the end of the step (for
+  example at the outline check). An automatic stop is not sent a second time once one got
+  through; an explicit request always sends one, or joins the one in flight.
 - **The stop without a job.** The stop request works with or without a job running, for
   example right after a job (the app's Stop Machine). With `"check": true`, a stop that got
-  through is followed by ESC 05 reads every 0.4 s for up to 3 s while the machine reads `1` or
-  `4`; the reply then names the last status read (`status_after`) and whether it was still `1`
-  (`still_busy`: press the power button). Only ESC 09 twice and ESC 05 are sent for it.
+  through is followed, once its quiet window is over, by ESC 05 reads every 0.4 s (and at once
+  on a status indication) for up to 3 s while the machine reads `1` or `4`, and for up to 15 s
+  once it read `3` (a paused machine ends the job about 5 s after the stop, and its `4` may not
+  be seen at all); the reply then names the last status read (`status_after`: a `3` means it
+  still reported Paused, so press Unload on the machine) and whether it was still `1`
+  (`still_busy`: press the power button). When nothing could be read, the log says why. Only
+  ESC 09 twice and ESC 05 are sent for it. While the machine reads `3` or `4`, the service sends
+  no query but ESC 05 for any request, and no text query for 10 s after a stop.
 - **After a lost link.** Once the Bluetooth link is lost, no stop can reach the machine. When the
   link was lost while the machine may have been moving, or a stop's writes failed, or a stop was
   asked for while there was no link and the machine may have been moving, the stop is owed to
@@ -602,15 +723,22 @@ M1016,2814.D1016,2794.D1524,2794.D1524,3302.D1016,3302.D1016,2794.D1036,2794.
 ## 9. Not known yet
 
 - The exact position of (0, 0) against the printed grid of the mat.
-- Whether a stop during a long blade cut behaves on the machine exactly as described above:
-  the stop sequence has been seen to end a paused state, but not yet to interrupt a running cut.
-- Whether ESC 09 discards the commands already sent but not yet run (up to one batch of 1024
-  bytes, section 7.2), or only the moves the machine has already taken in: so whether queued
-  motion survives a stop.
-- How the machine's own Pause and Unload keys behave during a job, and whether pressing Pause
-  again after a stop would resume motion that is still queued.
-- The owed stop after a lost link, Stop Machine after a job and the write time-outs (section 2.6)
-  have not run against a real machine.
+- Whether a stop during a long blade cut behaves on the machine as the firmware analysis says
+  (section 8): the stop sequence has been seen to end a paused state, but not yet to interrupt
+  a running cut.
+- How long a paused machine reports Paused after the stop on a real machine (the analysis says
+  at least 5 s).
+- Which printed keys of the panel are the ones the analysis read as the pause key and as the
+  key that cancels and unloads a paused job: the docs and the app assume the Pause key and the
+  Unload key.
+- How long a press of the Pause key must be to cancel a paused job.
+- How often a pause in the middle of a batch ends in `0` with no `1` or `4` seen (section 3.1),
+  so how often OpenCutter ends a job there that the machine had finished.
+- Whether BlueZ ends the link after a write that never gets its Write Response: inside a job
+  OpenCutter waits for such a query write until a stop request or a lost link (section 2.8).
+- The machine's own Pause and Unload keys during a job, the user's Pause and Resume, Cancel Job
+  while the machine is paused, the owed stop after a lost link, Stop Machine after a job and
+  the write time-outs (section 2.6) have not run against a real machine.
 - How force on holder 2 compares with holder 1 at the same value.
 - Whether the machine always accepts a new connection after a clean disconnect, without being
   switched off and on.
@@ -646,31 +774,58 @@ concern the machine profiles:
   verdicts of section 3.3. `unchecked` comes with `ok` true and the message that the cut area
   could not be checked on this model.
 
-These parts concern the stop (section 8); they add nothing to what is sent but ESC 09 twice
-and ESC 05 reads:
+These parts concern the stop and the pause (sections 3.1 and 8); they add nothing to what is
+sent but ESC 09 twice, ESC 05 reads and the user's own ESC 07 or ESC 08:
 
 - **The stop ping.** `{"op": "ping", "stop": true}` (also with `"machine": true`) adds
   `stop_owed` (a stop could not get through and is sent when the same machine is linked again),
   `owed_stops_sent` (how many owed stops went out on a new link), `motion_stopped` (the open job
-  got a stop request, from any client), `interrupted` (the Paused or Cancelling digit the open job
-  saw after its first write, or null) and `load_seen` (how often the status changed to `2`: a
-  change means the mat was unloaded, even between two pings). The plain ping and the machine
-  ping keep exactly their keys.
+  got a stop request, from any client), `interrupted` (why the open job ends with the stop
+  although nobody asked: the Cancelling digit it saw after its first write, or `"left-pause"`
+  when the machine left Pause without going on; null otherwise) and `load_seen` (how often the
+  status changed to `2`: a change means the mat was unloaded, even between two pings). Since
+  API 2 it also has `paused` (the open job waits on a paused machine), `resume_ok` and
+  `pause_ok` (a resume or pause request would be sent now), `no_reply_s` (how long the query the
+  job waits for has been unanswered, once that is 7 s or more; null otherwise),
+  `indication_age_s` (seconds since the machine's last status indication) and `stop_check` (the
+  ESC 05 read-back of the last stop request with `"check": true`, also while it runs). The
+  plain ping and the machine ping keep exactly their keys.
 - **The stop request.** `{"op": "stop"}` answers `{ok, errors}`, with or without a job. With
   `"check": true`, a stop that got through also answers `status_after` and `still_busy`
   (section 8).
+- **The resume and pause requests** (API 2). `{"op": "resume"}` and `{"op": "pause"}` send the
+  user's Resume or Pause once, as section 8 says, and answer `{ok, sent, status_before,
+  status_after, paused, errors}`, with `error` in plain words when nothing was sent (`sent`
+  false: no job runs, a stop was asked for, the machine is not paused, it is not a CAMEO 4 on
+  firmware V5, its status could not be read) or when the write failed (`sent` true: whether it
+  arrived is unknown, and it is not sent again). After the write, ESC 05 is read for up to 5 s,
+  until the machine has left Paused (Resume) or reached it (Pause).
+- **The info request.** `{"op": "info"}` answers the `FG` reply read at the model gate: it never
+  sends `FG`, which a paused machine would not answer (section 3.1). While the machine reads `3`
+  or `4` it sends no ESC 15 either, and `tools` is null.
 - **The open reply** gives each step `tool_down`: true when the step holds a write that can lower
   a tool (`D`, `TF`); the unit step never does.
 - **A failed step** after the link was lost has the error "the Bluetooth link was lost"; when the
   machine may have been moving, it also has `stopped` true with the errors of the stop tried on
   the dead link, and the stop is owed. A step refused for the machine's status after the job
-  wrote (a stop request, Paused, Cancelling, Rejected, still Busy, an unknown digit) has
-  `stopped` true too. The texts for Paused and Cancelling say not to press Pause to continue, and
-  to press Unload or switch the machine off and on.
+  wrote (a stop request, Cancelling, a machine that left Pause without going on, Rejected, still
+  Busy, an unknown digit) has `stopped` true too. The texts for Cancelling and for a machine
+  that left Pause without going on say to press Unload, check that the tool is up, then load the
+  mat and send the job again. A step has no time limit while the machine is paused: a client
+  waits for it and watches the stop ping instead.
 - **The service log** has one line per real status change (`[status change] 3 = Paused`, with
   ` (ESC 05)` when an ESC 05 reply showed it; `0` and `1` only during a job, for 30 s after a
-  stop, or with `-v`) and one line per stop, numbered per link (`STOP (ESC 09 x2) sent, pair 1
-  on this link`).
+  stop, or with `-v`), one line per stop, numbered per link (`STOP (ESC 09 x2) sent, pair 1
+  on this link`; a failed one says what each write did), and lines for a pause and how it
+  ended, for the user's Resume or Pause, for a query that is overdue or whose write was not
+  acknowledged, and for every write acknowledged only after 1 s or more. With `-v` it also has
+  every write with the time of its Write Response, every reply, every late reply dropped and
+  every status indication, each with its time.
+- **API version 2.** The resume and pause requests, the new stop-ping fields, the info request
+  without `FG` and steps that wait with no time limit while the machine is paused are why
+  OpenCutter 0.1.1 raised the service's API from 1 to 2. A service refuses the sessions of a
+  client of another build or API, and the app and the command line use only a service of their
+  own build (`opencutter stop` reaches any).
 
 ---
 
@@ -726,9 +881,13 @@ Passes are 1..10 on every model (a rule of the app, not of the firmware).
 
 Shared by every model OpenCutter drives today: the unit (0.05 mm), writes of at most 182 bytes,
 batches of at most 1024 bytes, coordinates of at most five digits, the status digits of section
-3.1, `D` and `TF` as the commands that can lower a tool, the read of ESC 05 after `FG`, and the
-stop of section 8 (ESC 09 twice, 0.3 s apart). The forms of section 5.1 depend on the number of
-holders. Only the CAMEO 4 has the pinned test programs (`dry-run`, `pen-test`, `cut-test`).
+3.1, `D` and `TF` as the commands that can lower a tool, the read of ESC 05 after `FG`, the
+wait while the machine reports Paused (section 3.1), and the stop of section 8 (ESC 09 twice,
+0.3 s apart). The forms of section 5.1 depend on the number of holders. Only the CAMEO 4 has the
+pinned test programs (`dry-run`, `pen-test`, `cut-test`), and only the CAMEO 4 on firmware V5
+gets the user's Pause and Resume (ESC 07 and ESC 08, section 8): OpenCutter sends them only to
+a tested model on a tested firmware line, so on the other models a paused job goes on only
+through the machine's own Pause key.
 
 ## 12. CAMEO 4
 
@@ -753,6 +912,9 @@ OpenCutter used before profiles existed, so the bytes it sends to a CAMEO 4 did 
   `U`.
 - **Session.** `FG` claims the session (section 3.4). A new link is accepted only right after
   power-on (observed).
+- **Pause and Resume.** ESC 07 pauses and ESC 08 goes on (firmware analysis of V5.05, section
+  3.1). OpenCutter sends them only on line V5, and only as the user's own Pause and Resume
+  (section 8); line V1 gets neither.
 - **No `FM`:** its machine data has no expand mode.
 
 ## 13. CAMEO 4 Plus and CAMEO 4 Pro

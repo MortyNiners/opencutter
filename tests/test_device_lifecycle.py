@@ -177,7 +177,7 @@ def test_ping_names_version_build_api_and_pid(harness):
         p = await h.ping()
         assert (p["version"], p["build"], p["api"], p["pid"]) == (__version__, BUILD, API_VERSION,
                                                                   os.getpid())
-        assert API_VERSION == 1 and re.fullmatch(r"[0-9a-f]{12}", p["build"])
+        assert API_VERSION == 2 and re.fullmatch(r"[0-9a-f]{12}", p["build"])
         assert p["connected"] and p["motion"] is None          # the old keys are all still there
         assert p["stopping"] is False
     harness.run(scenario)

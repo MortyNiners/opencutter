@@ -56,7 +56,15 @@ CHAR_STATUS = "61490654-b5b4-458c-a867-9e15bc1471e0"  # indicate: status changes
 
 ETX = 0x03
 ESC = 0x1B
-REPLY_TIMEOUT = 3.0
+REPLY_TIMEOUT = 3.0        # a reply to a query at session open or of a one-shot op
+# Inside a session an ESC 05 (or ESC 15) query is never given up while the link is up: once its
+# reply is this late the query is "overdue" (the app says "Checking connection"), the wait is
+# logged and the query is asked once more (a reply can be lost over Bluetooth LE).
+STATUS_OVERDUE = 7.0
+# After the stop op of a client that asks for the read-back: ESC 05 is read for up to this many
+# seconds once the machine read Paused (a paused machine ends the job about 5 s after the stop;
+# firmware analysis). Still Paused then: the client tells the user to press Unload.
+STOP_CHECK_PAUSED = 15.0
 
 # The service's socket and lock, in runtime_dir(). Builds before 0.1.0 used these names directly
 # in $XDG_RUNTIME_DIR: the daemon holds that old lock too, and `opencutter stop` also stops there.
@@ -86,8 +94,8 @@ def stop_sequence(profile: MachineProfile = CAMEO4) -> tuple[bytes, ...]:
     """The profile's stop writes, each sent alone, profile.stop.gap_s seconds apart: ESC 09 (cancel)
     twice on every model. While busy or with GPGL bytes pending, ESC 09 runs the firmware's hard
     stop (tool up, step timers stopped, motion ring cleared); the second one covers a latch that
-    makes the first one only clear itself. ESC 07 (pause) is never used: it stops nothing by
-    itself and, consumed late, leaves the machine paused.
+    makes the first one only clear itself. ESC 07 (pause) is never part of the stop: it stops
+    nothing by itself and, consumed late, leaves the machine paused.
 
     Raises UnsafeCommand for a stop that is not exactly ESC 09 twice (the registry refuses such a
     profile at import; this holds for a profile built anywhere else too). A link calls it when
@@ -189,16 +197,16 @@ def status_text(reply: object, profile: MachineProfile = CAMEO4, default: str = 
     return default if text is None else text
 
 
-# The terms of the states that end a job for good once it has started: OpenCutter never resumes
-# a paused machine (it never sends ESC 08), so a session that sees one of them stops. Keyed on
-# the term, not the digit: every profile today has '3' Paused and '4' Cancelling, and a test
-# profile with other digits keeps its own.
+# Keyed on the term, not the digit: every profile today has '3' Paused and '4' Cancelling, and a
+# test profile with other digits keeps its own. A Paused status during a session makes it wait
+# (nothing more is sent until the machine goes on, or the user cancels); INTERRUPTED_TERMS end a
+# job for good once it has started: a session that sees one of them stops.
 PAUSED = "Paused"
 CANCELLING = "Cancelling"
 REJECTED = "Rejected"
-INTERRUPTED_TERMS = frozenset({PAUSED, CANCELLING})
-# The advice after a paused or cancelled job: never press Pause to go on (motion that is still
-# queued may survive a stop, and Pause could resume it).
+INTERRUPTED_TERMS = frozenset({CANCELLING})
+# The advice before a job, for a machine that is paused or ending a cancel when no job of
+# OpenCutter runs: a paused job that is not ours is never continued.
 UNLOAD_ADVICE = ("Do not press Pause to continue: press Unload on the machine (or switch it off "
                  "and on), check that the tool is up, then load the Cutting Mat right before the "
                  "job.")

@@ -49,9 +49,34 @@ Stopping (the service's stop fields, PING_STOP_KEYS)
   ``ping_stop()``; a client without them gives none. MachineState then carries stop_owed (a stop
   could not get through; the service sends it when that machine is linked again),
   owed_stops_sent (how many such stops it sent), motion_stopped (the open session got a stop
-  request, e.g. from `opencutter stop`), interrupted (the Paused or Cancelling digit the session
-  saw) and load_seen (how often the machine reported its load status: an Unload shows as a
-  change, even between two polls).
+  request, e.g. from `opencutter stop`), interrupted (why the session ends with the stop
+  although nobody asked: the Cancelling digit it saw, or LEFT_PAUSE_MARK when the machine left
+  Pause without going on) and load_seen (how often the machine reported its load status: an
+  Unload shows as a change, even between two polls).
+
+The machine's Pause during a job (the same stop fields)
+  paused     the open session waits on a paused machine (its Pause key, or the app's Pause):
+             the service sends it nothing but ESC 05 until it goes on, and the step waits with
+             no time limit. MachineState.shows_paused also counts a machine whose status reads
+             Paused while the session has not said so yet.
+  resume_ok  the service would send the machine's Resume now (one ESC 08: paused, no stop asked
+             for, a machine whose Resume was tested, the CAMEO 4 on firmware V5); pause_ok the
+             same for the app's Pause (one ESC 07: a job of ours runs and the machine reads Ready
+             or Busy). The app offers Resume only with paused and resume_ok, and Pause only on
+             such a machine (MachineState.offers_pause); each is sent only for a click, through
+             the service's op, never by itself.
+  no_reply_s the query the open session waits for has been unanswered this many seconds (7 or
+             more: "Checking connection"; the service keeps waiting and sends nothing new);
+             indication_age_s (kept only then) says whether the machine still reports its
+             status by itself (checking_note()).
+  stop_check the service's read-back after its last checked stop (StopCheck), or None.
+  paused_note() and checking_note() are the job view's notes for them. A missing key (an older
+  service) means "not known": nothing is offered.
+
+  Outside a job the info poll stays: from API 2 on the service answers it without FG (the reply
+  read when the machine was connected) and, while the machine reads Paused or Cancelling,
+  without ESC 15 (its "tools" is then None and the tools read last are kept), so that a paused
+  machine gets nothing but ESC 05.
 
 Link drops
   After the link to a machine dropped (from Connected to the service answering without one),
@@ -82,9 +107,10 @@ from dataclasses import dataclass, replace
 from enum import Enum
 
 from opencutter.device.client import daemon_log_path
-from opencutter.device.protocol import (REASON_HELD_ELSEWHERE, REASON_NO_BLUETOOTH,
-                                        REASON_NOT_PAIRED, REASON_UNREACHABLE,
-                                        REASON_WRONG_MODEL, model_text, parse_tools, tool_name)
+from opencutter.device.protocol import (INTERRUPTED_TERMS, PAUSED, REASON_HELD_ELSEWHERE,
+                                        REASON_NO_BLUETOOTH, REASON_NOT_PAIRED, REASON_UNREACHABLE,
+                                        REASON_WRONG_MODEL, STATUS_OVERDUE, model_text,
+                                        parse_tools, tool_name)
 from opencutter.identity import BUILD, build_on_disk, same_build
 from opencutter.machines import (CAMEO4, Holder, MachineProfile, RecognizedModel, Support,
                                  ble_name_prefixes, by_id, detect, enabled, enabled_profile)
@@ -98,7 +124,12 @@ DEFAULT_PROFILE = CAMEO4.id           # the layout's machine when none was chose
 # What a ping with "machine": true adds (the service's daemon.PING_MACHINE_KEYS)
 PING_MACHINE_KEYS = ("profile", "support", "refused_reason")
 # What a ping with "stop": true adds (the service's daemon.PING_STOP_KEYS)
-PING_STOP_KEYS = ("stop_owed", "owed_stops_sent", "motion_stopped", "interrupted", "load_seen")
+PING_STOP_KEYS = ("stop_owed", "owed_stops_sent", "motion_stopped", "interrupted", "load_seen",
+                  "paused", "resume_ok", "pause_ok", "no_reply_s", "indication_age_s",
+                  "stop_check")
+# the ping's "interrupted" when the machine left Pause without going on (daemon.LEFT_PAUSE_MARK;
+# the GUI does not import the service)
+LEFT_PAUSE_MARK = "left-pause"
 SUPPORT_LEVELS = (Support.TESTED.value, Support.UNTESTED.value)   # a connected machine's
 REASON_CHARS = 300                    # the most of a refused_reason that is shown
 
@@ -257,6 +288,20 @@ UNSUPPORTED = "Unsupported Machine"      # the pill, the status bar and the head
 NOT_SUPPORTED = "This machine is not supported."            # why Send and Test Cut are disabled
 CONNECT_HINT_TAIL = ("To use one, pair it in Settings → Bluetooth and switch it on: OpenCutter "
                      "connects to it by itself.")
+# The job view's notes while the machine is paused during a job: Resume offered (the service
+# would send it: paused and resume_ok), or only the machine's own Pause key
+PAUSED_NOTE = ("The machine is paused. OpenCutter sends nothing more until it goes on. To go on "
+               "from where it stopped, press Resume here or the Pause key on the machine. To end "
+               "the job, press Cancel Job.")
+PAUSED_NOTE_KEY = ("The machine is paused. OpenCutter sends nothing more until it goes on. To go "
+                   "on from where it stopped, press the Pause key on the machine. To end the job, "
+                   "press Cancel Job.")
+# ... and while the query the job waits for has no answer for STATUS_OVERDUE s or more
+CHECKING = "Checking connection"           # the pill
+CHECKING_NOTE = ("No answer from the machine for {n} s. OpenCutter keeps waiting and sends "
+                 "nothing new. If it moves when it should not, press Cancel Job or its power "
+                 "button.")
+STILL_REPORTS = " It still reports its status ({term})."   # indications came in the last 7 s
 
 
 def _join(items: list[str]) -> str:
@@ -424,6 +469,13 @@ def _plain(value: object) -> str | None:
     return text or None
 
 
+def service_text(value: object) -> str | None:
+    """Plain words from the service (a refusal, a reason) as one plain line of at most
+    REASON_CHARS characters, or None: control characters as spaces, runs of spaces collapsed.
+    Still text from outside the app: escape it before it goes into markup."""
+    return _plain(value)
+
+
 def machine_fields(ping: object) -> dict:
     """The machine fields of a ping (PING_MACHINE_KEYS, from {"op": "ping", "machine": true}),
     as MachineState takes them: profile, support, refused_reason and recognized.
@@ -451,22 +503,90 @@ def machine_fields(ping: object) -> dict:
     return out
 
 
+@dataclass(frozen=True)
+class StopCheck:
+    """The service's ESC 05 read-back after its last stop op with check (the ping's
+    "stop_check"): still reading, the last status digit read (None: none), how many seconds it
+    read, whether it still read Busy or Paused at the end (None: nothing read), and why nothing
+    could be read (plain words from the service, or None)."""
+    running: bool = False
+    status: str | None = None
+    seconds: float = 0.0
+    still_busy: bool | None = None
+    still_paused: bool | None = None
+    reason: str | None = None
+
+
+def _seconds(value: object) -> float | None:
+    """A number of seconds the service sent (not a bool, finite, not negative), or None."""
+    if type(value) not in (int, float) or not 0 <= value < float("inf"):
+        return None
+    return float(value)
+
+
+def _stop_check(value: object) -> StopCheck | None:
+    """The ping's "stop_check" as a StopCheck, or None for anything that is not a dict."""
+    if not isinstance(value, dict):
+        return None
+    status = value.get("status")
+
+    def flag(key: str) -> bool | None:
+        return value.get(key) if isinstance(value.get(key), bool) else None
+    return StopCheck(running=value.get("running") is True,
+                     status=status if isinstance(status, str) and len(status) == 1 else None,
+                     seconds=_seconds(value.get("seconds")) or 0.0,
+                     still_busy=flag("still_busy"), still_paused=flag("still_paused"),
+                     reason=_plain(value.get("reason")))
+
+
 def stop_fields(ping: object) -> dict:
     """The stop fields of a ping (PING_STOP_KEYS, from {"op": "ping", "stop": true}), as
-    MachineState takes them; the defaults for a ping without them."""
+    MachineState takes them; the defaults for a ping without them (an older service: nothing
+    paused, nothing offered). "indication_age_s" is kept only while "no_reply_s" is set: it
+    matters only then (checking_note()), and a value that changes on every ping would change
+    the state on every poll."""
     out = {"stop_owed": False, "owed_stops_sent": None, "motion_stopped": False,
-           "interrupted": None, "load_seen": None}
+           "interrupted": None, "load_seen": None, "paused": False, "resume_ok": False,
+           "pause_ok": False, "no_reply_s": None, "indication_age_s": None, "stop_check": None}
     if not isinstance(ping, dict):
         return out
-    out["stop_owed"] = ping.get("stop_owed") is True
-    out["motion_stopped"] = ping.get("motion_stopped") is True
+    for key in ("stop_owed", "motion_stopped", "paused", "resume_ok", "pause_ok"):
+        out[key] = ping.get(key) is True
     for key in ("owed_stops_sent", "load_seen"):
         value = ping.get(key)
         out[key] = value if type(value) is int and value >= 0 else None
     interrupted = ping.get("interrupted")
-    if isinstance(interrupted, str) and len(interrupted) == 1:
+    if isinstance(interrupted, str) and (len(interrupted) == 1
+                                         or interrupted == LEFT_PAUSE_MARK):
         out["interrupted"] = interrupted
+    out["no_reply_s"] = _seconds(ping.get("no_reply_s"))
+    if out["no_reply_s"] is not None:
+        out["indication_age_s"] = _seconds(ping.get("indication_age_s"))
+    out["stop_check"] = _stop_check(ping.get("stop_check"))
     return out
+
+
+def paused_note(state: MachineState) -> str | None:
+    """The job view's note while the machine is paused (MachineState.shows_paused): PAUSED_NOTE
+    when Resume is offered (the service would send it now), else PAUSED_NOTE_KEY (only the
+    machine's own Pause key goes on); None otherwise."""
+    if not state.shows_paused:
+        return None
+    return PAUSED_NOTE if state.offers_resume else PAUSED_NOTE_KEY
+
+
+def checking_note(state: MachineState) -> str | None:
+    """The job view's note while the query the job waits for has had no answer for 7 s or more
+    (CHECKING_NOTE with the whole seconds), adding STILL_REPORTS with the last status when the
+    machine reported it by itself in the last 7 s; None otherwise."""
+    if not state.checking:
+        return None
+    text = CHECKING_NOTE.format(n=int(state.no_reply_s))
+    term = state.machine_profile.status.text(state.status)
+    age = state.indication_age_s
+    if term and age is not None and age < STATUS_OVERDUE:
+        text += STILL_REPORTS.format(term=term)
+    return text
 
 
 def _takes(function, name: str) -> bool:
@@ -537,6 +657,15 @@ class MachineState:
     motion_stopped: bool = False
     interrupted: str | None = None
     load_seen: int | None = None
+    # ... and the pause fields: the open session waits on a paused machine, Resume and Pause
+    # would be sent now, how long the session's query has had no answer (7 s or more), seconds
+    # since the last status indication (only with no_reply_s), the last checked stop's read-back
+    paused: bool = False
+    resume_ok: bool = False
+    pause_ok: bool = False
+    no_reply_s: float | None = None
+    indication_age_s: float | None = None
+    stop_check: StopCheck | None = None
 
     @property
     def connected(self) -> bool:
@@ -609,6 +738,49 @@ class MachineState:
             return None
         name = tool_name(holder, code, self.machine_profile)
         return name if code == 0 else f"{name} (Detected)"
+
+    @property
+    def reports_paused(self) -> bool:
+        """True while the connected machine's status reads Paused."""
+        return self.connected and self.machine_profile.status.text(self.status) == PAUSED
+
+    @property
+    def shows_paused(self) -> bool:
+        """True while a job is to be shown paused: the open session waits on a paused machine,
+        or the machine's status reads Paused (before the session said so, or an older
+        service)."""
+        return self.connected and (self.paused or self.reports_paused)
+
+    @property
+    def offers_resume(self) -> bool:
+        """True when Resume may be offered: the session waits on a paused machine and the
+        service would send its Resume now."""
+        return self.connected and self.paused and self.resume_ok
+
+    @property
+    def ends_job(self) -> bool:
+        """True while the open session is ending without a Cancel of ours: it saw a cancel on
+        the machine or LEFT_PAUSE_MARK (interrupted), it got a stop request (motion_stopped),
+        or the machine reads Cancelling. Neither Resume nor Pause is offered then."""
+        if not self.connected:
+            return False
+        return (self.interrupted is not None or self.motion_stopped
+                or self.machine_profile.status.text(self.status) in INTERRUPTED_TERMS)
+
+    @property
+    def offers_pause(self) -> bool:
+        """True for a machine whose Pause the app offers during a job: the detected profile has
+        one, and it is a tested model on a tested firmware line (the CAMEO 4 on V5). Whether it
+        is sent now is pause_ok."""
+        detected = self.detected
+        return (detected is not None and detected.pause is not None
+                and self.support == Support.TESTED.value)
+
+    @property
+    def checking(self) -> bool:
+        """True while the query the open session waits for has had no answer for 7 s or more
+        ("Checking connection")."""
+        return self.connected and self.no_reply_s is not None
 
     @property
     def tools_problem(self) -> str | None:
@@ -1026,7 +1198,8 @@ class MachineMonitor:
         if not new.connected:
             wrong = new.wrong_model
             new = replace(new, tools=None, tools_reply=None, status=None, firmware=None,
-                          motion=None, profile=None,
+                          motion=None, profile=None, paused=False, resume_ok=False,
+                          pause_ok=False, no_reply_s=None, indication_age_s=None,
                           model=new.model if wrong else None,
                           support=new.support if wrong else None,
                           refused_reason=new.refused_reason if wrong else None,

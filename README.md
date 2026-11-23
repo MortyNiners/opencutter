@@ -54,10 +54,10 @@ America (see [Trademarks](#trademarks)).
 > CAMEO 4 (firmware V5.05) over Bluetooth and cut them, end to end; the built-in vinyl preset is
 > the setting of an earlier 1-inch test cut in Oracal 651 vinyl on that machine. The other models
 > it drives have not been tested on a real machine at all. Not yet tried on a real machine:
-> stopping a running cut with Cancel Job, and the other stops that [Safety](#safety) lists. Where
-> a design lands against the printed grid of the mat has not been measured yet: use the outline
-> preview and scrap material for your first jobs. OpenCutter moves a sharp blade: read
-> [Safety](#safety) before you send anything.
+> stopping a running cut with Cancel Job, the other stops that [Safety](#safety) lists, and
+> pausing and resuming a job (new in 0.1.1). Where a design lands against the printed grid of the
+> mat has not been measured yet: use the outline preview and scrap material for your first jobs.
+> OpenCutter moves a sharp blade: read [Safety](#safety) before you send anything.
 
 ## What it does
 
@@ -83,6 +83,10 @@ America (see [Trademarks](#trademarks)).
 - **Lets you cancel at any time.** Cancel Job is one click (or Esc) and always visible while a
   job runs; it sends the machine's stop command at once. What that command does is only partly
   known: see [Safety](#safety).
+- **Waits while the machine is paused.** The machine's Pause key pauses the job (on the CAMEO 4
+  with firmware V5, so does **Pause** in the app). OpenCutter then sends it nothing but status
+  queries until the machine goes on: press the Pause key again, or **Resume** in the app, and
+  the job goes on from where it stopped. See [Safety](#safety).
 - **Checks before anything moves.** The layout must be made for the connected machine, the
   detected tool must match the material's tool, and the design must lie inside the media and
   the cut area.
@@ -186,8 +190,8 @@ machine in your desktop's Bluetooth settings, with the Flatpak too: see [First r
 
 Each release on <https://github.com/MortyNiners/opencutter/releases> has a Flatpak bundle for
 64-bit PCs (x86_64), `opencutter-<version>.flatpak`, and a file `SHA256SUMS` with its checksum.
-The current release is [0.1.0](https://github.com/MortyNiners/opencutter/releases/tag/v0.1.0),
-with the bundle `opencutter-0.1.0.flatpak`. There is no bundle for ARM computers yet; on those,
+The current release is [0.1.1](https://github.com/MortyNiners/opencutter/releases/tag/v0.1.1),
+with the bundle `opencutter-0.1.1.flatpak`. There is no bundle for ARM computers yet; on those,
 OpenCutter can run [from source](#from-source). OpenCutter is not on Flathub, but the bundle runs
 on the GNOME 51 runtime from Flathub. You need Flatpak (see <https://flatpak.org/setup/>).
 
@@ -195,10 +199,10 @@ Download the bundle and `SHA256SUMS` into one folder, from the release page or w
 two commands below. In that folder, check the download and install the bundle for your user:
 
 ```sh
-curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.1.0/opencutter-0.1.0.flatpak
-curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.1.0/SHA256SUMS
-sha256sum --check SHA256SUMS                       # prints: opencutter-0.1.0.flatpak: OK
-flatpak install --user ./opencutter-0.1.0.flatpak
+curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.1.1/opencutter-0.1.1.flatpak
+curl -LO https://github.com/MortyNiners/opencutter/releases/download/v0.1.1/SHA256SUMS
+sha256sum --check SHA256SUMS                       # prints: opencutter-0.1.1.flatpak: OK
+flatpak install --user ./opencutter-0.1.1.flatpak
 ```
 
 `sha256sum --check` shows that the download is complete and unchanged; it does not show who
@@ -313,7 +317,7 @@ Then fetch a release and install it with pipx. `--system-site-packages` lets Ope
 system's PyGObject; pipx installs bleak, dbus-fast and svgelements from PyPI:
 
 ```sh
-git clone --branch v0.1.0 https://github.com/MortyNiners/opencutter.git
+git clone --branch v0.1.1 https://github.com/MortyNiners/opencutter.git
 pipx install --system-site-packages ./opencutter
 opencutter
 ```
@@ -409,7 +413,17 @@ folder and install that folder the same way, with `pipx install --force
    **Send**. Check the summary and press **Send** again.
 5. With "Preview outline before cutting" on, the tool traces the outer box of the design with
    the tool up and waits. Check that it stays over your media, then press **Cut**.
-6. **After the job.** The finished page has **Stop Machine**, which sends the machine's stop
+6. **While the job runs**, the job view shows each step and **Cancel Job**. To pause, press the
+   machine's Pause key, or (on the CAMEO 4 with firmware V5) **Pause** above Cancel Job while a
+   step runs: one click asks the machine once. While the machine is paused, the status pill says
+   "Paused", the job view says what to do, the time left stops, and OpenCutter sends it nothing
+   but status queries. Press the Pause key again, or **Resume** (shown only when the background
+   service would send it), and the job goes on from where it stopped; **Cancel Job** ends it
+   (see [Safety](#safety)). Neither command is ever sent again by itself: if the machine is
+   still paused 5 seconds after Resume, or did not pause after Pause, the job view says so. When
+   the machine has not answered for 7 seconds, the pill reads "Checking connection": OpenCutter
+   keeps waiting and sends nothing new.
+7. **After the job.** The finished page has **Stop Machine**, which sends the machine's stop
    command (see [Safety](#safety)), and **Cut Again** (after a job that did not finish:
    **Send Again…**). Before the next job, press **Unload** on the machine and load the mat
    again: after a job and after a lost connection, until the machine has reported an unloaded
@@ -457,9 +471,9 @@ the mat right before every job, and if you send a report, include that reply.
 OpenCutter moves a sharp blade, and not every stop has been tried yet. Not yet tried on a real
 machine: stopping a running cut with Cancel Job, Stop Machine after a job, a lost connection or a
 quit during a job, the stop the background service sends again when a lost connection comes back,
-and the machine's own Pause and Unload buttons during a job. Whether the machine's stop command
-also drops what was already sent to it is not known yet (see below). Keep the power button within
-reach.
+and, new in 0.1.1, the machine's own Pause and Unload keys during a job, Pause and Resume in the
+app, and Cancel Job while the machine is paused. What the machine's stop command does is known
+only from an analysis of its firmware (see below). Keep the power button within reach.
 
 - **Load the Cutting Mat right before every job.** The machine applies the mat setting only
   right after a load. If you loaded the mat before an earlier job, press Unload, then Load.
@@ -472,36 +486,50 @@ reach.
 - **Do not unload the mat during a job**, not even at the outline check: press Cancel instead.
   If the machine reports an unloaded mat after the job started, OpenCutter sends nothing more
   (a step under way ends with the stop command); load the mat and send the job again.
-- **Do not press the machine's Pause key during a job.** OpenCutter cannot pause or resume a
-  job: if the machine reports Paused, or cancels the job by itself, after the job started,
-  OpenCutter ends the job and sends its stop command (during a step at once; at the outline
-  check when you press Cut or Cancel), and the job cannot be continued from the app. Do not
-  press Pause again to continue, because what the machine still holds could then
-  run with no app watching: press **Unload** (or switch the machine off and on), check that the
-  tool is up, then load the mat and send the job again. How the Pause key behaves during a job
-  has not been tried on a real machine yet.
+- **The machine's Pause key pauses the job.** A short press of the Pause key during a job (or
+  **Pause** in the job view, on the CAMEO 4 with firmware V5) pauses it. From an analysis of the
+  CAMEO 4's firmware, the machine first finishes the moves it has already planned (at most
+  eight), then lifts the tool and keeps the rest of the job. While it is paused, OpenCutter
+  sends it nothing but status queries, for as long as it stays paused, and the status pill says
+  "Paused". To go on from where it stopped, press the Pause key again, or **Resume** in the job
+  view (on the CAMEO 4 with firmware V5): the tool may come down at once, so keep your hands
+  clear. To end the job, press **Cancel Job**: a paused machine ends the job about 5 seconds
+  after the stop. A long press of the Pause key, or **Unload**, while the machine is paused also
+  ends the job, and OpenCutter then ends it too. If the machine leaves Pause without going on
+  (it reports Ready with no Busy in between) after a pause in the middle of a cut, OpenCutter
+  cannot tell that from a cancel on the machine's panel: it ends the job with its stop command,
+  and the app says to press **Unload**, check that the tool is up, then load the mat and send
+  the job again. None of this has been tried on a real machine yet.
+- **A paused machine without an OpenCutter job is not continued.** When the machine is paused
+  but no job of OpenCutter waits for it (for example a job of another program), the Load sheet
+  says to press **Unload** (or switch the machine off and on). Do not press Pause to continue
+  such a job: what the machine still holds would then run with nothing watching it.
 - **Cancel Job** is one click (or Esc) and is always visible while a job runs. It sends the
-  machine's stop command at once; the job view says "Stopping…" until the background service
-  says whether the command went out, and Send waits until then. Closing the window during a
-  job asks first, then stops the machine (right after Cancel Job, it waits for that stop). If
-  the app ends without asking (it crashes or is killed, or the terminal that started it is
-  closed or gets Ctrl+C), the background service sends the stop command only when that happens
-  while a step runs; between steps, for example at the outline check, the machine has
-  already reported Ready and gets nothing. If the background service itself is killed at once
-  (for example with `flatpak kill`), nothing sends the stop: use the power button. Start the
-  app from your desktop rather than from a terminal you might close.
+  machine's stop command at once; the job view says "Stopping…" until the background service says
+  whether the command went out, and Send waits until then. While the machine is paused, Cancel Job
+  also waits for the machine to end the job: the job view says "Cancelling…" until it reports
+  Ready or Load Media (for up to 15 seconds), and if it still reports Paused then, the page says
+  so: press **Unload** on the machine. Closing the window during a job asks first, then stops the
+  machine (right after Cancel Job, it waits for that stop). If the app ends without asking (it
+  crashes or is killed, or the terminal that started it is closed or gets Ctrl+C), the background
+  service sends the stop command only when that happens while a step runs; between steps, for
+  example at the outline check, the machine has already reported Ready and gets nothing. If the
+  background service itself is killed at once (for example with `flatpak kill`), nothing sends the
+  stop: use the power button. Start the app from your desktop rather than from a terminal you
+  might close.
 - **Stop Machine** on the page after a job (and in the header bar after a job that did not
   finish) sends the machine's stop command, each time you press it, and reads back what the
   machine reports; without a connection it is disabled: use the power button. `opencutter stop`
   does the same from any terminal. If the machine still reports Busy after it, press the power
-  button.
+  button; if it still reports Paused, press Unload on the machine.
 - **What the stop command does is only partly known.** OpenCutter's stop is the machine's own
-  stop command (ESC 09), sent twice. From an analysis of the CAMEO 4's firmware, it lifts the
-  tool, stops the motors and clears the moves the machine has already queued. Whether it also
-  drops the commands that are still waiting in the machine's input buffer is not known, so
-  whether motion that was already sent can still run after a stop is not known either. After
-  any stop, do not press Pause: press Unload, or the power button if anything moves. Stopping a
-  running cut has not been tried on a real machine yet: keep the power button within reach.
+  stop command (ESC 09), sent twice. From an analysis of the CAMEO 4's firmware: while the
+  machine cuts, it first finishes the moves it has already planned (at most eight) with the
+  tool still down, then lifts the tool, stops and drops the commands it was sent but has not
+  run; a paused machine ends the job about 5 seconds after the stop, or later while commands
+  still reach it (OpenCutter sends it none, only status queries). Stopping a running cut has
+  not been tried on a real machine yet: keep the power button within reach. After a stop, press
+  Unload before the next job, or the power button if anything moves.
 - **The power button is the last resort.** If the machine keeps moving, or the app loses the
   Bluetooth link during a job, press the machine's power button: without the link no stop can
   reach the machine. When the link was lost while the machine may have been moving, the
@@ -637,13 +665,15 @@ opencutter serve           hold the Bluetooth link (the app starts this by itsel
 opencutter status          the machine, its model, its machine profile and its status
 opencutter info            status, tools, sensor, firmware, machine profile and test programs
 opencutter stop            stop the MACHINE now, from any terminal (the service keeps running)
+opencutter pause           pause the job that runs now, as the machine's Pause key does
+opencutter resume          go on with the paused job, from where it stopped
 opencutter service stop    stop the background service, which releases the machine
 opencutter service status  which background service runs: version, build, process, machine,
                            model
 opencutter dry-run         motion test with the tool always up (nothing touches the mat)
 opencutter pen-test        20 mm square with a Sketch Pen in Tool 1
 opencutter cut-test        cut one 1-inch grid square in adhesive vinyl (AutoBlade, Tool 1)
-opencutter --version       the version and build of this copy of OpenCutter
+opencutter --version       the version and build of this copy of OpenCutter, and its API
 ```
 
 `opencutter --help` ends with the machines this copy drives: the tested ones, the ones not yet
@@ -656,16 +686,35 @@ it shows `refused:` with the reason. The test programs (`dry-run`, `pen-test`, `
 for the CAMEO 4 only: on another model they say so and send nothing.
 
 The test programs explain what to prepare and run one step per Enter; Ctrl+C stops the
-machine. `opencutter stop` (and Ctrl+C in a test program) prints a second line with the status
-the machine reports after the stop (read for up to 3 s while it reports Busy or Cancelling),
-for example `the machine now reports status '0' = Ready.`; when it still reports Busy, it says
-to press the power button. A Ready status
-says what the machine reports, not that every move it was sent is gone. The service log (see
+machine. A step has no time limit: while the machine is paused it waits, and the program prints
+`.. the machine is paused (status '3'). Press its Pause key to go on, run 'opencutter resume' in
+another terminal, or press Ctrl+C to stop.`, then `.. the machine goes on (status '1').` when it
+does. It also says when the machine has not answered for 7 s or more (the service keeps
+waiting), and it sends the stop when the background service itself does not answer three pings
+in a row, 2 s apart.
+
+`opencutter pause` and `opencutter resume` act on the job or test program that runs now, from
+any terminal, and only on the CAMEO 4 with firmware V5. Each sends the machine's command once
+(ESC 07 to pause, ESC 08 to go on), and only after a fresh status read: Resume only while the
+running job waits on a paused machine, Pause only while it runs and the machine reports Ready
+or Busy. Nothing is ever sent again by itself. They print what was sent and what the machine
+reports afterwards, for example `Resume sent (ESC 08); the machine now reports 1 = Busy.`, or
+why nothing was sent (`Not sent: the machine is not paused (status '1' = Busy)`). While a job
+waits on a paused machine, `opencutter status` adds `Paused (the open job waits for the
+machine)`.
+
+`opencutter stop` (and Ctrl+C in a test program) prints a second line with the status the machine
+reports after the stop (read for up to 3 s while it reports Busy or Cancelling, and for up to 15 s
+once it reported Paused: a paused machine ends the job about 5 s after the stop), for example `the
+machine now reports status '0' = Ready.`; when it still reports Busy, it says to press the power
+button, and when it still reports Paused, to press Unload on the machine. A Ready status says what
+the machine reports, not that every move it was sent is gone. The service log (see
 [Troubleshooting](#troubleshooting)) shows the machine's status changes (Ready and Busy only
 during a job and for 30 s after a stop); `opencutter serve -v` logs those at any time, and also
-every write and every reply (a large log), for reports. A service you start by hand with
-`opencutter serve` keeps running until you stop it (`--idle-exit SECONDS` makes it end after that
-long without any request).
+every write and every reply, each with its time, every late reply it dropped and every status
+indication (a large log), for reports. A service you start by hand with `opencutter serve` keeps
+running until you stop it (`--idle-exit SECONDS` makes it end after that long without any
+request).
 
 In the Flatpak, each command starts with
 `flatpak run --command=opencutter io.github.mortyniners.OpenCutter` instead of `opencutter`, for
@@ -709,13 +758,18 @@ Both are refused while a job runs: cancel the job first (in the app, or with `op
 Neither sends anything to the machine. **Connect** in the connection menu starts the service
 again.
 
-**Which service runs?** `opencutter service status` shows its version, build, process id and
-machine, or "not running". In the Flatpak it shows no process id: the service runs in a sandbox
+**Which service runs?** `opencutter service status` shows its version, build, API, process id
+and machine, or "not running". In the Flatpak it shows no process id: the service runs in a sandbox
 of its own, which `flatpak ps` lists. After an update, the app replaces a service of an older
 version by itself (never during a job) and shows "Updating OpenCutter’s background service…"
 meanwhile. If it says "Another OpenCutter version is using the CAMEO 4" (or your machine's name),
 two different copies of OpenCutter are installed (for example a Flatpak and one from source):
 close the other one, then press **Try again**, or stop its service with `opencutter service stop`.
+OpenCutter 0.1.1 raised the API, the version of what the app and its service say to each other,
+from 1 to 2 (the pause and resume requests, the new status fields of the service's ping, steps
+that wait as long as the machine is paused): the app and the command line of 0.1.1 send no job
+or test program to a service of 0.1.0 (`opencutter stop` still reaches it), and the app replaces
+an idle older service as above.
 
 **"OpenCutter was updated while it was open."** OpenCutter was updated (or its files changed)
 while the app was running, so the app is older than the background service it would start.
@@ -748,15 +802,22 @@ app, stop its service (above) and open the app again.
 `~/.var/app/io.github.mortyniners.OpenCutter/.local/state/opencutter/daemon.log`, from source
 `~/.local/state/opencutter/daemon.log` (`$XDG_STATE_HOME/opencutter/daemon.log` when
 `$XDG_STATE_HOME` is set). The app names this file when the service stopped unexpectedly. Each
-start of the service writes a line naming its version, build, process id and date (in the
-Flatpak, the process id inside the service's own sandbox, usually 2); when the log grows past
-1 MiB, the previous one is kept as `daemon.log.1`. A line `--- <date> ---` starts each new day.
-The log shows the machine's status changes (`[status change] 3 = Paused`; Ready and Busy only
-during a job and for 30 s after a stop), each stop (`STOP (ESC 09 x2) sent, pair 1 on this
-link`) and what the machine reported after it, a stop kept for a machine whose link was lost
-(`a stop is owed to ...`, then `link back: sending the stop owed from the lost session: ...`),
-and why a job was refused. The app writes its own log, with any error it did not expect, to
-`app.log` in the same folder (when it is larger than 1 MiB at start, the previous one is kept
+start of the service writes a line naming its version, build, process id and date (in the Flatpak,
+the process id inside the service's own sandbox, usually 2); when the log grows past 1 MiB, the
+previous one is kept as `daemon.log.1`. A line `--- <date> ---` starts each new day. The log shows
+the machine's status changes (`[status change] 3 = Paused`; Ready and Busy only during a job and
+for 30 s after a stop), each stop (`STOP (ESC 09 x2) sent, pair 1 on this link`; a failed one says
+what each of its two writes did) and what the machine reported after it, a stop kept for a machine
+whose link was lost (`a stop is owed to ...`, then `link back: sending the stop owed from the lost
+session: ...`), and why a job was refused. During a job it also shows a pause and how it ended
+(`job: the machine paused (3) during '<step>', batch 2/5; waiting: nothing more is sent until it
+goes on`, `job: the machine goes on (1) after 42 s`, `job: resume asked: ESC 08 sent (the machine
+read 3)`, `job: cancel while paused: the machine read 3 for 5.3 s, then 4, then 0`), a reply that
+is late (`job: ESC 05 not answered for 7 s (...); asking again, nothing new is sent`, then `job:
+ESC 05 answered again after ...`), a write the machine did not acknowledge within 5 s (`... write
+not acknowledged after 5 s ...`) and every write it acknowledged only after 1 s or more (`slow
+Write Response: ... after 2.6 s`). The app writes its own log, with any error it did not expect,
+to `app.log` in the same folder (when it is larger than 1 MiB at start, the previous one is kept
 as `app.log.1`). Attach the relevant lines when you report a problem, without the machine's
 Bluetooth name and address (see [CONTRIBUTING.md](CONTRIBUTING.md#reporting-a-model)).
 
@@ -764,7 +825,14 @@ Bluetooth name and address (see [CONTRIBUTING.md](CONTRIBUTING.md#reporting-a-mo
 failed, while the machine may have been moving. Press the machine's power button if it moves.
 The background service sends the stop once when the same machine is connected again, and the
 app says so when it did. After any stop, press Unload on the machine, check that the tool is up
-and load the mat again before the next job; do not press Pause to continue.
+and load the mat again before the next job.
+
+**"Checking connection" during a job.** The machine has not answered OpenCutter's status query for
+7 seconds or more. OpenCutter keeps waiting, asks again every 7 seconds and sends nothing new; the
+job goes on as soon as an answer comes (0.1.0 ended the job when three status queries in a row
+went unanswered in time). The job view adds "It still reports its status" when the machine still
+sends its status changes by itself, a sign that the link is still up. If the machine moves when it
+should not, press Cancel Job or its power button.
 
 ## Reporting problems
 
@@ -884,6 +952,9 @@ by the service (see [Other Silhouette machines](#other-silhouette-machines)):
 .venv/bin/python tests/fake_daemon.py            # prints e.g. /tmp/oct-xxxx/app/io.github.mortyniners.OpenCutter/opencutter.sock
 OPENCUTTER_SOCKET=/tmp/oct-xxxx/app/io.github.mortyniners.OpenCutter/opencutter.sock .venv/bin/opencutter
 ```
+
+It also prints its process id: `kill -USR1 <pid>` presses the simulated machine's Pause key (a
+second time, it goes on), and `kill -USR2 <pid>` is a long press, which cancels a paused job.
 
 To build and try the Flatpak from your copy, see "Building the Flatpak locally" in
 [CONTRIBUTING.md](CONTRIBUTING.md).

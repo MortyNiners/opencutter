@@ -65,11 +65,11 @@ def test_build_ignores_editor_lock_files_and_hidden_names(tmp_path):
 def test_identity_and_same_build():
     me = ident.identity()
     assert me == {"version": __version__, "build": ident.BUILD, "api": ident.API_VERSION}
-    assert ident.API_VERSION == 1
+    assert ident.API_VERSION == 2
     ping = {"ok": True, "connected": True, **me, "pid": os.getpid()}
     assert ident.same_build(ping)
     assert not ident.same_build({**ping, "build": "0123456789ab"})
-    assert not ident.same_build({**ping, "api": 2})
+    assert not ident.same_build({**ping, "api": 3})
     assert not ident.same_build({**ping, "api": True})            # not an int
     older = {k: v for k, v in ping.items() if k not in ("version", "build", "api", "pid")}
     assert not ident.same_build(older) and not ident.same_build(None)

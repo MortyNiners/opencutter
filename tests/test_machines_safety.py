@@ -178,7 +178,9 @@ def test_esc_rules():
     assert {code for code in range(256) if safety.esc_query_allowed(code)} == {0x05}
     assert not safety.esc_query_allowed(True, CAMEO4) and not safety.esc_query_allowed("5")
     assert not (safety.NEVER_ESC & (safety.QUERY_ESC | {safety.STOP_ESC}))
-    assert {0x11, 0x12, 0x13, 0x07, 0x00} <= safety.NEVER_ESC
+    assert {0x11, 0x12, 0x13, 0x00} <= safety.NEVER_ESC
+    # ESC 07 and ESC 08 are the user's Pause and Resume: never a query or the stop either
+    assert not ({safety.PAUSE_ESC, safety.RESUME_ESC} & (safety.QUERY_ESC | {safety.STOP_ESC}))
     assert safety.is_stop_write(b"\x1b\x09") and not safety.is_stop_write(b"\x1b\x09\x1b\x09")
     assert not safety.is_stop_write(bytearray(b"\x1b\x09")) and not safety.is_stop_write(b"\x09")
 

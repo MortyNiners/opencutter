@@ -13,13 +13,14 @@ computer. OpenCutter's own stop needs the Bluetooth link, and what it does is on
 Safety problems:
 
 - **The machine moves when it should not**: before you pressed Send or Cut, after the job ended
-  or was cancelled, or with a tool down where it should be up.
+  or was cancelled, while it was paused and nobody pressed its Pause key or Resume, or with a
+  tool down where it should be up.
 - **A stop that does not stop**: the machine keeps moving after Cancel Job, Stop Machine or
   `opencutter stop`, or the app says a stop went out when it did not.
 - **A command sent that should not be**: a command from the never-send list
   ([docs/PROTOCOL.md](https://github.com/MortyNiners/opencutter/blob/main/docs/PROTOCOL.md),
-  section 6), a value outside the model's ranges, a job for another model than the one
-  connected, or a job that the app's checks should have refused.
+  section 6), a Pause or Resume that nobody asked for, a value outside the model's ranges, a job
+  for another model than the one connected, or a job that the app's checks should have refused.
 
 Security problems:
 

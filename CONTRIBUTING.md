@@ -242,11 +242,12 @@ new version.
 ## Hardware tests
 
 Only run OpenCutter on a real machine when you mean to, with the safety notes of the README in
-mind: load the mat right before the job, keep the outline preview on, use scrap material, keep
-your hands clear and the power button within reach, and do not press the machine's Pause key
-during a job (OpenCutter ends the job then; press Unload or the power button, never Pause
-again). If you report a result at <https://github.com/MortyNiners/opencutter/issues>, say what
-"Reporting a model" below lists.
+mind: load the mat right before the job, keep the outline preview on, use scrap material, and
+keep your hands clear and the power button within reach. The machine's Pause key pauses a job
+and OpenCutter waits; pressing it again (or Resume in the app) goes on from where it stopped,
+and Cancel Job ends the job. That comes from an analysis of the CAMEO 4's firmware and has not
+been tried on a real machine yet: try it with a pen first. If you report a result at
+<https://github.com/MortyNiners/opencutter/issues>, say what "Reporting a model" below lists.
 
 Every model OpenCutter knows has a support level (see "Machine profiles" in
 [ARCHITECTURE.md](ARCHITECTURE.md) and section 11 of [docs/PROTOCOL.md](docs/PROTOCOL.md)), and
@@ -289,11 +290,17 @@ what it does helps to move it up a level. Open an issue at
   Force, Speed, Acceleration, Passes), and what you measured: whether a 1-inch square came out as
   one inch, where it landed against the mat grid, and whether the cut went cleanly through.
 - **The stop**, if you tried it (with a hand on the power button): whether a running cut stopped
-  at once after Cancel Job or `opencutter stop`, whether anything moved afterwards, and the
-  service log's lines from the stop on (`STOP (ESC 09 x2) sent, ...`, `after the stop the
-  machine reports ...` and the `[status change]` lines). Whether the stop also drops what was
-  already sent to the machine is not known yet (docs/PROTOCOL.md, section 9). After a stop,
-  press Unload or the power button; do not press the machine's Pause key to continue.
+  at once after Cancel Job or `opencutter stop` or first finished a few moves with the tool
+  down, whether anything moved afterwards, and the service log's lines from the stop on
+  (`STOP (ESC 09 x2) sent, ...`, `after the stop the machine reports ...` and the
+  `[status change]` lines). What the stop does is known only from an analysis of the CAMEO 4's
+  firmware (docs/PROTOCOL.md, section 8). After a stop, press Unload or the power button.
+- **The Pause key**, if you tried it (with a pen first): whether the machine paused with the
+  tool up, whether it went on where it stopped when you pressed Pause again (or Resume in the
+  app), with no gap and no doubled line, how long the machine reported Paused after Cancel Job
+  (the log's `cancel while paused: ...` line), what a long press of Pause and Unload did while
+  paused, and the service log's lines from the pause on (`job: the machine paused ...`, `job:
+  the machine goes on ...`).
 
 Leave out personal data: `opencutter status` and the service log show the machine's Bluetooth
 name, which holds its serial number, and its Bluetooth address. Replace both before you post.

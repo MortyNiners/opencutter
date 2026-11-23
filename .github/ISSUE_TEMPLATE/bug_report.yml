@@ -26,7 +26,7 @@ body:
       description: >-
         The output of `opencutter --version`, which also names the build. The app shows the
         version under main menu → About OpenCutter.
-      placeholder: opencutter 0.1.0 (build 1a2b3c4d5e6f, api 1)
+      placeholder: opencutter 0.1.1 (build 1a2b3c4d5e6f, api 2)
     validations:
       required: true
 

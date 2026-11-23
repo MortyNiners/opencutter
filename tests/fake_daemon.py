@@ -21,12 +21,20 @@ one; for an UNTESTED model its ping says "untested" (with "machine": true). `--f
 itself: a model OpenCutter only recognizes (`--fg "CAMEO 3 V1.60    "`) or does not know
 (`--fg "CAMEO 5 PRO V1.07"`) is refused by the daemon, and nothing more is sent to it.
 Ctrl+C or SIGTERM ends it.
+
+The simulated machine's panel: SIGUSR1 is a short press of its Pause key (it pauses a running
+or idle machine, or goes on when paused), SIGUSR2 a long press (the cancel of a paused job).
+`--cancel-seconds` sets how long a paused machine with motion left reports Paused after a
+stop, before Cancelling (5 s, as the firmware analysis of the CAMEO 4 says):
+
+    kill -USR1 <pid>      # Pause pressed on the machine; again to go on
 """
 from __future__ import annotations
 
 import argparse
 import asyncio
 import os
+import signal
 import sys
 
 import pytest
@@ -71,6 +79,9 @@ def main() -> None:
     ap.add_argument("--fg", default=None,
                     help="the FG reply (the model): the tested CAMEO 4's, or --machine's, by "
                          "default; a model OpenCutter does not drive is refused by the daemon")
+    ap.add_argument("--cancel-seconds", type=float, default=stubs.FakeClient.cancel_quiet_s,
+                    help="after a stop, how long a paused machine with motion left reports "
+                         "Paused before Cancelling")
     args = ap.parse_args()
     with pytest.MonkeyPatch.context() as mp:
         h = stubs.DaemonHarness(mp)
@@ -87,9 +98,20 @@ def main() -> None:
             h.fake_cls.u_by_tg = {}
         if args.fg is not None:
             h.fake_cls.fg_reply = args.fg
+        h.fake_cls.cancel_quiet_s = args.cancel_seconds
+
+        def panel(press: str) -> None:
+            """A key press on the simulated machine's panel (SIGUSR1, SIGUSR2)."""
+            if h.fake is not None and h.fake.is_connected:
+                getattr(h.fake, press)()
 
         async def until_stopped(h: stubs.DaemonHarness) -> None:
+            loop = asyncio.get_running_loop()
+            loop.add_signal_handler(signal.SIGUSR1, panel, "press_pause")
+            loop.add_signal_handler(signal.SIGUSR2, panel, "hold_pause")
             print(h.socket, flush=True)
+            print(f"pid {os.getpid()}: SIGUSR1 = Pause key, SIGUSR2 = a long press of it",
+                  flush=True)
             await asyncio.wait({h.task})             # SIGTERM ends serve()
         try:
             h.run(until_stopped, timeout=None, until=lambda ping: ping.get("connected")

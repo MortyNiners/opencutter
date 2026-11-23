@@ -79,12 +79,12 @@ def test_info_and_query_ops(harness):
         f = await h.fresh(tools=" 2, 4")
         info = await h.client().info()
         assert info == {"ok": True, "status": "0", "tools": " 2, 4", "firmware": "CAMEO 4 V5.05"}
-        assert f.writes == [ESC05, ESC15, b"FG\x03"]
+        assert f.writes == [ESC05, ESC15]          # FG: its reply from the model gate
         bad = (await h.raw([{"op": "query", "cmd": "TB72,0,0"}]))[2][0]
         assert not bad["ok"] and "refused" in bad["error"]
         assert (await h.raw([{"op": "esc", "code": 0x12}]))[2][0]["ok"] is False
         assert (await h.raw([{"op": "nope"}]))[2][0]["ok"] is False
-        assert f.writes == [ESC05, ESC15, b"FG\x03"]
+        assert f.writes == [ESC05, ESC15]
     harness.run(scenario)
 
 

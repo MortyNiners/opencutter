@@ -30,9 +30,12 @@ window.
 
 ESC: before the model gate only ESC 05 (and the text query FG) may be sent. After the gate the
 profile's queries, always within ESC 05, 10, 15 and 16, each alone in a 2-byte write. The stop
-is ESC 09, twice, each alone. Every other ESC code is refused: 0x11, 0x12 and 0x13 (firmware
-download), 0x00 (nudge), 0x07 (pause) and all the rest. ESC 0x11 is never used to identify a
-machine: FG decides.
+is ESC 09, twice, each alone. ESC 07 (pause) and ESC 08 (resume) are never a query, never part
+of a motion write and never the stop: each may go out only alone, once, as the Pause or Resume
+the user asked for, on a profile that lists exactly that write (MachineProfile.pause, resume;
+the device link sends it only on a TESTED profile and firmware line). Every other ESC code is
+refused: 0x11, 0x12 and 0x13 (firmware download), 0x00 (nudge) and all the rest. ESC 0x11 is
+never used to identify a machine: FG decides.
 
 Text queries: a profile's read-only getters are always within READ_ONLY_QUERIES, the getters
 that only report. A motion or setting command (M, D, TG, TF, H, ...) can never become a query.
@@ -93,8 +96,14 @@ REQUIRED_ESC = frozenset({0x05, 0x15})            # status and the tool check
 STOP_ESC = 0x09
 STOP_WRITE = bytes([ESC, STOP_ESC])
 STOP_WRITES = 2                  # ESC 09 twice: the second covers the firmware's latch
-NEVER_ESC = frozenset({0x00, 0x07, 0x08, 0x11, 0x12, 0x13})   # named in refusals; every code
-                                                                # outside the rules is refused too
+NEVER_ESC = frozenset({0x00, 0x11, 0x12, 0x13})   # named in refusals; every code outside
+                                                  # the rules is refused too
+# The user's explicit Pause and Resume: each one write alone, never a query, never in a motion
+# write, never the stop, never sent by OpenCutter on its own (device.link.SafeLink.pause/resume)
+PAUSE_ESC = 0x07
+RESUME_ESC = 0x08
+PAUSE_WRITE = bytes([ESC, PAUSE_ESC])
+RESUME_WRITE = bytes([ESC, RESUME_ESC])
 PRE_GATE_ESC = frozenset({0x05})
 PRE_GATE_TEXT = frozenset({b"FG"})
 # The text queries any profile may allow after the gate: getters that only report and move
@@ -259,6 +268,16 @@ def is_stop_write(data: object) -> bool:
     return type(data) is bytes and data == STOP_WRITE
 
 
+def is_pause_write(data: object) -> bool:
+    """True only for ESC 07, alone: the user's explicit Pause."""
+    return type(data) is bytes and data == PAUSE_WRITE
+
+
+def is_resume_write(data: object) -> bool:
+    """True only for ESC 08, alone: the user's explicit Resume."""
+    return type(data) is bytes and data == RESUME_WRITE
+
+
 # --- the profile self-check --------------------------------------------------------------------
 def check_entry(entry: object, pinned: Iterable[bytes] = ()) -> None:
     """check_profile() for a MachineProfile, check_recognized() for a RecognizedModel; refuse
@@ -409,6 +428,10 @@ def _profile_problems(p: MachineProfile, pinned: tuple[bytes, ...]) -> Iterator[
     gap = p.stop.gap_s
     if not (type(gap) in (int, float) and math.isfinite(gap) and 0 < gap <= 2):
         yield "the stop gap must be 0..2 s"
+    if p.pause is not None and not is_pause_write(p.pause):
+        yield "the pause must be None or ESC 07 alone"
+    if p.resume is not None and not is_resume_write(p.resume):
+        yield "the resume must be None or ESC 08 alone"
     if p.unit_mm != UNIT_MM:
         yield f"the plotter unit must be {UNIT_MM} mm"
     if type(p.max_write) is not int or not 20 <= p.max_write <= FIRMWARE_WRITE_CAP:

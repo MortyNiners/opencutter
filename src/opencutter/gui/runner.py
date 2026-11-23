@@ -21,13 +21,32 @@ machine profile is a cutting mat, so the wording is the same for all of them.
 
 Stopping. Cancel ends the run at once (Outcome.CANCELLED), but the stop's reply may come later
 (up to the client's STOP_TIMEOUT): ``stop_pending`` is True until it arrives, then
-``stop_failed`` says whether it got through, and the runner notifies again. A cancel at the
-outline gate whose stop could not be sent because the service has no link to the machine is
-not a failed stop: the machine waited there with the tool up after the preview had ended, and
-nothing can be sent without the link (``link_lost``). A step that failed with the service's
-link-loss text sets ``link_lost`` too. ``stopped_elsewhere()`` ends a run that waits at the
-gate when another client (``opencutter stop``) stopped the session. ``refused_before_start``:
-the session was refused before any step, so nothing was sent.
+``stop_failed`` says whether it got through, and the runner notifies again. A Cancel while the
+machine is paused (``cancel(check=True)``, ``paused_cancel``) asks the service for the status
+read-back after its stop: a paused machine ends the job about 5 s after the stop, so the reply
+comes once the machine reads Ready or Load Media (or after the service's read-back time), and
+``still_paused`` says that it still read Paused then (``stop_seconds`` after the Cancel). A
+plain Cancel asks for no read-back, as before. A cancel at the outline gate whose stop could
+not be sent because the service has no link to the machine is not a failed stop: the machine
+waited there with the tool up after the preview had ended, and nothing can be sent without the
+link (``link_lost``). A step that failed with the service's link-loss text sets ``link_lost``
+too. ``stopped_elsewhere()`` ends a run that waits at the gate when another client
+(``opencutter stop``) stopped the session. ``refused_before_start``: the session was refused
+before any step, so nothing was sent.
+
+The machine's Pause. A step waits with no time limit while the machine is paused (the service
+sends it nothing but ESC 05 until it goes on): the runner never gives up on a step by itself
+(``session.step(index, timeout=None)``), and Cancel Job stays available. The window tells the
+runner whether the machine is paused (``set_paused``): the progress estimate stops while it is
+(``step_progress``, ``progress``, ``seconds_left``), and the elapsed time goes on. ``resume()``
+and ``pause()`` ask the service for the machine's Resume or Pause (its resume and pause ops,
+one ESC 08 or ESC 07, sent only for the user's click, never repeated); they do not touch the
+session, and one of them at a time (``command_pending``). ``command_note`` then says what came
+of it when the view should say so: not sent and why, maybe not received, or that the machine
+is still paused RESUME_SECONDS after Resume (NOT_RESUMED) or has not reported Paused yet after
+Pause (NOT_PAUSED: it pauses only after the moves it already planned, so it may still pause).
+The note goes once the machine's paused state changes, and when the next step starts. Nothing
+is ever sent again by itself.
 
 Activity. ``activity(runner, verb)`` names what the current step does for the pill and the
 status bar: 'Preparing' (header, unit check, tool setup), 'Previewing outline', the verb only on
@@ -43,11 +62,12 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import Enum
 
+from opencutter.device.protocol import PAUSED
 from opencutter.identity import same_build
 from opencutter.job.spec import DEFAULT_MACHINE
 from opencutter.machines import CAMEO4, MachineProfile, Mat, enabled_profile
 
-from .machine import OTHER_VERSION_REFUSED, shown_model
+from .machine import OTHER_VERSION_REFUSED, service_text, shown_model
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +83,50 @@ STOPPED_OUTSIDE = ("Stopped from outside the app (for example with the opencutte
 PREPARING = "Preparing"
 PREVIEWING = "Previewing outline"
 RETURNING = "Returning to origin"
+# Resume and Pause (the service's resume and pause ops): what came of a click
+RESUME_SECONDS = 5.0        # still paused this long after Resume: NOT_RESUMED (never sent again)
+NOT_RESUMED = "The machine is still paused. Press its Pause key to go on, or Cancel Job."
+# The Pause went out, but the machine did not read Paused within the service's few seconds of
+# reads: it pauses only once it has run the moves it already planned (which can take longer),
+# so it may still pause. Never advise its Pause key here: a press after it paused would resume.
+NOT_PAUSED = ("The machine has not reported Paused yet. It pauses only after the few moves it "
+              "has already planned, so it may still pause. If it keeps cutting, press Pause "
+              "here again, or Cancel Job to end the job.")
+COMMAND_NAMES = {"resume": "Resume", "pause": "Pause"}
+COMMAND_REFUSED = "{what} was not sent: {reason}."
+COMMAND_UNKNOWN = ("{what} may not have reached the machine ({reason}). OpenCutter does not send "
+                   "it again.")
+COMMAND_WRITE_FAILED = "the write failed: {error}"    # COMMAND_UNKNOWN's reason for a write error
+COMMAND_BUSY = "a Resume or Pause is already being sent"
+
+
+def _unknown_reason(reply: dict) -> str:
+    """Why a Resume or Pause may not have reached the machine: the write's own error when the
+    service reports one (its "error" text already says that nothing is sent again, which
+    COMMAND_UNKNOWN says too), else the reply's "error" (e.g. no answer from the service)."""
+    errors = reply.get("errors")
+    if reply.get("sent") is True and isinstance(errors, list) and errors:
+        error = service_text(errors[0])
+        if error:
+            return COMMAND_WRITE_FAILED.format(error=error.rstrip("."))
+    return (service_text(reply.get("error")) or "no answer").rstrip(".")
+
+
+def command_note(kind: str, reply: dict, still_paused: bool | None = None) -> str | None:
+    """What the job view says after the service's answer to Resume or Pause (`kind`), or None
+    when the paused state it shows says it all. `reply` is DaemonClient.resume()/pause()'s;
+    `still_paused`: whether the machine still reads paused now (Resume: NOT_RESUMED when it
+    does; Pause: NOT_PAUSED when it does not); None takes the reply's "paused"."""
+    what = COMMAND_NAMES.get(kind, kind)
+    if not reply.get("ok"):
+        if reply.get("sent") is False:
+            reason = service_text(reply.get("error")) or "no reason given"
+            return COMMAND_REFUSED.format(what=what, reason=reason.rstrip("."))
+        return COMMAND_UNKNOWN.format(what=what, reason=_unknown_reason(reply))
+    paused = reply.get("paused") is True if still_paused is None else still_paused
+    if kind == "resume":
+        return NOT_RESUMED if paused else None
+    return None if paused else NOT_PAUSED
 
 
 class StepState(Enum):
@@ -95,6 +159,7 @@ class RunStep:
     state: StepState = StepState.TODO
     started_at: float | None = None
     seconds: float | None = None
+    paused_before: float = 0.0     # the run's paused seconds when the step started
 
 
 def reload_hint(mat: Mat | None = None, profile: MachineProfile = CAMEO4) -> str:
@@ -211,13 +276,22 @@ class JobRunner:
         self.units_note: str | None = None   # the cut area could not be checked (units_note())
         self.started_at: float | None = None
         self.finished_at: float | None = None
+        self.machine_paused = False    # the machine is paused (set_paused, from the window)
+        self.command_pending: str | None = None   # "resume" or "pause" while its op runs
+        self.command_note: str | None = None      # what came of the last one (command_note())
+        self.paused_cancel = False     # Cancel came while paused: its stop asked for the read-back
+        self.still_paused = False      # ... and the machine still read Paused at its end
+        self.stop_seconds: float | None = None    # from Cancel to the stop's reply
         self._on_update = on_update or (lambda runner: None)
         self._clock = clock
         self._task: asyncio.Task | None = None
         self._gate: asyncio.Future | None = None
         self._cancelling = False
         self._stop: asyncio.Future | None = None       # Cancel's stop (see cancel())
+        self._stop_asked_at: float | None = None
         self._ended = asyncio.Event()                  # set once the run has an outcome
+        self._paused_since: float | None = None        # the machine paused at (set_paused)
+        self._paused_total = 0.0                       # seconds paused before that
 
     # --- running ---------------------------------------------------------------------
     async def run_job(self, spec: dict) -> Outcome:
@@ -252,9 +326,12 @@ class JobRunner:
                         return self._finish(Outcome.CANCELLED,
                                             STOPPED_OUTSIDE if self.stopped_outside else None)
                     step.state, step.started_at = StepState.ACTIVE, self._clock()
+                    step.paused_before = self.paused_seconds()
+                    self.command_note = None    # about the step before (a refusal, no pause)
                     self._notify()
                     # no client-side timeout: a long cut must never be cut short by the GUI
-                    # (dropping the session would stop the machine); Cancel Job stays available
+                    # (dropping the session would stop the machine), and a step waits with no
+                    # limit while the machine is paused; Cancel Job stays available
                     result = await session.step(index, timeout=None)
                     if not result.get("ok"):
                         step.state = StepState.FAILED
@@ -329,17 +406,21 @@ class JobRunner:
             self.stopped_outside = True
             self._gate.set_result(False)
 
-    async def cancel(self) -> dict:
+    async def cancel(self, check: bool = False) -> dict:
         """Cancel Job: send the stop right away and drop the session. Returns the stop reply
         (the same one to every caller while it is pending, and after it came); {"ok": True}
-        once the run had ended without a Cancel."""
+        once the run had ended without a Cancel. `check` (the machine is paused): the stop asks
+        for the service's status read-back, so the reply comes once the machine ended the job
+        (``paused_cancel``, ``still_paused``)."""
         if self._stop is not None:
             return await asyncio.shield(self._stop)
         if self.outcome is not Outcome.RUNNING:
             return {"ok": True}
         self._cancelling = True
         self.cancelled_at_gate = self.holding
+        self.paused_cancel = check
         self.stop_pending = True
+        self._stop_asked_at = self._clock()
         self._stop = asyncio.ensure_future(self._send_stop())
         if self._task is not None and not self._task.done():
             self._task.cancel()
@@ -347,11 +428,16 @@ class JobRunner:
 
     async def _send_stop(self) -> dict:
         try:
-            reply = await self.client.stop()
+            reply = await (self.client.stop(check=True) if self.paused_cancel
+                           else self.client.stop())
         except Exception as e:  # noqa: BLE001 - DaemonClient.stop never raises; a fake might
             reply = {"ok": False, "error": f"{type(e).__name__}: {e}"}
         if not isinstance(reply, dict):
             reply = {"ok": False, "error": "no answer"}
+        self.stop_seconds = self._clock() - self._stop_asked_at
+        if reply.get("ok") and self.paused_cancel:
+            profile = enabled_profile(self.summary.get("machine")) or CAMEO4
+            self.still_paused = profile.status.text(reply.get("status_after")) == PAUSED
         if not reply.get("ok"):
             if self.cancelled_at_gate and await self._link_down():
                 # at the gate the preview had ended with Ready and nothing was sent since:
@@ -391,6 +477,86 @@ class JobRunner:
             pass
         return self.outcome is not Outcome.RUNNING
 
+    # --- the machine's Pause ----------------------------------------------------------
+    def set_paused(self, paused: bool) -> None:
+        """The machine is paused, or no longer (the window, from the service's ping): the
+        progress estimate stops while it is. A change also ends the note of the last Resume or
+        Pause (it was about the state before)."""
+        paused = bool(paused)
+        if paused == self.machine_paused:
+            return
+        now = self._clock()
+        if paused:
+            self._paused_since = now
+        elif self._paused_since is not None:
+            self._paused_total += now - self._paused_since
+            self._paused_since = None
+        self.machine_paused = paused
+        self.command_note = None
+        self._notify()
+
+    def paused_seconds(self) -> float:
+        """Seconds the machine was paused during this run so far."""
+        if self._paused_since is None:
+            return self._paused_total
+        return self._paused_total + (self._clock() - self._paused_since)
+
+    async def resume(self) -> dict:
+        """The machine's Resume, for the user's click: the service's resume op (one ESC 08,
+        sent only while the session waits on a paused machine whose Resume was tested). Does
+        not touch the session. While the op runs ``command_pending`` is "resume"; a reply that
+        says the machine is still paused waits until RESUME_SECONDS after the click before
+        NOT_RESUMED is shown, and nothing is sent again by itself. Returns the reply."""
+        return await self._command("resume")
+
+    async def pause(self) -> dict:
+        """The machine's Pause, for the user's click: the service's pause op (one ESC 07, sent
+        only while a job of ours runs and the machine reads Ready or Busy). The view shows the
+        machine paused from the service's state, not from the click. See resume()."""
+        return await self._command("pause")
+
+    async def _command(self, kind: str) -> dict:
+        """Ask the service for `kind` once; nothing at all while another one runs, after the
+        run ended or once Cancel was pressed (a refusal of our own, nothing sent)."""
+        if self.command_pending is not None:
+            return {"ok": False, "sent": False, "error": COMMAND_BUSY}
+        if self.outcome is not Outcome.RUNNING or self._cancelling:
+            return {"ok": False, "sent": False, "error": "no job is running"}
+        call = getattr(self.client, kind, None)
+        self.command_pending, self.command_note = kind, None
+        asked = self._clock()
+        self._notify()
+        try:
+            if call is None:
+                reply = {"ok": False, "sent": False,
+                         "error": "this background service cannot do it"}
+            else:
+                reply = await call()
+            if not isinstance(reply, dict):
+                reply = {"ok": False, "sent": None, "error": "no answer"}
+            if kind == "resume" and reply.get("ok") and reply.get("paused") is True:
+                rest = RESUME_SECONDS - (self._clock() - asked)
+                if rest > 0:                       # still "Resuming…" until RESUME_SECONDS
+                    await asyncio.sleep(rest)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001 - DaemonClient's ops never raise; a fake might
+            reply = {"ok": False, "sent": None, "error": f"{type(e).__name__}: {e}"}
+        finally:
+            self.command_pending = None
+        if self.outcome is Outcome.RUNNING and not self._cancelling:
+            still = None
+            if reply.get("ok"):
+                # a pause the window has seen since counts: the machine went on only when the
+                # window no longer shows it paused (Resume), and it paused when either says so
+                # (Pause: a poll may have seen it pause after the service's answer was made)
+                paused = reply.get("paused") is True
+                still = (paused and self.machine_paused if kind == "resume"
+                         else paused or self.machine_paused)
+            self.command_note = command_note(kind, reply, still)
+        self._notify()
+        return reply
+
     @property
     def started(self) -> bool:
         """True once a step went to the machine (the machine may have moved)."""
@@ -409,12 +575,16 @@ class JobRunner:
         return (self.finished_at or self._clock()) - self.started_at
 
     def step_progress(self, step: RunStep) -> float | None:
-        """Estimated fraction done of an active step, from the plan's time estimate."""
+        """Estimated fraction done of an active step, from the plan's time estimate; the time
+        the machine was paused during the step does not count."""
         total = estimated_seconds(self.summary)
         if step.state is not StepState.ACTIVE or step.started_at is None or not total:
             return None
         share = total * step.writes / max(1, sum(s.writes for s in self.steps))
-        return min(0.95, (self._clock() - step.started_at) / share) if share > 0 else None
+        # while paused the clock of the estimate stands at the pause's start
+        now = self._paused_since if self._paused_since is not None else self._clock()
+        working = (now - step.started_at) - (self._paused_total - step.paused_before)
+        return min(0.95, max(0.0, working) / share) if share > 0 else None
 
     def progress(self) -> float:
         """Overall fraction done, weighted by each step's number of writes."""

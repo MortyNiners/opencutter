@@ -20,12 +20,22 @@ profile's grammar. ``machine_pings`` counts the machine pings. A job session ref
 made for another machine than the connected one, as the service does, before anything else.
 
 The stop fields ({"op": "ping", "stop": true}: ``ping_stop()``, or ``ping_machine(stop=True)``)
-come from ``stop_owed``, ``owed_stops_sent``, ``motion_stopped``, ``interrupted`` and
-``load_seen``; ``set_status`` to the load digit '2' counts in ``load_seen`` as the service does.
-``stop(check=True)`` adds "status_after" and "still_busy" from the status, like the service's
-checked stop; ``stop_gate`` (an asyncio.Event) holds every stop reply until it is set, and
-``stop_checks`` records the check flag of every stop. A job session's steps carry "tool_down"
-as the service computes it.
+come from ``stop_owed``, ``owed_stops_sent``, ``motion_stopped``, ``interrupted``,
+``load_seen``, ``paused``, ``resume_ok``, ``pause_ok``, ``no_reply_s``, ``indication_age_s``
+and ``stop_check`` (daemon.PING_STOP_KEYS); ``set_status`` to the load digit '2' counts in
+``load_seen`` as the service does. ``stop(check=True)`` adds "status_after" and "still_busy"
+from the status, like the service's checked stop (``stop_status_after``, when set, is the status
+the machine reads once the checked stop is answered, as a paused machine that ends the job;
+the session is then no longer paused); ``stop_gate`` (an asyncio.Event) holds every stop reply
+until it is set, and ``stop_checks`` records the check flag of every stop. A job session's
+steps carry "tool_down" as the service computes it.
+
+The machine's Pause (API 2): ``pause_machine()`` is a pause on the machine during the job
+(status '3', paused, Resume possible), ``go_on()`` its end (status '1'). ``resume()`` and
+``pause()`` are the service's resume and pause ops: each call is recorded in ``commands``,
+waits for ``command_gate`` when set, and answers ``resume_reply``/``pause_reply`` when set;
+otherwise it refuses as the service does (not paused, already paused: nothing sent), or the
+machine obeys (go_on(), pause_machine()) unless ``obeys`` is False (sent, but the state stays).
 
 Its ping is that of a service of this very build (``identity`` is merged into every reply; a
 "build" in ``ping_reply`` wins, ``identity = {}`` gives an older service's reply). An older
@@ -166,6 +176,18 @@ class FakeDaemonClient:
         self.motion_stopped = False
         self.interrupted: str | None = None
         self.load_seen = 0
+        self.paused = False                        # the pause fields of the stop ping
+        self.resume_ok = False
+        self.pause_ok = False
+        self.no_reply_s: float | None = None
+        self.indication_age_s: float | None = None
+        self.stop_check: dict | None = None
+        self.stop_status_after: str | None = None  # the status once a checked stop is answered
+        self.commands: list[str] = []              # every resume() and pause() call, in order
+        self.command_gate: asyncio.Event | None = None   # they wait for it when set
+        self.resume_reply: dict | None = None      # None: as the service (see the module doc)
+        self.pause_reply: dict | None = None
+        self.obeys = True                          # the machine follows Resume and Pause
         self.opened: list[dict] = []
         self.open_reply: dict | None = None
         self.steps_started: list[int] = []
@@ -227,7 +249,53 @@ class FakeDaemonClient:
         """What {"op": "ping", "stop": true} adds (daemon.PING_STOP_KEYS)."""
         return {"stop_owed": self.stop_owed, "owed_stops_sent": self.owed_stops_sent,
                 "motion_stopped": self.motion_stopped, "interrupted": self.interrupted,
-                "load_seen": self.load_seen}
+                "load_seen": self.load_seen, "paused": self.paused, "resume_ok": self.resume_ok,
+                "pause_ok": self.pause_ok, "no_reply_s": self.no_reply_s,
+                "indication_age_s": self.indication_age_s,
+                "stop_check": dict(self.stop_check) if self.stop_check else None}
+
+    def pause_machine(self) -> None:
+        """A pause on the machine during the job: status '3', the session waits, Resume would
+        be sent, Pause not."""
+        self.set_status("3")
+        self.paused, self.resume_ok, self.pause_ok = True, True, False
+
+    def go_on(self) -> None:
+        """The machine goes on: status '1', nothing paused, Pause would be sent."""
+        self.set_status("1")
+        self.paused, self.resume_ok, self.pause_ok = False, False, True
+
+    def _status(self) -> str | None:
+        return (self.ping_reply or {}).get("status")
+
+    async def resume(self) -> dict:
+        """The service's resume op (see the module doc)."""
+        return await self._command("resume")
+
+    async def pause(self) -> dict:
+        """The service's pause op (see the module doc)."""
+        return await self._command("pause")
+
+    async def _command(self, kind: str) -> dict:
+        """The resume or pause op (`kind`): see the module doc."""
+        self.commands.append(kind)
+        if self.command_gate is not None:
+            await self.command_gate.wait()
+        set_reply = self.resume_reply if kind == "resume" else self.pause_reply
+        if set_reply is not None:
+            return dict(set_reply)
+        before = self._status()
+        allowed = self.resume_ok if kind == "resume" else self.pause_ok
+        if not allowed:
+            error = (f"the machine is not paused (status {before!r})" if kind == "resume"
+                     else "the machine is already paused" if self.paused
+                     else "the job has not started yet")
+            return {"ok": False, "sent": False, "status_before": None, "status_after": before,
+                    "paused": self.paused, "errors": [], "error": error}
+        if self.obeys:
+            self.go_on() if kind == "resume" else self.pause_machine()
+        return {"ok": True, "sent": True, "status_before": before,
+                "status_after": self._status(), "paused": self.paused, "errors": []}
 
     @property
     def socket_path(self) -> str:
@@ -270,6 +338,9 @@ class FakeDaemonClient:
             await self.stop_gate.wait()
         reply = self.stop_reply
         if check and reply.get("ok"):
+            if self.stop_status_after is not None:
+                self.set_status(self.stop_status_after)
+                self.paused = self.resume_ok = self.pause_ok = False
             status = (self.ping_reply or {}).get("status")
             reply = {**reply, "status_after": status,
                      "still_busy": None if status is None else status == "1"}

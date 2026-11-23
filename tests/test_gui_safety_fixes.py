@@ -559,7 +559,8 @@ def test_a_paused_machine_shows_paused_not_a_percentage(make, run, svg):
         await _until(lambda: cut in client.steps_started)
         client.set_status("3")
         await win.monitor.refresh()
-        assert win.pill.text == "Paused" and win.status_label.get_text() == "Status: Paused · machine: Paused"
+        assert (win.pill.text == "Paused"
+                and win.status_label.get_text() == "Status: Paused on the machine · machine: Paused")
         client.set_status("0")
         client.interrupted = "4"                               # what the session saw
         await win.monitor.refresh()

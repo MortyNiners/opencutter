@@ -39,8 +39,11 @@ from .protocol import (LEGACY_SOCKET_NAME, SOCKET_NAME, flatpak_app_id, in_flatp
 
 PING_TIMEOUT = 3.0
 REQUEST_TIMEOUT = 10.0
-STOP_TIMEOUT = 20.0       # > the daemon's two stop writes of up to 2 s each, plus a joined one,
-                          # plus its status read afterwards (check=True: up to about 6 s)
+STOP_TIMEOUT = 30.0       # > the daemon's two stop writes of up to 2 s each, plus a joined one,
+                          # plus its status read afterwards (check=True: up to 15 s while the
+                          # machine reads Paused, each read waiting up to 4 s for the query lock)
+COMMAND_TIMEOUT = 25.0    # the resume and pause ops: the query lock (3 s), ESC 05 (3 s), the
+                          # write (2 s), its quiet window and up to 5 s of reads afterwards
 OPEN_TIMEOUT = 60.0       # planning a large job, three queries and the MTU read
 SPAWN_WAIT = 15.0         # > the daemon's startup look at a link held elsewhere (4 x 2 s)
 STREAM_LIMIT = 64 << 20   # a JobSpec line can be large
@@ -553,7 +556,8 @@ class DaemonClient:
         self._helper: subprocess.Popen | None = None
 
     async def request(self, req: dict, timeout: float = REQUEST_TIMEOUT) -> dict:
-        """Send one one-shot request (ping, esc, query, info, stop) and return the answer.
+        """Send one one-shot request (ping, esc, query, info, stop, resume, pause) and return
+        the answer.
         Raises DaemonError when the daemon cannot be reached or does not answer."""
         reader, writer = await _connect(self.socket_path)
         try:
@@ -611,13 +615,35 @@ class DaemonClient:
                              when it goes up)
           "motion_stopped"   the open session got a stop request (from this app or another
                              client, such as `opencutter stop`): its next step is refused
-          "interrupted"      the Paused or Cancelling status digit the open session saw after
-                             its first write, or None: the job ends with the stop
+          "interrupted"      why the open session ends with the stop although nobody asked:
+                             the Cancelling status digit it saw after its first write (a
+                             cancel on the machine's panel), or "left-pause" (the machine left
+                             Pause without going on, maybe a cancel whose Cancelling was
+                             missed); None otherwise
           "load_seen"        how often the machine's status changed to the load digit (Load
                              Media) since the service started: an unload shows as a change of
                              this count, even between two pings
+        and, from API 2 (OpenCutter 0.1.1) on:
+          "paused"           the open session waits on a paused machine (its Pause key, or a
+                             pause op): nothing more is sent until it goes on; the step in
+                             progress, or the next one, waits with no time limit
+          "resume_ok"        a resume op would be sent now (paused, no stop asked for, and a
+                             machine whose Resume was tested: the CAMEO 4 on firmware V5)
+          "pause_ok"         a pause op would be sent now (a session of ours wrote, it is not
+                             paused or ending, the machine last read Ready or Busy, and its
+                             Pause was tested)
+          "no_reply_s"       seconds the query the open session waits for has been unanswered,
+                             once that is 7 s or more ("Checking connection"; the service
+                             keeps waiting and sends nothing new); None otherwise
+          "indication_age_s" seconds since the machine's last status indication, or None: when
+                             replies are late but indications still come, the machine still
+                             reports its status ("status" is the last one)
+          "stop_check"       the ESC 05 read-back after the last stop op with check, or None:
+                             {"running", "status", "seconds", "still_busy", "still_paused",
+                             "reason"} (see DaemonClient.stop)
         None when no daemon answers. Same build only, as for ping_machine(); a service without
-        these fields answers without them."""
+        these fields (an older build) answers without them: a missing key means "not known",
+        never "false"."""
         try:
             reply = await self.request({"op": "ping", "stop": True}, PING_TIMEOUT)
         except DaemonError:
@@ -641,7 +667,10 @@ class DaemonClient:
                 helper.wait(HELPER_REAP_WAIT)
 
     async def info(self) -> dict:
-        """{"ok","status","tools","firmware"} (ESC 05, ESC 15, FG). Raises DaemonError."""
+        """{"ok","status","tools","firmware"}: ESC 05, ESC 15 and the machine's FG reply. From
+        API 2 on the service never sends FG for it (the reply comes from when the machine was
+        connected), and "tools" is None while the machine reads Paused or Cancelling (no ESC 15
+        is sent then: keep the tools read last). Raises DaemonError."""
         return await self.request({"op": "info"})
 
     async def stop(self, check: bool = False) -> dict:
@@ -650,11 +679,14 @@ class DaemonClient:
         button is the only stop left. {"ok", "errors"} otherwise.
 
         With `check`, a stop that got through is followed by ESC 05 reads (for up to about 3 s
-        while the machine reads Busy or Cancelling), and the reply adds "status_after" (the last
-        status digit read, or None) and "still_busy" (True when it still reads Busy: press the
-        power button; None when nothing was read). A Ready reply does not prove that the
-        machine stopped for good; it is what the machine reports. An older service answers
-        without these keys."""
+        while the machine reads Busy or Cancelling, up to 15 s once it read Paused: a paused
+        machine ends the job about 5 s after the stop), and the reply adds "status_after" (the
+        last status digit read, or None) and "still_busy" (True when it still reads Busy: press
+        the power button; None when nothing was read). A "status_after" of the Paused digit
+        means that it still reported Paused at the end (protocol.STOP_CHECK_PAUSED s): press
+        Unload on the machine. A Ready reply does not prove that the machine stopped for good;
+        it is what the machine reports. An older service answers without these keys. The ping's
+        "stop_check" (ping_stop) shows the read-back too, also while it runs."""
         req = {"op": "stop", **({"check": True} if check else {})}
         try:
             return await self.request(req, STOP_TIMEOUT)
@@ -662,6 +694,35 @@ class DaemonClient:
             raise
         except Exception as e:
             return {"ok": False, "error": f"{type(e).__name__}: {e}"}
+
+    async def resume(self) -> dict:
+        """The resume op (API 2): the service sends the machine's Resume (one ESC 08) for the
+        user's explicit click or command, only while the open session waits on a paused
+        machine whose Resume was tested (the CAMEO 4 on firmware V5), after a fresh ESC 05 read
+        Paused; never repeated. pause(): the same with the Pause (one ESC 07), only while a
+        session of ours has written and the machine reads Ready or Busy. The session then goes
+        on, or waits, as for the machine's own Pause key. Never raises.
+
+        {"ok", "sent", "status_before", "status_after", "paused", "errors"} and, unless "ok",
+        "error" (why, in plain words). "sent" is False for a refusal (nothing was written),
+        True when the write went out or may have (a write error: whether it arrived is
+        unknown), None when the service did not answer. "status_after" is the last status the
+        service read or was told within about 5 s; "paused" says whether the session waits on
+        a paused machine now. An older service answers {"ok": False, "error": "unknown op"}."""
+        return await self._command("resume")
+
+    async def pause(self) -> dict:
+        """The pause op (API 2): see resume()."""
+        return await self._command("pause")
+
+    async def _command(self, op: str) -> dict:
+        try:
+            reply = await self.request({"op": op}, COMMAND_TIMEOUT)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            return {"ok": False, "sent": None, "error": f"{type(e).__name__}: {e}"}
+        return reply
 
     @property
     def manages_service(self) -> bool:
@@ -817,7 +878,11 @@ class Session:
 
     async def step(self, index: int, timeout: float | None = 400) -> dict:
         """Run step `index` (in order) and wait for its result; None waits without limit.
-        A long cut step can take longer than the default: pass a timeout from the plan."""
+        A long cut step can take longer than the default: pass a timeout from the plan. From
+        API 2 on a step waits with no time limit while the machine is paused (until it goes
+        on, or the user stops the job): pass None, and watch the service with ping_stop()
+        instead ("paused", "no_reply_s"); a client that gives up on a step must send the stop
+        (closing this connection while a step runs does that too)."""
         return await self._call({"op": "step", "index": index}, timeout)
 
     async def end(self) -> None:

@@ -35,6 +35,7 @@ _NAMES = ("bleak", "bleak.backends", "bleak.backends.device", "bleak.exc",
           "dbus_fast", "dbus_fast.aio")
 
 ESC05, ESC09, ESC15, ESC16 = b"\x1b\x05", b"\x1b\x09", b"\x1b\x15", b"\x1b\x16"
+ESC07, ESC08 = b"\x1b\x07", b"\x1b\x08"      # the user's Pause and Resume (CAMEO 4)
 FG = b"FG\x03"
 TESTED_FG = "CAMEO 4 V5.05    "     # the FG reply of the one tested machine (padded, ETX on the wire)
 ADDRESS = "00:00:00:00:00:01"        # the simulated machine (a made-up address)
@@ -121,6 +122,16 @@ class FakeClient:
     each test its own subclass, so class settings are local; each link made is in `instances`
     there (one FakeClient per link, like bleak's BleakClient).
 
+    Pause (the firmware analysis of V5.05, simplified): ESC 07, or press_pause() on the panel,
+    pauses a machine that is busy or idle: status '3' (indicated), the motion still queued is
+    kept (`paused_left` seconds of it; motion written while paused is added). ESC 08, or
+    press_pause() again, goes on from there: '1' while that runs, or '0' at once when nothing
+    was left; ESC 08 does nothing unless paused. While paused U and FG are not answered. ESC 09
+    while paused ends the job: with motion left it stays '3' for `cancel_quiet_s`, then '4',
+    then '0'; with nothing left '4' at once, then '0'. hold_pause() (a long press) is the same
+    cancel, press_unload() a cancel followed by '2' (the mat goes out). Each change is
+    indicated. A status set by a test without these (status = '3') keeps the old behaviour.
+
     Writes are serialized like BlueZ's: one WriteValue per characteristic is in flight at a
     time, and a second one gets org.bluez.Error.InProgress, which bleak 3.x retries every
     10 ms. So a write (an ESC 09 included) never overtakes one whose Write Response is still
@@ -144,6 +155,8 @@ class FakeClient:
     # like bleak on a dead link: a write while not connected raises BleakError("Not connected")
     # and a dead link delivers no reply (False: the old fake, which takes writes after a drop)
     fail_when_disconnected = False
+    cancel_quiet_s = 5.0       # a cancel while paused with motion left: '3' this long, then '4'
+    command_delay = 0.0        # seconds an ESC 07 or ESC 08 write takes to be acknowledged
     instance = None            # the last one made
     instances: list | None = None   # every one made (a harness's subclass sets a list)
 
@@ -164,6 +177,8 @@ class FakeClient:
         self.on_write = None
         self.in_flight = False      # a write's Write Response is still due
         self.last_tg: int | None = None   # the TG of the last accepted motion write that had one
+        self.paused_left: float | None = None   # paused (ESC 07, press_pause): motion left, s
+        self.ignored: list[bytes] = []   # U and FG that a paused machine did not answer
         type(self).instance = self
         if type(self).instances is not None:
             type(self).instances.append(self)
@@ -194,6 +209,70 @@ class FakeClient:
 
     def moving(self) -> bool:
         return asyncio.get_running_loop().time() < self.moving_until
+
+    # the panel and the pause ---------------------------------------------------------------
+    def show(self, status: str) -> None:
+        """Set the status and indicate it, as the machine does on every change."""
+        from opencutter.device.protocol import CHAR_STATUS
+        self.status = status
+        cb = self.cbs.get(CHAR_STATUS)
+        if cb is not None and (self.is_connected or not type(self).fail_when_disconnected):
+            cb(None, bytearray(status.encode() + b"\x03"))
+
+    def _later(self, seconds: float, status: str) -> None:
+        asyncio.get_running_loop().call_later(seconds, self.show, status)
+
+    def pause_now(self) -> None:
+        """ESC 07, or a short press of Pause while busy or idle (ignored while paused)."""
+        if self.paused_left is not None or self.status not in ("0", "1"):
+            return
+        loop = asyncio.get_running_loop()
+        self.paused_left = max(0.0, self.moving_until - loop.time())
+        self.moving_until = 0.0
+        self.show("3")
+
+    def go_on(self) -> None:
+        """ESC 08, or a short press of Pause while paused: on from where it stopped."""
+        if self.paused_left is None:
+            return
+        left, self.paused_left = self.paused_left, None
+        loop = asyncio.get_running_loop()
+        if left > 0:
+            self.moving_until = loop.time() + left
+            self.show("1")
+            self.status = "0"               # Busy while moving (cur_status), Ready after
+            loop.call_later(left, lambda: self.moving() or self.show("0"))
+        else:
+            self.show("0")
+
+    def cancel_paused(self, then: str | None = None) -> None:
+        """The cancel of a paused machine (ESC 09, a long press, Unload): see the class doc.
+        `then`: a status shown 0.5 s after the '0' (Unload: '2')."""
+        left, self.paused_left = self.paused_left, None
+        quiet = type(self).cancel_quiet_s if left else 0.0
+        self.queued = 0
+        self._later(quiet, "4")
+        self._later(quiet + 0.3, "0")
+        if then is not None:
+            self._later(quiet + 0.8, then)
+
+    def press_pause(self) -> None:
+        """A short press of the panel's Pause key."""
+        if self.paused_left is None:
+            self.pause_now()
+        else:
+            self.go_on()
+
+    def hold_pause(self) -> None:
+        """A long press of Pause while paused: a cancel."""
+        if self.paused_left is not None:
+            self.cancel_paused()
+
+    def press_unload(self) -> None:
+        """Unload while paused: flush, cancel, then the mat goes out ('4', '0', '2')."""
+        if self.paused_left is not None:
+            self.paused_left = 0.0
+            self.cancel_paused(then="2")
 
     def cur_status(self) -> str:
         if self.status_override is not None:
@@ -229,7 +308,19 @@ class FakeClient:
         self.writes.append(data)
         if self.on_write:
             self.on_write(data)
-        if data == ESC05:
+        paused = self.paused_left is not None
+        if data in (ESC07, ESC08):
+            if type(self).command_delay:
+                await asyncio.sleep(type(self).command_delay)
+            self.pause_now() if data == ESC07 else self.go_on()
+        elif paused and data == ESC09:
+            self.cancel_paused()
+        elif paused and data in (b"U\x03", FG):
+            self.ignored.append(data)          # a paused machine answers no command
+        elif paused and self._is_motion(data):
+            self.paused_left += type(self).move_s
+            self.queued += len(data)
+        elif data == ESC05:
             self._reply(self.cur_status())
         elif data == ESC15:
             self._reply(type(self).tools)
@@ -507,7 +598,7 @@ class DaemonHarness:
         """Reset the fake machine (and set class settings such as tools=...) between scenarios."""
         for key in ("tools", "u_reply", "u_by_tg", "move_s", "write_delay", "mtu_payload",
                     "serialize_writes", "fg_reply", "fg_status", "busy_status",
-                    "fail_when_disconnected"):
+                    "fail_when_disconnected", "cancel_quiet_s", "command_delay"):
             setattr(self.fake_cls, key, getattr(FakeClient, key))
         for key, value in settings.items():
             setattr(self.fake_cls, key, value)
@@ -515,6 +606,8 @@ class DaemonHarness:
         f.status_override = None
         f.status = "0"
         f.moving_until = 0.0
+        f.paused_left = None
+        f.ignored.clear()
         f.fail_esc09 = False
         f.on_write = None
         f.last_tg = None

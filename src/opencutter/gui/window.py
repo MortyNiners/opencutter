@@ -29,6 +29,20 @@ Stopping and the next job (safety):
   was sent on a new link. A stop from another client at the outline gate ends the run there.
 - Esc cancels a running job through the window's own shortcut (bubble phase): a dialog or a
   popover that is open takes Esc first (the "A job is running" dialog then keeps the job).
+
+The machine's Pause during a job (the service's stop fields, MachineMonitor):
+- A paused machine shows 'Paused' (the pill, no pulse), 'Paused on the machine' in the status
+  bar, the job view's note, and Resume while the service would send it; the progress estimate
+  stops meanwhile (JobRunner.set_paused). Nothing is sent to it but what a click asks for.
+- Resume and Pause each send the service's op once for a click (resume_job, pause_job), one at
+  a time, never within COMMAND_GUARD_SECONDS of the last one's answer (a double click: both
+  buttons are insensitive meanwhile), and never again by themselves; the paused state shown
+  always comes from the service.
+- Cancel Job while paused asks for the stop's status read-back: 'Stopping…' with
+  CANCELLING_PAUSED (the pill 'Cancelling…') until the machine ended the job, then the usual
+  page, with STILL_PAUSED when it still reported Paused. Stop Machine says the same.
+- No answer from the machine for 7 s or more during a job: the pill 'Checking connection' and
+  the job view's note; the job waits, and Cancel Job stays available.
 """
 from __future__ import annotations
 
@@ -41,7 +55,7 @@ from dataclasses import replace
 from gi.repository import Adw, GLib, GObject, Gdk, Gio, Gsk, Gtk, Pango
 
 from opencutter import APP_ID
-from opencutter.device.protocol import INTERRUPTED_TERMS
+from opencutter.device.protocol import INTERRUPTED_TERMS, PAUSED
 from opencutter.machines import MachineProfile
 from opencutter.presets.model import PresetStore
 from opencutter.svg.importer import SvgImportError, load_svg
@@ -55,8 +69,9 @@ from .firstrun import FirstRunDialog
 from .geometry import (ALIGNMENTS, UNCHECKED_MAT, align_rect, design_fits, format_duration,
                        format_length, mat_choices, media_covers_cut_area, placement_problem,
                        test_cut_spot, usable_area)
-from .jobview import STOP_MACHINE, JobInfo, JobView
-from .machine import MACHINE_NAME, Link, MachineMonitor, MachineState, chosen_profile, pill
+from .jobview import CANCELLING, STOP_MACHINE, STOPPING, JobInfo, JobView, still_paused_text
+from .machine import (CHECKING, LEFT_PAUSE_MARK, MACHINE_NAME, Link, MachineMonitor, MachineState,
+                      chosen_profile, pill)
 from .runner import JobRunner, Outcome, StepState, activity, cut_steps, estimated_seconds
 from .sending import (LayoutMachine, blocker_for_test_cut, depth_note, job_spec, plan_summary,
                       send_blocker, spec_for_test_cut, supported_presets, tool_check)
@@ -107,7 +122,8 @@ OWED_STOP_SENT = ("The stop that could not get through was sent to the {name} wh
                   "again.")
 STILL_BUSY_SECONDS = 4.0    # Busy for this long after a run: the finished page says so
 TEST_TOAST_SECONDS = 15     # the completed Test Cut's toast (with Stop Machine) stays this long
-STOP_WAIT = 25.0            # longest wait for Cancel's stop reply (> DaemonClient's STOP_TIMEOUT)
+STOP_WAIT = 35.0            # longest wait for Cancel's stop reply (> DaemonClient's STOP_TIMEOUT)
+COMMAND_GUARD_SECONDS = 1.0  # Resume and Pause take no click this soon after the last answer
 QUIT_WAIT = 5.0             # after Cancel Job and quit: how long the run may take to end
 JOB_LOST_HEADING = "Connection lost during the job"
 CUT_LOST_HEADING = "Connection lost while cutting"
@@ -158,6 +174,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._busy_since: float | None = None   # the machine reports Busy after a run, since
         self._owed_alerted = False              # the owed stop was told
         self._owed_sent_seen: int | None = None   # the service's owed_stops_sent, last seen
+        self._command_done_at: float | None = None   # the last Resume or Pause was answered at
         self._build()
         self._install_actions()
         self.connect("close-request", self._on_close_request)
@@ -191,6 +208,8 @@ class MainWindow(Adw.ApplicationWindow):
         self.sidebar.connect("tab-changed", lambda *_: self._on_tab())
         self.job_view = JobView()
         self.job_view.connect("cancel", lambda *_: self.cancel_job())
+        self.job_view.connect("resume", lambda *_: spawn(self.resume_job()))
+        self.job_view.connect("pause", lambda *_: spawn(self.pause_job()))
         self.job_view.connect("done", lambda *_: self._leave_job())
         self.job_view.connect("cut-again", lambda *_: self._cut_again())
         self.job_view.connect("tick", lambda *_: self._update_pill())    # the pill's % every second
@@ -699,6 +718,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._switch_layout()
         if state.choice != self.layout.machine:      # the texts name the layout's machine
             state = replace(state, choice=self.layout.machine)
+        self._follow_pause(state)
         self.connection.update(state)
         # why, when the daemon said so (plain text: use_markup is off, the model is the
         # machine's own text). A machine of another model gets no Try again: it would never
@@ -735,6 +755,14 @@ class MainWindow(Adw.ApplicationWindow):
         self._follow_owed_stop(state)
         self._watch_busy(state)
         self.job_view.set_machine(state.name, state.connected)
+
+    def _follow_pause(self, state: MachineState) -> None:
+        """The machine's pause during a job: the job view's notes and its Resume and Pause
+        buttons follow the service's state, and the runner's progress estimate stops while the
+        machine is paused."""
+        self.job_view.show_machine(state)
+        if self._job_running():
+            self.runner.set_paused(state.shows_paused)
 
     def _need_reload(self, state: MachineState, why: str) -> None:
         """The next job first needs Unload and Load (see _check_reload); `why` is the Load
@@ -864,6 +892,12 @@ class MainWindow(Adw.ApplicationWindow):
         if runner is not None and runner.outcome is Outcome.RUNNING:
             text, tone, pulse, status = self._job_pill(runner, info, state)
             refused = None
+        elif (runner is not None and runner.stop_pending and runner.paused_cancel
+              and self.side_stack.get_visible_child_name() == "job"):
+            # Cancel while paused: the machine ends the job some seconds after the stop
+            reported = f" · machine: {state.status_text}" if state.connected else ""
+            text, tone, pulse, status = CANCELLING, "warning", True, f"{CANCELLING}{reported}"
+            refused = None
         else:
             text, tone, pulse = pill(state)
             status = state.status_text
@@ -877,16 +911,25 @@ class MainWindow(Adw.ApplicationWindow):
                   state: MachineState) -> tuple[str, str, bool, str]:
         """(pill text, tone, pulsing, status bar text) while a job runs: what the current step
         does (runner.activity: 'Preparing', 'Previewing outline', 'Cutting 40%', 'Returning to
-        origin'), 'Check the position' at the outline gate, the machine's own Paused or
-        Cancelling, or 'Connection lost'. The status bar adds what the machine reports."""
+        origin'), 'Check the position' at the outline gate, the machine's own Cancelling (the
+        job ends), 'Stopping…' when it left Pause without going on (the job ends with the
+        stop), 'Checking connection' while the job's query has had no answer for 7 s or more,
+        'Paused' while the machine is paused (the job waits), or 'Connection lost'. The status
+        bar adds what the machine reports."""
         verb = ACTIVITY.get(info.action, "Cutting")
         if self._link_dropped_in_job:
             return "Connection lost", "negative", False, "Connection lost"
         status = state.machine_profile.status
         term = (status.text(state.interrupted) or status.text(state.status)) if state.connected else None
         reported = f" · machine: {state.status_text}" if state.connected else ""
-        if term in INTERRUPTED_TERMS:            # never resumed from here: the step ends
+        if term in INTERRUPTED_TERMS:            # a cancel on the machine: the step ends
             return term, "warning", False, f"{term}{reported}"
+        if state.connected and state.interrupted == LEFT_PAUSE_MARK:   # ends with the stop
+            return STOPPING, "warning", False, f"{STOPPING}{reported}"
+        if state.checking:                       # the job waits for an answer, sends nothing
+            return CHECKING, "warning", False, f"{CHECKING}{reported}"
+        if state.shows_paused:                   # the job waits until the machine goes on
+            return "Paused", "warning", False, f"Paused on the machine{reported}"
         if runner.holding:
             return ("Check the position", "warning", False,
                     f"Waiting for Cut (outline check){reported}")
@@ -1222,9 +1265,48 @@ class MainWindow(Adw.ApplicationWindow):
             self._update_send_state()            # Stopping… ends: Send and the rest come back
 
     def cancel_job(self) -> None:
-        """Cancel Job: one click, no confirmation."""
+        """Cancel Job: one click, no confirmation. While the machine is paused the stop asks
+        for the status read-back: the job view says 'Cancelling…' until the machine ended the
+        job (about 5 s after the stop), or that it still reports Paused."""
         if self._job_running():
-            spawn(self.runner.cancel())
+            spawn(self.runner.cancel(check=self.monitor.state.shows_paused))
+
+    async def resume_job(self) -> dict | None:
+        """Resume, one click: the service's resume op, once (one ESC 08), only while the service
+        says that it would send it (the session waits on a paused machine whose Resume was
+        tested). Nothing while another Resume or Pause runs or right after one was answered
+        (COMMAND_GUARD_SECONDS). The state shown afterwards comes from the service."""
+        return await self._job_command("resume", self.monitor.state.offers_resume)
+
+    async def pause_job(self) -> dict | None:
+        """Pause, one click: the service's pause op, once (one ESC 07), only on a machine whose
+        Pause the app offers, while a step runs (not at the outline check, not while the job
+        ends) and the service says that it would send it. The job view shows the machine
+        paused only once the service says so. See resume_job()."""
+        state = self.monitor.state
+        runner = self.runner
+        allowed = (state.offers_pause and state.pause_ok and not state.shows_paused
+                   and not state.ends_job and runner is not None and not runner.holding)
+        return await self._job_command("pause", allowed)
+
+    async def _job_command(self, kind: str, allowed: bool) -> dict | None:
+        """Send `kind` ("resume" or "pause") through the runner once, when `allowed` and the
+        guards let it; then poll the service, whose state the view shows. The reply, or None
+        when nothing was sent."""
+        runner = self.runner
+        if not allowed or not self._job_running() or runner.command_pending is not None:
+            return None
+        done = self._command_done_at
+        if done is not None and time.monotonic() - done < COMMAND_GUARD_SECONDS:
+            return None                           # the second click of a double click
+        try:
+            reply = await (runner.resume() if kind == "resume" else runner.pause())
+        finally:
+            self._command_done_at = time.monotonic()
+            self.job_view.hold_commands(COMMAND_GUARD_SECONDS)   # shown, not just ignored
+        if not self._closed:
+            await self.monitor.refresh()          # the state the service reports now
+        return reply
 
     async def stop_machine(self) -> dict | None:
         """Stop Machine, once a run has ended: the service's stop op without a session (ESC 09
@@ -1234,6 +1316,7 @@ class MainWindow(Adw.ApplicationWindow):
             return None
         self._machine_stopping = True
         self._update_send_state()
+        asked = time.monotonic()
         try:
             reply = await self.client.stop(check=True)
         except Exception as e:  # noqa: BLE001 - DaemonClient.stop never raises; shown as not sent
@@ -1241,10 +1324,15 @@ class MainWindow(Adw.ApplicationWindow):
         finally:
             self._machine_stopping = False
             self._update_send_state()
+        status = self.monitor.state.machine_profile.status
         if not isinstance(reply, dict) or not reply.get("ok"):
             await dialogs.stop_not_sent(self)
         elif reply.get("still_busy"):
             await dialogs.still_busy_after_stop(self)
+        elif status.text(reply.get("status_after")) == PAUSED:
+            # still Paused at the end of the service's read-back (a paused machine ends the
+            # job about 5 s after the stop)
+            await dialogs.still_paused_after_stop(self, still_paused_text(time.monotonic() - asked))
         else:
             self.toast(GLib.markup_escape_text(STOP_SENT))
         return reply

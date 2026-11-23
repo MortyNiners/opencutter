@@ -8,6 +8,10 @@
   opencutter info            status, tools, sensor, firmware, machine profile and test programs
   opencutter stop            stop the MACHINE now (ESC 09 twice), from any terminal, through
                              every OpenCutter service that runs; the service keeps running
+  opencutter pause           pause the job or test program that runs now (ESC 07), as the
+                             machine's Pause key does; it then waits for the machine
+  opencutter resume          go on with that job once it is paused (ESC 08), from where it
+                             stopped, as pressing the machine's Pause key again does
   opencutter service stop    stop the background service (not the machine): it releases the
                              Bluetooth link, so other programs can use the machine
   opencutter service status  which background service runs: version, build, pid, machine,
@@ -19,8 +23,9 @@
 The machine must already be paired in the system Bluetooth settings. The daemon reads the model
 a machine reports (FG) and drives it only when OpenCutter knows how (see "Machines" in
 `opencutter --help`). The test programs exist for the CAMEO 4 only. They run only through the
-daemon, one step per Enter; Ctrl+C stops the machine. The machine's power button is the only
-stop that does not depend on its firmware.
+daemon, one step per Enter; Ctrl+C stops the machine. A step waits as long as the machine is
+paused (its Pause key): press it again, or run `opencutter resume`, to go on. The machine's
+power button is the only stop that does not depend on its firmware.
 """
 from __future__ import annotations
 
@@ -39,12 +44,15 @@ from .device.client import (PING_TIMEOUT, SOCKET_ENV, DaemonClient, DaemonError,
                             ping_with_peer, service_socket_path, shutdown_service,
                             terminate_older_daemon)
 from .device.programs import PINNED_PROGRAMS
-from .device.protocol import (REASON_WRONG_MODEL, describe_tools, model_text, status_text,
-                              wrong_model_message)
+from .device.protocol import (PAUSED, REASON_WRONG_MODEL, STOP_CHECK_PAUSED, describe_tools,
+                              model_text, status_text, wrong_model_message)
 from .identity import API_VERSION, BUILD, describe, same_build, this_build
 from .machines import CAMEO4, MachineProfile, Support, ble_name_prefixes, detect, registry
 
-STEP_TIMEOUT = 170.0       # a pinned step: ready wait 120 s + pre-step wait 10 s + margin
+# A step has no time limit (a paused machine waits as long as it takes): while it runs, the
+# service is pinged every WATCH_EVERY s, and changes are printed (paused, going on, no answer).
+WATCH_EVERY = 2.0
+WATCH_MISSES = 3           # pings in a row without an answer: the stop is sent
 POWER = "PRESS THE POWER BUTTON if it is still moving"
 NO_DAEMON = "No OpenCutter daemon is running. Start it with `opencutter serve` or open the app."
 NOT_CONNECTED = ("The daemon is running but the machine is not connected yet "
@@ -155,6 +163,9 @@ def after_stop_line(resp: dict) -> tuple[str, bool] | None:
     if resp.get("still_busy"):
         return (f"!! the machine still reports Busy (status {status!r}) a few seconds after the "
                 f"stop: {POWER}", True)
+    if status_text(status, CAMEO4, default="") == PAUSED:
+        return (f"  the machine still reports Paused {STOP_CHECK_PAUSED:g} s after the stop: "
+                f"press Unload on the machine; {POWER}", True)
     return (f"  the machine now reports status {status!r} = {status_text(status, CAMEO4)}.", False)
 
 
@@ -525,6 +536,13 @@ async def show_status(client: DaemonClient) -> None:
         status = ping.get("status")
         print(f"running: {motion_words(ping['motion'])} (last reported status {status!r} = "
               f"{_status_words(status, profile)})")
+        stop = await client.ping_stop() if ping.get("build") is not None else None
+        if stop and stop.get("paused"):
+            print("         Paused (the open job waits for the machine): press its Pause key or "
+                  "run `opencutter resume` to go on, or `opencutter stop`")
+        elif stop and isinstance(stop.get("no_reply_s"), (int, float)):
+            print(f"         no answer from the machine for {stop['no_reply_s']:.0f} s; the "
+                  "service keeps waiting and sends nothing new")
         return
     r = await client.request({"op": "esc", "code": 0x05})
     if not r.get("ok"):
@@ -552,6 +570,63 @@ async def show_info(client: DaemonClient) -> None:
         print(f"Test programs:     {', '.join(names) if names else 'none for this machine yet'}")
 
 
+PAUSED_LINE = ("      .. the machine is paused (status {status!r}). Press its Pause key to go "
+               "on, run 'opencutter resume' in another terminal, or press Ctrl+C to stop.")
+PAUSED_KEY_LINE = ("      .. the machine is paused (status {status!r}). Press its Pause key to "
+                   "go on, or press Ctrl+C to stop.")
+GOES_ON_LINE = "      .. the machine goes on (status {status!r})."
+NO_ANSWER_LINE = ("      .. no answer from the machine for {seconds:.0f} s; still waiting. Ctrl+C "
+                  "stops.")
+
+
+def watch_lines(ping: dict, seen: dict) -> list[str]:
+    """What changed since the last ping of a running step (`seen` keeps what was printed):
+    the machine paused, it goes on, or no answer from it for 7 s or more (once per episode)."""
+    lines = []
+    paused = bool(ping.get("paused"))
+    status = ping.get("status")
+    if paused and not seen.get("paused"):
+        lines.append((PAUSED_LINE if ping.get("resume_ok") else PAUSED_KEY_LINE)
+                     .format(status=status))
+    elif not paused and seen.get("paused") and not ping.get("motion_stopped") \
+            and ping.get("interrupted") is None:
+        lines.append(GOES_ON_LINE.format(status=status))
+    seen["paused"] = paused
+    silent = ping.get("no_reply_s")
+    if isinstance(silent, (int, float)) and not seen.get("silent"):
+        lines.append(NO_ANSWER_LINE.format(seconds=silent))
+    seen["silent"] = isinstance(silent, (int, float))
+    return lines
+
+
+async def run_step(client: DaemonClient, s: Session, index: int) -> dict:
+    """Run one step without a time limit (it waits as long as the machine is paused), pinging
+    the service every WATCH_EVERY s and printing what changes (watch_lines). Raises DaemonError
+    when the step's connection fails or WATCH_MISSES pings in a row get no answer."""
+    step = asyncio.ensure_future(s.step(index, None))
+    seen: dict = {}
+    misses = 0
+    try:
+        while True:
+            done, _ = await asyncio.wait({step}, timeout=WATCH_EVERY)
+            if step in done:
+                return step.result()
+            ping = await client.ping_stop()
+            if ping is None:
+                misses += 1
+                if misses >= WATCH_MISSES:
+                    raise DaemonError(f"{WATCH_MISSES} pings in a row got no answer")
+                continue
+            misses = 0
+            for line in watch_lines(ping, seen):
+                print(line, flush=True)
+    finally:
+        if not step.done():
+            step.cancel()
+            with contextlib.suppress(BaseException):
+                await step
+
+
 async def _run_steps(client: DaemonClient, s: Session, name: str, opened: dict) -> None:
     steps = opened["steps"]
     for i, st in enumerate(steps):
@@ -560,13 +635,13 @@ async def _run_steps(client: DaemonClient, s: Session, name: str, opened: dict) 
             print("Stopped before the step; nothing more was sent.")
             return
         try:
-            r = await s.step(i, STEP_TIMEOUT)
+            r = await run_step(client, s, i)
         except asyncio.CancelledError:
             print("\nCtrl+C: sending STOP...")
             await send_stop(client)
             raise
         except DaemonError as e:
-            print(f"\n!! no answer from the daemon ({e}): sending STOP...")
+            print(f"\n!! no answer from the service ({e}): sending STOP...")
             await send_stop(client)
             return
         if not r.get("ok"):
@@ -617,6 +692,40 @@ async def run_program(client: DaemonClient, name: str, options: dict) -> None:
               f"tools {opened['tools']!r} = {_tools_words(opened['tools'], profile)}")
         await _run_steps(client, s, name, opened)
         await s.end()
+
+
+async def command(client: DaemonClient, kind: str) -> bool:
+    """`opencutter resume` / `opencutter pause`: one resume op (ESC 08) or pause op (ESC 07)
+    through the service of this very build, for the session that runs now. Prints what was sent
+    and what the machine reports afterwards, or why nothing was sent. True when it was sent."""
+    ping = await _ping_service(client)
+    if ping is None:
+        raise SystemExit(NO_DAEMON)
+    if not same_build(ping):
+        raise SystemExit(OTHER_BUILD.format(service=describe(ping), mine=this_build()))
+    ping = await with_machine(client, ping)
+    if not ping.get("connected"):
+        raise SystemExit(_not_connected(ping))
+    profile = ping_profile(ping)
+    r = await (client.resume() if kind == "resume" else client.pause())
+    word, esc = ("Resume", "ESC 08") if kind == "resume" else ("Pause", "ESC 07")
+    after = r.get("status_after")
+    if r.get("ok"):
+        print(f"{word} sent ({esc}); the machine now reports {after} = "
+              f"{_status_words(after, profile)}.")
+        if kind == "resume" and r.get("paused"):
+            print("  It still reports Paused: press its Pause key to go on, or stop the job "
+                  "(Cancel Job in the app, Ctrl+C in its terminal, or `opencutter stop`).")
+        elif kind == "pause" and not r.get("paused"):
+            print("  It does not report Paused yet: a paused job waits until the moves it has "
+                  "already taken in are done. Watch the machine.")
+        return True
+    if r.get("sent") is False:
+        print(f"Not sent: {r.get('error')}", file=sys.stderr)
+    else:
+        print(f"!! {word} ({esc}) may have reached the machine: {r.get('error')}. It is not "
+              "sent again; watch the machine.", file=sys.stderr)
+    return False
 
 
 def _seconds(text: str) -> float:
@@ -693,11 +802,16 @@ def _parser() -> argparse.ArgumentParser:
                        help="end after SECONDS without any request while no job runs, releasing "
                             "the machine (default 0: never; the app starts it with 900)")
     only = f"; {_join(_program_machines())} only"
+    paused_only = f"; {_join(_pause_machines())} only"
     for name, text in (("status", "the machine, its model and its status (ESC 05)"),
                        ("info", "status, tools, sensor, firmware, machine profile and test "
                                 "programs"),
                        ("stop", "stop the MACHINE now (ESC 09 twice); the background service "
                                 "keeps running (see `service stop`)"),
+                       ("pause", "pause the job that runs now (ESC 07), as the machine's Pause "
+                                 f"key does{paused_only}"),
+                       ("resume", "go on with the paused job that runs now (ESC 08), from where "
+                                  f"it stopped{paused_only}"),
                        ("dry-run", f"motion test with the tool always up{only}"),
                        ("cut-test", f"cut one 1-inch square in adhesive vinyl{only}")):
         sub.add_parser(name, help=text)
@@ -719,6 +833,13 @@ def _parser() -> argparse.ArgumentParser:
 def _program_machines() -> list[str]:
     """The names of the machines that have test programs (the CAMEO 4)."""
     return [p.profile.name for p in PINNED_PROGRAMS.values()]
+
+
+def _pause_machines() -> list[str]:
+    """The names of the machines whose Pause and Resume OpenCutter sends (the CAMEO 4): a
+    TESTED profile that has them."""
+    return [p.name for p in registry.enabled() if p.support is Support.TESTED
+            and p.pause is not None and p.resume is not None]
 
 
 async def _run(args: argparse.Namespace) -> None:
@@ -750,6 +871,10 @@ async def _run(args: argparse.Namespace) -> None:
         return
     client = DaemonClient()
     try:
+        if args.action in ("resume", "pause"):
+            if not await command(client, args.action):
+                raise SystemExit(1)
+            return
         if args.action == "status":
             await show_status(client)
         elif args.action == "info":

@@ -125,6 +125,10 @@ CAMEO4 = MachineProfile(
     fg_claims_session=True,          # V5.05: FG claims the session, status 1 becomes 2
     power_cycle_to_connect=True,     # observed: a new link only right after power-on
     programs=frozenset({"dry-run", "pen-test", "cut-test"}),
+    # firmware analysis of V5.05: ESC 07 pauses between commands while busy or idle (ignored when
+    # paused); ESC 08 goes on from where it stopped, only while paused (no effect otherwise)
+    pause=b"\x1b\x07",
+    resume=b"\x1b\x08",
 )
 
 PROFILES: tuple = (CAMEO4,)

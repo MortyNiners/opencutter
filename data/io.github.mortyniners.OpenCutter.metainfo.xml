@@ -19,9 +19,9 @@
     </ul>
     <p>
       OpenCutter is experimental. It has cut designs on one real CAMEO 4 (firmware V5.05), but
-      stopping a running cut and where a design lands against the printed grid of the mat have
-      not been checked on a real machine yet. Use the outline preview and scrap material for
-      your first jobs.
+      stopping a running cut, pausing and resuming a job, and where a design lands against the
+      printed grid of the mat have not been checked on a real machine yet. Use the outline
+      preview and scrap material for your first jobs.
     </p>
     <p>
       OpenCutter reads the model and firmware the machine reports. Not yet tested: it also
@@ -81,6 +81,25 @@
     <category>Graphics</category>
   </categories>
   <releases>
+    <release version="0.1.1" type="stable" date="2026-11-23">
+      <description>
+        <p>
+          The machine's Pause key now pauses the job instead of ending it. While the machine is
+          paused, OpenCutter sends it nothing but status queries and waits, for as long as it
+          takes; press the Pause key again and the job goes on from where it stopped.
+        </p>
+        <ul>
+          <li>Resume and Pause buttons in the job view, for the CAMEO 4 with firmware V5, and the commands opencutter resume and opencutter pause</li>
+          <li>Cancel Job while the machine is paused: the job view shows "Cancelling…" until the machine has ended the job, about 5 seconds after the stop</li>
+          <li>A job is no longer ended when the machine answers slowly: OpenCutter keeps waiting and sends nothing new, and the app says "Checking connection" when no answer has come for 7 seconds</li>
+        </ul>
+        <p>
+          How the machine pauses, goes on and ends a paused job comes from an analysis of the
+          CAMEO 4's firmware. None of these changes has been tried on a real machine yet: keep
+          the power button within reach, and please report how it went on the bug tracker.
+        </p>
+      </description>
+    </release>
     <release version="0.1.0" type="stable" date="2026-11-19">
       <description>
         <p>

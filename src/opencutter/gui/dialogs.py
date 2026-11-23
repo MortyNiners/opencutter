@@ -151,6 +151,16 @@ async def still_busy_after_stop(parent: Gtk.Widget) -> None:
     await _choose(dialog, parent)
 
 
+async def still_paused_after_stop(parent: Gtk.Widget, body: str) -> None:
+    """Blocking alert after Stop Machine: the stop went out, but the machine still reports
+    Paused at the end of the service's read-back (a paused machine ends the job about 5 s after
+    the stop). `body` is jobview.STILL_PAUSED with the seconds."""
+    dialog = Adw.AlertDialog(heading="The machine still reports Paused", body=body)
+    dialog.add_response("ok", "OK")
+    dialog.set_close_response("ok")
+    await _choose(dialog, parent)
+
+
 def show_message(parent: Gtk.Widget, heading: str, body: str) -> None:
     """A simple informational dialog with an OK button."""
     dialog = Adw.AlertDialog(heading=heading, body=body)
